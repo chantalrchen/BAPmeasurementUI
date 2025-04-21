@@ -1,0 +1,29 @@
+{
+    "description": "Cycle through valve positions",
+    "steps": [
+        {
+            "time": 0,
+            "flow": 5.0,
+            "temperature": 25.0,
+            "valve": 1
+        },
+        {
+            "time": 60,
+            "flow": 5.0,
+            "temperature": 25.0,
+            "valve": 2
+        },
+        {
+            "time": 120,
+            "flow": 5.0,
+            "temperature": 25.0,
+            "valve": 3
+        },
+        {
+            "time": 180,
+            "flow": 5.0,
+            "temperature": 25.0,
+            "valve": 4
+        }
+    ]
+}
