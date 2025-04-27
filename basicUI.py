@@ -3,6 +3,8 @@ from tkinter import messagebox, ttk
 import propar   # Bronkhorst MFC
 import serial   # Cooling and Valve
 import time 
+import json
+import os
 
 class BronkhorstMFC:
     def __init__(self, port = "COM1"):
@@ -85,7 +87,10 @@ class BronkhorstMFC:
         
         if self.connected:
             try:
-                if value > self.maxmassflow:
+                if value < 0:
+                    messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
+                    return False             
+                elif value > self.maxmassflow:
                     messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow:.2f} mL/min. The mass flow rate will be set to {self.maxmassflow:.2f} mL/min.")
                     self.targetmassflow = self.maxmassflow
                     ##the following should be connected when connected with Bronkhorst MFC
@@ -312,6 +317,45 @@ class RVM:
         valve_position = self.currentposition
         return valve_position
 
+class ProfileData:
+    def __init__(self, profiles_dir="profiles"):
+        self.profiles_dir = profiles_dir
+        self.current_profile = None
+        self.standard_profiles = {
+        }
+        
+        # Create profiles directory if it doesn't exist
+        if not os.path.exists(profiles_dir):
+            os.makedirs(profiles_dir)
+            
+        # Save standard profiles if they don't exist
+        for name, profile in self.standard_profiles.items():
+            file_path = os.path.join(self.profiles_dir, f"{name}.json")
+            if not os.path.exists(file_path):
+                with open(file_path, 'w') as f:
+                    json.dump(profile, f, indent=4)
+    
+    def get_profiles(self):
+        profiles = []
+        for filename in os.listdir(self.profiles_dir):
+            if filename.endswith('.json'):
+                profiles.append(filename[:-5])  # Remove .json extension
+        return profiles
+    
+    def load_profile(self, name):
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                self.current_profile = json.load(f)
+                return self.current_profile
+        return None
+    
+    def save_profile(self, name, profile):
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        with open(file_path, 'w') as f:
+            json.dump(profile, f, indent=4)
+        return True
+
 class MicrofluidicGasSupplySystemUI:
     def __init__(self, root):
         self.root = root
@@ -322,15 +366,16 @@ class MicrofluidicGasSupplySystemUI:
         self.MFC = BronkhorstMFC()
         self.cooling = Koelingsblok()
         self.valve = RVM()
+        self.profiledata = ProfileData()
         
         self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill = 'both', expand = True)
+        self.notebook.pack(fill='both', expand=True)
 
         self.create_menu()
         self.create_MFC_tab()
         self.create_cooling_tab()
         self.create_valve_tab()
-    
+ 
     def create_menu(self):
         menu = tk.Menu(self.root)
         
@@ -341,127 +386,243 @@ class MicrofluidicGasSupplySystemUI:
         
         self.root.config(menu=menu)
         
-    def create_MFC_tab (self):
-        self.MFC_tab = ttk.Frame(self.notebook)
-        self.MFC_tab.pack(fill = 'both', expand = True)
-        self.notebook.add(self.MFC_tab, text = "Bronkhorst MFC")
+    def create_MFC_tab(self):
+        MFC_tab = ttk.Frame(self.notebook)
+        MFC_tab.pack(fill='both', expand=True)
+        self.notebook.add(MFC_tab, text="Bronkhorst MFC")
         
         # label for the mass flow rate
-        self.massflow_label = tk.Label(self.MFC_tab, text="Mass flow rate (mL/min):")
-        self.massflow_label.grid(row=0, column=0, padx=10, pady=10)
+        massflow_label = tk.Label(MFC_tab, text="Mass flow rate (mL/min):")
+        massflow_label.grid(row=0, column=0, padx=10, pady=10)
         
         # entry field for mass flow rate 
         self.massflow_var = tk.DoubleVar()
-        self.massflow_entry = tk.Entry(self.MFC_tab, textvariable=self.massflow_var)
-        self.massflow_entry.grid(row=0, column=1, padx=10, pady=10)
+        massflow_entry = tk.Entry(MFC_tab, textvariable=self.massflow_var)
+        massflow_entry.grid(row=0, column=1, padx=10, pady=10)
         
         # button to set the mass flow rate
-        self.set_massflow_button = tk.Button(self.MFC_tab, text="Set mass flow rate", command=self.set_MFCmassflow)
-        self.set_massflow_button.grid(row=1, column=0, columnspan=2, pady=10)
+        set_massflow_button = tk.Button(MFC_tab, text="Set mass flow rate", command=self.set_MFCmassflow)
+        set_massflow_button.grid(row=1, column=0, columnspan=2, pady=10)
         
         # Label to display the current flow rate
-        self.current_massflow_label = tk.Label(self.MFC_tab, text="Current mass flow rate: Not available")
+        self.current_massflow_label = tk.Label(MFC_tab, text="Current mass flow rate: Not available")
         self.current_massflow_label.grid(row=2, column=0, padx=10, pady=10)
         
         # Label to display the target flow rate
-        self.target_massflow_label = tk.Label(self.MFC_tab, text=f"Target mass flow rate: {self.MFC.targetmassflow:.2f} mL/min")
+        self.target_massflow_label = tk.Label(MFC_tab, text=f"Target mass flow rate: {self.MFC.targetmassflow:.2f} mL/min")
         self.target_massflow_label.grid(row=2, column=1, padx=10, pady=10)
         
-        #Connect button
-        self.MFC_connect_button = tk.Button(self.MFC_tab, text="Connect", command=self.connect_MFC)
-        self.MFC_connect_button.grid(row=3, column=0, padx=10, pady=10)
+        # Connect button
+        MFC_connect_button = tk.Button(MFC_tab, text="Connect", command=self.connect_MFC)
+        MFC_connect_button.grid(row=3, column=0, padx=10, pady=10)
         
         # Disconnect button
-        self.MFC_disconnect_button = tk.Button(self.MFC_tab, text="Disconnect", command=self.disconnect_MFC)
-        self.MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        MFC_disconnect_button = tk.Button(MFC_tab, text="Disconnect", command=self.disconnect_MFC)
+        MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
         
         # Connection info label at the bottom
-        MFC_connection_info_label = ttk.Label(self.MFC_tab, text="Current connection ports: ")
+        MFC_connection_info_label = ttk.Label(MFC_tab, text="Current connection ports: ")
         MFC_connection_info_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
         # Label to show the current port for MFC at the bottom
-        self.MFC_current_port_label = ttk.Label(self.MFC_tab, text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}")
+        self.MFC_current_port_label = ttk.Label(MFC_tab, text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}")
         self.MFC_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
 
-    def create_cooling_tab (self):
-        self.cooling_tab = ttk.Frame(self.notebook)
-        self.cooling_tab.pack(fill = 'both', expand = True)
-        self.notebook.add(self.cooling_tab, text = "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
+    def create_cooling_tab(self):
+        cooling_tab = ttk.Frame(self.notebook)
+        cooling_tab.pack(fill='both', expand=True)
+        self.notebook.add(cooling_tab, text="Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
         
         # label for the mass flow rate
-        self.temperature_label = tk.Label(self.cooling_tab, text="Temperature (°C):")
-        self.temperature_label.grid(row=0, column=0, padx=10, pady=10)
+        temperature_label = tk.Label(cooling_tab, text="Temperature (°C):")
+        temperature_label.grid(row=0, column=0, padx=10, pady=10)
         
         # entry field for mass flow rate 
         self.temperature_var = tk.DoubleVar()
-        self.temperature_entry = tk.Entry(self.cooling_tab, textvariable=self.temperature_var)
-        self.temperature_entry.grid(row=0, column=1, padx=10, pady=10)
+        temperature_entry = tk.Entry(cooling_tab, textvariable=self.temperature_var)
+        temperature_entry.grid(row=0, column=1, padx=10, pady=10)
         
         # button to set the mass flow rate
-        self.set_temperature_button = tk.Button(self.cooling_tab, text="Set temperature", command=self.set_temperature)
-        self.set_temperature_button.grid(row=1, column=0, columnspan=2, pady=10)
+        set_temperature_button = tk.Button(cooling_tab, text="Set temperature", command=self.set_temperature)
+        set_temperature_button.grid(row=1, column=0, columnspan=2, pady=10)
         
         # Label to display the current flow rate
-        self.current_temperature_label = tk.Label(self.cooling_tab, text="Current temperature: Not available")
+        self.current_temperature_label = tk.Label(cooling_tab, text="Current temperature: Not available")
         self.current_temperature_label.grid(row=2, column=0, padx=10, pady=10)
         
         # Label to display the target flow rate
-        self.target_temperature_label = tk.Label(self.cooling_tab, text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
+        self.target_temperature_label = tk.Label(cooling_tab, text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
         self.target_temperature_label.grid(row=2, column=1, padx=10, pady=10)
     
-        #Connect button
-        self.cooling_connect_button = tk.Button(self.cooling_tab, text="Connect", command=self.connect_cooling)
-        self.cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
+        # Connect button
+        cooling_connect_button = tk.Button(cooling_tab, text="Connect", command=self.connect_cooling)
+        cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
         
         # Disconnect button
-        self.cooling_disconnect_button = tk.Button(self.cooling_tab, text="Disconnect", command=self.disconnect_cooling)
-        self.cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        cooling_disconnect_button = tk.Button(cooling_tab, text="Disconnect", command=self.disconnect_cooling)
+        cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
         
         # Connection info label at the bottom
-        cooling_connection_info_label = ttk.Label(self.cooling_tab, text="Current connection ports: ")
+        cooling_connection_info_label = ttk.Label(cooling_tab, text="Current connection ports: ")
         cooling_connection_info_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
         # Label to show the current port for cooling at the bottom
-        self.cooling_current_port_label = ttk.Label(self.cooling_tab, text=f"cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
+        self.cooling_current_port_label = ttk.Label(cooling_tab, text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         self.cooling_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
     
-    def create_valve_tab (self):
-        self.valve_tab = ttk.Frame(self.notebook)
-        self.valve_tab.pack(fill = 'both', expand = True)
-        self.notebook.add(self.valve_tab, text = "RVM Industrial Microfluidic Rotary Valve")
+    def create_valve_tab(self):
+        valve_tab = ttk.Frame(self.notebook)
+        valve_tab.pack(fill='both', expand=True)
+        self.notebook.add(valve_tab, text="RVM Industrial Microfluidic Rotary Valve")
         
         # label for the mass flow rate
-        self.valve_label = tk.Label(self.valve_tab, text="Position of the Valve:")
-        self.valve_label.grid(row=0, column=0, padx=10, pady=10)
+        valve_label = tk.Label(valve_tab, text="Position of the Valve:")
+        valve_label.grid(row=0, column=0, padx=10, pady=10)
         
         # entry field for mass flow rate 
         self.valve_pos_var = tk.DoubleVar()
-        self.valve_pos_entry = tk.Entry(self.valve_tab, textvariable=self.valve_pos_var)
-        self.valve_pos_entry.grid(row=0, column=1, padx=10, pady=10)
+        valve_pos_entry = tk.Entry(valve_tab, textvariable=self.valve_pos_var)
+        valve_pos_entry.grid(row=0, column=1, padx=10, pady=10)
         
         # button to set the position of the valve
-        self.set_valve_button = tk.Button(self.valve_tab, text="Set valve", command=self.set_valve)
-        self.set_valve_button.grid(row=1, column=0, columnspan=2, pady=10)
+        set_valve_button = tk.Button(valve_tab, text="Set valve", command=self.set_valve)
+        set_valve_button.grid(row=1, column=0, columnspan=2, pady=10)
         
         # Label to display the current position of the valve
-        self.current_valve_label = tk.Label(self.valve_tab, text="Current position of the valve: Not available")
+        self.current_valve_label = tk.Label(valve_tab, text="Current position of the valve: Not available")
         self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
         
-        #Connect button
-        self.valve_connect_button = tk.Button(self.valve_tab, text="Connect", command=self.connect_valve)
-        self.valve_connect_button.grid(row=3, column=0, padx=10, pady=10)
+        # Connect button
+        valve_connect_button = tk.Button(valve_tab, text="Connect", command=self.connect_valve)
+        valve_connect_button.grid(row=3, column=0, padx=10, pady=10)
         
         # Disconnect button
-        self.valve_disconnect_button = tk.Button(self.valve_tab, text="Disconnect", command=self.disconnect_valve)
-        self.valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        valve_disconnect_button = tk.Button(valve_tab, text="Disconnect", command=self.disconnect_valve)
+        valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
         
         # Connection info label at the bottom
-        valve_connection_info_label = ttk.Label(self.valve_tab, text="Current connection ports: ")
+        valve_connection_info_label = ttk.Label(valve_tab, text="Current connection ports: ")
         valve_connection_info_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
         # Label to show the current port for valve at the bottom
-        self.valve_current_port_label = ttk.Label(self.valve_tab, text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
+        self.valve_current_port_label = ttk.Label(valve_tab, text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
         self.valve_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
+    
+        # def create_profile_tab(self):
+        # profile_frame = ttk.Frame(self.notebook)
+        # self.notebook.add(profile_frame, text="Profile Management")
+        
+        # # Split into two frames
+        # left_frame = ttk.Frame(profile_frame)
+        # left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # right_frame = ttk.Frame(profile_frame)
+        # right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # # Profile list frame
+        # list_frame = ttk.LabelFrame(left_frame, text="Available Profiles")
+        # list_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # # Profile listbox
+        # self.profile_listbox = tk.Listbox(list_frame)
+        # self.profile_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # self.update_profile_list()
+        
+        # # Profile buttons
+        # button_frame = ttk.Frame(list_frame)
+        # button_frame.pack(fill=tk.X, pady=5)
+        
+        # load_button = ttk.Button(button_frame, text="Load", command=self.load_selected_profile)
+        # load_button.pack(side=tk.LEFT, padx=5)
+        
+        # delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_profile)
+        # delete_button.pack(side=tk.LEFT, padx=5)
+        
+        # # Profile editor frame
+        # editor_frame = ttk.LabelFrame(right_frame, text="Profile Editor")
+        # editor_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # # Profile name
+        # name_frame = ttk.Frame(editor_frame)
+        # name_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        # ttk.Label(name_frame, text="Profile Name:").pack(side=tk.LEFT, padx=5)
+        # self.profile_name_var = tk.StringVar()
+        # name_entry = ttk.Entry(name_frame, textvariable=self.profile_name_var, width=30)
+        # name_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        
+        # # Profile description
+        # desc_frame = ttk.Frame(editor_frame)
+        # desc_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        # ttk.Label(desc_frame, text="Description:").pack(side=tk.LEFT, padx=5)
+        # self.profile_desc_var = tk.StringVar()
+        # desc_entry = ttk.Entry(desc_frame, textvariable=self.profile_desc_var, width=30)
+        # desc_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        
+        # # Profile steps
+        # steps_frame = ttk.LabelFrame(editor_frame, text="Profile Steps")
+        # steps_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # # Steps table
+        # self.steps_tree = ttk.Treeview(steps_frame, 
+        #                               columns=("Time", "Flow", "Temperature", "Valve"), 
+        #                               show="headings")
+        # self.steps_tree.heading("Time", text="Time (s)")
+        # self.steps_tree.heading("Flow", text="Flow (mL/min)")
+        # self.steps_tree.heading("Temperature", text="Temp (°C)")
+        # self.steps_tree.heading("Valve", text="Valve Pos")
+        
+        # self.steps_tree.column("Time", width=80)
+        # self.steps_tree.column("Flow", width=80)
+        # self.steps_tree.column("Temperature", width=80)
+        # self.steps_tree.column("Valve", width=80)
+        
+        # self.steps_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # # Step editor
+        # step_editor = ttk.Frame(editor_frame)
+        # step_editor.pack(fill=tk.X, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Time (s):").grid(row=0, column=0, padx=5, pady=5)
+        # self.step_time_var = tk.IntVar(value=0)
+        # time_entry = ttk.Entry(step_editor, textvariable=self.step_time_var, width=8)
+        # time_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Flow:").grid(row=0, column=2, padx=5, pady=5)
+        # self.step_flow_var = tk.DoubleVar(value=5.0)
+        # flow_entry = ttk.Entry(step_editor, textvariable=self.step_flow_var, width=8)
+        # flow_entry.grid(row=0, column=3, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Temp:").grid(row=0, column=4, padx=5, pady=5)
+        # self.step_temp_var = tk.DoubleVar(value=25.0)
+        # temp_entry = ttk.Entry(step_editor, textvariable=self.step_temp_var, width=8)
+        # temp_entry.grid(row=0, column=5, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Valve:").grid(row=0, column=6, padx=5, pady=5)
+        # self.step_valve_var = tk.IntVar(value=1)
+        # valve_combo = ttk.Combobox(step_editor, textvariable=self.step_valve_var, values=list(range(1, 7)), width=5)
+        # valve_combo.grid(row=0, column=7, padx=5, pady=5)
+        
+        # # Step buttons
+        # step_buttons = ttk.Frame(editor_frame)
+        # step_buttons.pack(fill=tk.X, padx=5, pady=5)
+        
+        # add_step_button = ttk.Button(step_buttons, text="Add Step", command=self.add_profile_step)
+        # add_step_button.pack(side=tk.LEFT, padx=5)
+        
+        # remove_step_button = ttk.Button(step_buttons, text="Remove Step", command=self.remove_profile_step)
+        # remove_step_button.pack(side=tk.LEFT, padx=5)
+        
+        # clear_steps_button = ttk.Button(step_buttons, text="Clear Steps", command=self.clear_profile_steps)
+        # clear_steps_button.pack(side=tk.LEFT, padx=5)
+        
+        # # Save profile button
+        # save_frame = ttk.Frame(editor_frame)
+        # save_frame.pack(fill=tk.X, padx=5, pady=10)
+        
+        # save_button = ttk.Button(save_frame, text="Save Profile", command=self.save_profile)
+        # save_button.pack(side=tk.RIGHT, padx=5)
         
     def connect_MFC(self):
         if self.MFC.connect():
@@ -599,20 +760,3 @@ def main():
     
 if __name__ == "__main__":
     main()
-
-# ####################################3
-# ##Valve: 4-ports but actually only has 2 directions
-# # Connecting the valve with the dedicated port
-# RVM_port = "COM3"
-# RVM_instrument = serial.Serial(
-#     RVM_port, 9600, 8, None, 1, 1000
-# )  # Baudrate = 9600, Data bits = 8, Parity = None, Stop bit = 1, Timeout = 1000 sec!!!!;
-# ##TIMEOUT SHOULD BE CHANGED AFTER WE KNOW WHAT KIND OF RVM IT IS!!!!
-
-# # Initializing the valve, Once it is done, the valve is positioned on port 1 (opened)
-# RVM_instrument.write(b"/1ZR\r")
-
-# # Position 1: connects port 1 - port 2 and port 3- port 4
-# RVM_instrument.write(b"/1b1R\r")
-# # Position 2: connects port 2 - port 3 and port 1 - port 4
-# RVM_instrument.write(b"/1b2R\r")
