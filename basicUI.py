@@ -278,14 +278,14 @@ class RVM:
         #if self.connected and self.instrument is not None:
         
         if self.connected:
-            if (position != 1) and (position != 2):
+            if position != 1 and position != 2:
                 messagebox.showerror("Error",
-                    f"The position of the valve can only be 1 or 2:"
+                    f"The position of the valve can only be 1 or 2, but received: {position}"
                 )
                 return False
             
             try:
-                self.instrument.write(b"/1b" + str(position).encode() + "R\r")
+                #self.instrument.write(b"/1b" + str(position).encode() + "R\r")
                 #if the above does not work, try: 
                 # self.instrument.write(f"/1b{position}R\r".encode()) 
                 self.currentposition = position
@@ -300,13 +300,16 @@ class RVM:
             return False #Operation failed
 
     def current_valve_position(self):
-        # Send position query
-        self.instrument.write(b"/1?6R\r")  
+        # Following when connected to the devices
+        # self.instrument.write(b"/1?6R\r")  
         ##TIMEOUT SHOULD BE CHANGED AFTER WE KNOW WHAT KIND OF RVM IT IS!!!!
-        time.sleep(0.1)  
+        #time.sleep(0.1)  
         
         # Read response
-        valve_position =  self.instrument.readline().decode().strip()
+        #valve_position =  self.instrument.readline().decode().strip()
+        
+        ##this is pure to simulate
+        valve_position = self.currentposition
         return valve_position
 
 class MicrofluidicGasSupplySystemUI:
@@ -428,7 +431,7 @@ class MicrofluidicGasSupplySystemUI:
         self.notebook.add(self.valve_tab, text = "RVM Industrial Microfluidic Rotary Valve")
         
         # label for the mass flow rate
-        self.valve_label = tk.Label(self.valve_tab, text="valve (°C):")
+        self.valve_label = tk.Label(self.valve_tab, text="Position of the Valve:")
         self.valve_label.grid(row=0, column=0, padx=10, pady=10)
         
         # entry field for mass flow rate 
@@ -578,17 +581,14 @@ class MicrofluidicGasSupplySystemUI:
         self.root.after(1000, self.update_temperature) #updating the temperature each 1s.
         
     def set_valve(self):
-        position = self.temperature_var.get()
+        position = self.valve_pos_var.get()
         if self.valve.set_valve(position):
-            self.target_temperature_label.config(text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
-            self.update_temperature()
-        else:
-            self.current_temperature_label.config(text="Failed to set the temperature.")
+            self.update_valve()
 
     def update_valve(self):
         current_position = self.valve.current_valve_position()
         if current_position is not None:
-            self.current_valve_label.config(text=f"Current position of the valve: {current_position:.2f} °C")
+            self.current_valve_label.config(text=f"Current position of the valve: {current_position}")
         else:
             self.current_valve_label.config(text="Failed to read the position of the valve.")
 
