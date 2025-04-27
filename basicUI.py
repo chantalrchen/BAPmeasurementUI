@@ -39,7 +39,7 @@ class BronkhorstMFC:
         #         self.instrument.writeParameter(23, 2)
         #     return True
         # else:
-        #     messagebox.showerror("Error", "The device is not connected.")
+        #     messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
         #     return False
         ##
         
@@ -58,7 +58,7 @@ class BronkhorstMFC:
         #         )
         #         return False  # Operation failed
         # else:
-        #     messagebox.showerror("Error", "The device is not connected.")
+        #     messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
         #     return False  # Operation failed
         ##
         
@@ -76,53 +76,238 @@ class BronkhorstMFC:
                 )
                 return False
         else:
-            messagebox.showerror("Error","The device is not connected.")
+            messagebox.showerror("Error","The Bronkhorst MFC is not connected.")
             return False  # Operation failed
 
-    def set_massflow(self, value):
-        # ##the following should be connected when connected with Bronkhorst MFC
-        # if self.connected and self.instrument is not None:  # device is connected and assigned
-        #     try:
-        #         if value > self.maxmassflow:
-        #             messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow} mL/min. The mass flow rate will be set to {self.maxmassflow} mL/min.")
-        #             self.targetmassflow = self.maxmassflow
-        #             self.instrument.writeParameter(206, self.maxmassflow)
-        #         else:
-        #             self.targetmassflow = value
-        #             self.instrument.writeParameter(206, value) #Fsetpoint
-        #         return True  # successful operation
-        #     except Exception as err:
-        #         messagebox.showerror("Error",
-        #             f"An error occurred while setting the mass flow rate: {err}"
-        #         )
-        #         return False  # Operation failed
-        # else:
-        #     messagebox.showerror("Error", "The device is not connected.")
-        #     return False  # Operation failed
-        # ##
+    def set_massflow(self, value: float):
+        ##the following should be connected when connected with Bronkhorst MFC
+        #if self.connected and self.instrument is not None:  # device is connected and assigned
         
-        ##the following is used only for simulation
         if self.connected:
             try:
                 if value > self.maxmassflow:
-                    messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow} mL/min. The mass flow rate will be set to {self.maxmassflow} mL/min.")
+                    messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow:.2f} mL/min. The mass flow rate will be set to {self.maxmassflow:.2f} mL/min.")
                     self.targetmassflow = self.maxmassflow
+                    ##the following should be connected when connected with Bronkhorst MFC
+                    #self.instrument.writeParameter(206, self.maxmassflow)
                     return True
                 else:
                     self.targetmassflow = value
-                    return True
+                    ##the following should be connected when connected with Bronkhorst MFC
+                    #self.instrument.writeParameter(206, value) #Fsetpoint
+                return True  # successful operation
             except Exception as err:
                 messagebox.showerror("Error",
                     f"An error occurred while setting the mass flow rate: {err}"
                 )
                 return False  # Operation failed
         else:
-            messagebox.showerror("Error", "The device is not connected.")
+            messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
             return False  # Operation failed
+        ##
 
     def disconnect(self):
         self.connected = False
         self.instrument = None
+
+class Koelingsblok:
+    def __init__(self, port = 'COM2'):
+        self.port = port
+        self.connected = False
+        self.instrument = None
+        self.temperature = 0
+        self.targettemperature = 0
+        self.dummy = 0;
+    
+    def connect(self):
+        
+        # ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+        # # p24: 9600 baud, 1 stop bit, no parity, no hardware handshake, 100ms delay after each command sent (after \r)
+        # # 100 ms delay, so a timeout of 1s should be enough
+        # try:
+        #     self.instrument = serial.Serial(self.port, 9600, timeout = 1)
+        #     self.connected = True
+        #     return self.connected
+        # except Exception as err:
+        #     messagebox.showerror("Error",
+        #         f"An error occurred while connecting the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths: {err}"
+        #     )
+        # return False  # Operation failed
+        # ##
+        
+        ##the following is used only for simulation
+        self.connected = True
+        return self.connected
+        ##
+    
+    def disconnect(self):
+        self.connected = False
+        self.instrument = None
+        
+    def get_temperature(self, dummy):
+    
+        # ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+        # if self.connected and self.instrument is not None: 
+        #     try:
+        #         # sending a request to read the temperature; The current plate temperature will be returned in a text string terminated by <CR><LF>, e.g. 14.3\r
+        #         self.instrument.write(b"p\r")  
+        #         # 100ms delay after each command sent (after \r)
+        #         time.sleep(0.1)  
+        #         self.response = self.instrument.read_until(b"\r").decode().strip()  # reads until \r
+        #         return self.response
+        #     except Exception as err:
+        #         messagebox.showerror("Error",
+        #             f"An error occurred while getting the temperature: {err}"
+        #         )
+        #         return False  # Operation failed
+        # else:
+        #     return False #Operation failed
+        # ##
+        
+            ##the following is used only for simulation
+            if dummy == 0:
+                return self.temperature
+            elif dummy == 1:                
+                if self.connected:
+                    try:
+                        if self.temperature < self.targettemperature:
+                            self.temperature += (self.targettemperature - self.temperature)/10
+                            return self.temperature
+                        elif self.temperature > self.targettemperature:
+                            self.temperature -= (self.targettemperature - self.temperature)/10
+                            return self.temperature
+                        else:
+                            return self.temperature
+                    except Exception as err:
+                        messagebox.showerror("Error",
+                            f"An error occurred while reading the temperature: {err}"
+                        )
+                        return False
+                else:
+                    messagebox.showerror("Error","The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
+                    return False  # Operation failed
+        ##
+
+    def set_temperature(self, value: float):
+
+        ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+        #if self.connected and self.instrument is not None: 
+        if self.connected:
+            current_temp = self.get_temperature(0)
+            try:
+                #the cooling system can only lower the temperature by 30 degrees below ambient
+                min_temp = current_temp - 30
+                if value < min_temp:
+                    messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {current_temp:.2f}. The temperature may not exceed {min_temp:.2f} °C")
+                    self.targettemperature = min_temp
+                    ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+                    # self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
+                    
+                    #if the above does not work, try: 
+                    # self.instrument.write(f"n{value}\r".encode()) 
+                    # 100ms delay after each command sent (after \r)
+                    time.sleep(0.1) 
+                    return True
+                else:
+                    self.targettemperature = value
+                    ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+                    # self.instrument.write(b"n" + str(value).encode() + "\r") 
+                    
+                    #if the above does not work, try: self.instrument.write(f"n{value}\r".encode()) 
+                    # 100ms delay after each command sent (after \r)
+                    time.sleep(0.1) 
+                    return True
+            except Exception as err:
+                messagebox.showerror("Error",
+                    f"An error occurred while setting the temperature: {err}"
+                )
+                return False  # Operation failed
+        else:
+            messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
+            return False #Operation failed
+
+class RVM:
+    def __init__(self, port = "COM3"):
+        self.port = port
+        self.connected = False
+        self.instrument = None
+        self.currentposition = 0
+
+    def connect(self):
+        # ##the following should be connected when connected with Bronkhorst MFC
+        # try:
+        #     self.instrument = serial.Serial(self.port, 9600, 8, None, 1, 1000)
+        #     # Baudrate = 9600, Data bits = 8, Parity = None, Stop bit = 1, Timeout = 1000 sec!!!!;
+        #     ##TIMEOUT SHOULD BE CHANGED AFTER WE KNOW WHAT KIND OF RVM IT IS!!!!
+        #     self.connected = True
+        # except Exception as err:
+        #     messagebox.showerror("Error",
+        #         f"An error occurred while connecting the RVM Industrial Microfluidic Rotary Valve: {err}"
+        #     )
+        # return False  # Operation failed
+        # ##
+        
+        ##the following is used only for simulation
+        self.connected = True
+        return self.connected
+        ##
+    
+    def disconnect(self):
+        self.connected = False
+        self.instrument = None
+    
+    def initialize_valve(self):
+        #when the instrument is connected use the following
+        #if self.connected and self.instrument is not None:
+        
+        if self.connected:
+            try:
+                self.instrument.write(b"/1ZR\r")
+                self.currentposition = 1
+                return True
+            except Exception as err:
+                messagebox.showerror("Error",
+                    f"An error occurred while initializing the valve: {err}"
+                )
+                return False
+        else:
+            return False #Operation Failed
+    
+    def set_valve(self, position: int):
+        #when the instrument is connected use the following
+        #if self.connected and self.instrument is not None:
+        
+        if self.connected:
+            if (position != 1) and (position != 2):
+                messagebox.showerror("Error",
+                    f"The position of the valve can only be 1 or 2:"
+                )
+                return False
+            
+            try:
+                self.instrument.write(b"/1b" + str(position).encode() + "R\r")
+                #if the above does not work, try: 
+                # self.instrument.write(f"/1b{position}R\r".encode()) 
+                self.currentposition = position
+                return True
+            except Exception as err:
+                messagebox.showerror("Error",
+                    f"An error occurred while setting the position of the valve: {err}"
+                )
+                return False  # Operation failed
+        else:
+            messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve is not connected.")
+            return False #Operation failed
+
+    def current_valve_position(self):
+        # Send position query
+        self.instrument.write(b"/1?6R\r")  
+        ##TIMEOUT SHOULD BE CHANGED AFTER WE KNOW WHAT KIND OF RVM IT IS!!!!
+        time.sleep(0.1)  
+        
+        # Read response
+        valve_position =  self.instrument.readline().decode().strip()
+        return valve_position
 
 class MicrofluidicGasSupplySystemUI:
     def __init__(self, root):
@@ -132,20 +317,16 @@ class MicrofluidicGasSupplySystemUI:
         
         # Initialize the devices
         self.MFC = BronkhorstMFC()
+        self.cooling = Koelingsblok()
+        self.valve = RVM()
         
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill = 'both', expand = True)
-        
-        # self.Cooling_tab = ttk.Frame(self.notebook)
-        # self.Cooling_tab.pack(fill = 'both', expand = True)
-        # self.notebook.add(self.Cooling_tab, text = "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
-        
-        # self.RVM_tab = ttk.Frame(self.notebook)
-        # self.RVM_tab.pack(fill = 'both', expand = True)
-        # self.notebook.add(self.RVM_tab, text = "RVM Industrial Microfluidic Rotary Valve")
-        
+
         self.create_menu()
         self.create_MFC_tab()
+        self.create_cooling_tab()
+        self.create_valve_tab()
     
     def create_menu(self):
         menu = tk.Menu(self.root)
@@ -180,38 +361,141 @@ class MicrofluidicGasSupplySystemUI:
         self.current_massflow_label.grid(row=2, column=0, padx=10, pady=10)
         
         # Label to display the target flow rate
-        self.target_massflow_label = tk.Label(self.MFC_tab, text=f"Target mass flow rate: {self.MFC.targetmassflow} mL/min")
+        self.target_massflow_label = tk.Label(self.MFC_tab, text=f"Target mass flow rate: {self.MFC.targetmassflow:.2f} mL/min")
         self.target_massflow_label.grid(row=2, column=1, padx=10, pady=10)
         
         #Connect button
-        self.connect_button = tk.Button(self.MFC_tab, text="Connect", command=self.connect_devices)
-        self.connect_button.grid(row=3, column=0, padx=10, pady=10)
+        self.MFC_connect_button = tk.Button(self.MFC_tab, text="Connect", command=self.connect_MFC)
+        self.MFC_connect_button.grid(row=3, column=0, padx=10, pady=10)
         
         # Disconnect button
-        self.disconnect_button = tk.Button(self.MFC_tab, text="Disconnect", command=self.disconnect_devices)
-        self.disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        self.MFC_disconnect_button = tk.Button(self.MFC_tab, text="Disconnect", command=self.disconnect_MFC)
+        self.MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
         
         # Connection info label at the bottom
-        connection_info_label = ttk.Label(self.MFC_tab, text="Current connection ports: ")
-        connection_info_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
+        MFC_connection_info_label = ttk.Label(self.MFC_tab, text="Current connection ports: ")
+        MFC_connection_info_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
         # Label to show the current port for MFC at the bottom
-        self.current_port_label = ttk.Label(self.MFC_tab, text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}")
-        self.current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
+        self.MFC_current_port_label = ttk.Label(self.MFC_tab, text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}")
+        self.MFC_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
 
+    def create_cooling_tab (self):
+        self.cooling_tab = ttk.Frame(self.notebook)
+        self.cooling_tab.pack(fill = 'both', expand = True)
+        self.notebook.add(self.cooling_tab, text = "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
         
-    def connect_devices(self):
+        # label for the mass flow rate
+        self.temperature_label = tk.Label(self.cooling_tab, text="Temperature (°C):")
+        self.temperature_label.grid(row=0, column=0, padx=10, pady=10)
+        
+        # entry field for mass flow rate 
+        self.temperature_var = tk.DoubleVar()
+        self.temperature_entry = tk.Entry(self.cooling_tab, textvariable=self.temperature_var)
+        self.temperature_entry.grid(row=0, column=1, padx=10, pady=10)
+        
+        # button to set the mass flow rate
+        self.set_temperature_button = tk.Button(self.cooling_tab, text="Set temperature", command=self.set_temperature)
+        self.set_temperature_button.grid(row=1, column=0, columnspan=2, pady=10)
+        
+        # Label to display the current flow rate
+        self.current_temperature_label = tk.Label(self.cooling_tab, text="Current temperature: Not available")
+        self.current_temperature_label.grid(row=2, column=0, padx=10, pady=10)
+        
+        # Label to display the target flow rate
+        self.target_temperature_label = tk.Label(self.cooling_tab, text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
+        self.target_temperature_label.grid(row=2, column=1, padx=10, pady=10)
+    
+        #Connect button
+        self.cooling_connect_button = tk.Button(self.cooling_tab, text="Connect", command=self.connect_cooling)
+        self.cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
+        
+        # Disconnect button
+        self.cooling_disconnect_button = tk.Button(self.cooling_tab, text="Disconnect", command=self.disconnect_cooling)
+        self.cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        
+        # Connection info label at the bottom
+        cooling_connection_info_label = ttk.Label(self.cooling_tab, text="Current connection ports: ")
+        cooling_connection_info_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
+
+        # Label to show the current port for cooling at the bottom
+        self.cooling_current_port_label = ttk.Label(self.cooling_tab, text=f"cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
+        self.cooling_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
+    
+    def create_valve_tab (self):
+        self.valve_tab = ttk.Frame(self.notebook)
+        self.valve_tab.pack(fill = 'both', expand = True)
+        self.notebook.add(self.valve_tab, text = "RVM Industrial Microfluidic Rotary Valve")
+        
+        # label for the mass flow rate
+        self.valve_label = tk.Label(self.valve_tab, text="valve (°C):")
+        self.valve_label.grid(row=0, column=0, padx=10, pady=10)
+        
+        # entry field for mass flow rate 
+        self.valve_pos_var = tk.DoubleVar()
+        self.valve_pos_entry = tk.Entry(self.valve_tab, textvariable=self.valve_pos_var)
+        self.valve_pos_entry.grid(row=0, column=1, padx=10, pady=10)
+        
+        # button to set the position of the valve
+        self.set_valve_button = tk.Button(self.valve_tab, text="Set valve", command=self.set_valve)
+        self.set_valve_button.grid(row=1, column=0, columnspan=2, pady=10)
+        
+        # Label to display the current position of the valve
+        self.current_valve_label = tk.Label(self.valve_tab, text="Current position of the valve: Not available")
+        self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
+        
+        #Connect button
+        self.valve_connect_button = tk.Button(self.valve_tab, text="Connect", command=self.connect_valve)
+        self.valve_connect_button.grid(row=3, column=0, padx=10, pady=10)
+        
+        # Disconnect button
+        self.valve_disconnect_button = tk.Button(self.valve_tab, text="Disconnect", command=self.disconnect_valve)
+        self.valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        
+        # Connection info label at the bottom
+        valve_connection_info_label = ttk.Label(self.valve_tab, text="Current connection ports: ")
+        valve_connection_info_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
+
+        # Label to show the current port for valve at the bottom
+        self.valve_current_port_label = ttk.Label(self.valve_tab, text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
+        self.valve_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
+        
+    def connect_MFC(self):
         if self.MFC.connect():
             messagebox.showinfo("Connection", "MFC successfully connected.")
             #updating the connection info
-            self.current_port_label.config(text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}") 
-            
-    def disconnect_devices(self):
+            self.MFC_current_port_label.config(text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}") 
+    
+    def disconnect_MFC(self):
         self.MFC.disconnect()
         messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
         #updating the connection info
-        self.current_port_label.config(text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}") 
+        self.MFC_current_port_label.config(text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}") 
+    
+    def connect_cooling(self):  
+        if self.cooling.connect():
+            messagebox.showinfo("Connection", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths successfully connected.")
+            #updating the connection info
+            self.cooling_current_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}") 
+            
+    def disconnect_cooling(self):
+        self.cooling.disconnect()
+        messagebox.showinfo("Disconnected", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected successfully.")
+        #updating the connection info
+        self.cooling_current_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}") 
 
+    def connect_valve(self):  
+        if self.valve.connect():
+            messagebox.showinfo("Connection", "RVM Industrial Microfluidic Rotary valve is successfully connected.")
+            #updating the connection info
+            self.valve_current_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}") 
+            
+    def disconnect_valve(self):
+        self.valve.disconnect()
+        messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
+        #updating the connection info
+        self.valve_current_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}") 
+             
     def com_settings(self):
         settings_window = tk.Toplevel(self.root)
         settings_window.title("Connection Settings")
@@ -221,18 +505,41 @@ class MicrofluidicGasSupplySystemUI:
         
         # Bronkhorst MFC settings
         MFC_frame = ttk.LabelFrame(settings_window, text="Bronkhorst MFC")
-        MFC_frame.pack(fill=tk.X, padx=10, pady=10)
+        MFC_frame.pack(fill="both", padx=10, pady=10)
         
         ttk.Label(MFC_frame, text="Port:").grid(row=0, column=0, padx=5, pady=5)
         MFC_port_var = tk.StringVar(value=self.MFC.port)
         MFC_port_entry = ttk.Entry(MFC_frame, textvariable=MFC_port_var)
         MFC_port_entry.grid(row=0, column=1, padx=5, pady=5)
         
+        # Cooling settings
+        cooling_frame = ttk.LabelFrame(settings_window, text="Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
+        cooling_frame.pack(fill="both", padx=10, pady=10)
+        
+        ttk.Label(cooling_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
+        cooling_port_var = tk.StringVar(value=self.cooling.port)
+        cooling_port_entry = ttk.Entry(cooling_frame, textvariable=cooling_port_var)
+        cooling_port_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        # valve settings
+        valve_frame = ttk.LabelFrame(settings_window, text="RVM Industrial Microfluidic Rotary valve ")
+        valve_frame.pack(fill="both", padx=10, pady=10)
+        
+        ttk.Label(valve_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
+        valve_port_var = tk.StringVar(value=self.valve.port)
+        valve_port_entry = ttk.Entry(valve_frame, textvariable=valve_port_var)
+        valve_port_entry.grid(row=2, column=1, padx=5, pady=5)
+        
         def save_settings():
-            self.MFC.port = MFC_port_var.get()
             #updating the connection info
-            self.current_port_label.config(text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}") 
-    
+            self.MFC.port = MFC_port_var.get()
+            self.cooling.port = cooling_port_var.get()
+            self.valve.port = valve_port_var.get()
+
+            self.MFC_current_port_label.config(text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}") 
+            self.cooling_current_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}") 
+            self.valve_current_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")  
+            
         save_button = ttk.Button(settings_window, text="Save", command=save_settings)
         save_button.pack(pady=10)
         
@@ -253,6 +560,38 @@ class MicrofluidicGasSupplySystemUI:
         
         self.root.after(1000, self.update_massflow) #updating the MFC flow rate reading each 1s
         
+    def set_temperature(self):
+        temperature = self.temperature_var.get()
+        if self.cooling.set_temperature(temperature):
+            self.target_temperature_label.config(text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
+            self.update_temperature()
+        else:
+            self.current_temperature_label.config(text="Failed to set the temperature.")
+    
+    def update_temperature(self):
+        current_temp = self.cooling.get_temperature(1)
+        if current_temp is not None:
+            self.current_temperature_label.config(text=f"Current temperature: {current_temp:.2f} °C")
+        else:
+            self.current_temperature_label.config(text="Failed to read the temperature.")
+        
+        self.root.after(1000, self.update_temperature) #updating the temperature each 1s.
+        
+    def set_valve(self):
+        position = self.temperature_var.get()
+        if self.valve.set_valve(position):
+            self.target_temperature_label.config(text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
+            self.update_temperature()
+        else:
+            self.current_temperature_label.config(text="Failed to set the temperature.")
+
+    def update_valve(self):
+        current_position = self.valve.current_valve_position()
+        if current_position is not None:
+            self.current_valve_label.config(text=f"Current position of the valve: {current_position:.2f} °C")
+        else:
+            self.current_valve_label.config(text="Failed to read the position of the valve.")
+
 def main():
     root = tk.Tk()
     app = MicrofluidicGasSupplySystemUI(root)
@@ -260,27 +599,6 @@ def main():
     
 if __name__ == "__main__":
     main()
-
-
-# #########################################
-# ##Cooling: the cooling system can lower the temperature maximum by 30 \textcelsius below the ambient temperature
-# Cooling_port = "COM2"
-# Cooling_instrument = serial.Serial(
-#     Cooling_port, 9600, timeout=1
-# )  # p24: 9600 baud, 1 stop bit, no parity, no hardware handshake, 100ms delay after each command sent (after \r)
-# # 100 ms delay, so a timeout of 1s should be enough
-
-# # Reading the temperature
-# Cooling_instrument.write(
-#     b"p\r"
-# )  # sending a request to read the temperature; The current plate temperature will be returned in a text string terminated by <CR><LF>, e.g. 14.3\r
-# time.sleep(0.1)  # 100ms delay after each command sent (after \r)
-# response = Cooling_instrument.read_until(b"\r").decode().strip()  # reads until \r
-
-
-# # Setting the temperature
-# Cooling_instrument.write(b"n20\r")  # setting the temperature to 20 degrees
-# time.sleep(0.1)  # 100ms delay after each command sent (after \r)
 
 # ####################################3
 # ##Valve: 4-ports but actually only has 2 directions
