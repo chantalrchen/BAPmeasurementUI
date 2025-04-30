@@ -291,7 +291,7 @@ class RVM:
         #if self.connected and self.instrument is not None:
         
         if self.connected:
-            if position != 1 and position != 2:
+            if position not in [1, 2]:
                 messagebox.showerror("Error",
                     f"The position of the valve can only be 1 or 2, but received: {position}"
                 )
@@ -348,6 +348,7 @@ class ProfileManager:
             os.makedirs(profiles_dir)
             
         # Save standard profiles if they don't exist
+        #https://www.geeksforgeeks.org/python-dictionary-values/
         for name, value in self.standard_profiles.items():
             #Obtaining the name of the profile and the value of the profile
             file_path = os.path.join(self.profiles_dir, f"{name}.json")
@@ -460,8 +461,8 @@ class ProfileManager:
         return True
 
 class ProfileTab:
-    def __init__(self, parent, profile_manager, device_controllers):
-        self.parent = parent
+    def __init__(self, notebook, profile_manager, device_controllers):
+        self.notebook = notebook
         self.profile_manager = profile_manager
         self.devices = device_controllers  # Should contain mfc, cooling, valve
         
@@ -470,63 +471,63 @@ class ProfileTab:
     
     def create_widgets(self):
         # Main container frame
-        self.main_frame = ttk.Frame(self.parent)
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.main_frame = ttk.Frame(self.notebook)
+        self.main_frame.pack(fill='both', expand=True, padx=10, pady=10)
         
         # Left panel - Profile list
+        #https://www.pythontutorial.net/tkinter/tkinter-labelframe/
         list_frame = ttk.LabelFrame(self.main_frame, text="Available Profiles")
-        list_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        list_frame.pack(side='left', fill='both', expand=True, padx=5, pady=5)
         
         # Profile listbox with scrollbar
+        #https://www.pythontutorial.net/tkinter/tkinter-listbox/#adding-a-scrollbar-to-the-listbox
         self.listbox_frame = ttk.Frame(list_frame)
-        self.listbox_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.listbox_frame.pack(fill='both', expand=True, padx=5, pady=5)
         
         self.scrollbar = ttk.Scrollbar(self.listbox_frame)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.scrollbar.pack(side='right', fill='y')
         
         self.profile_listbox = tk.Listbox(
             self.listbox_frame, 
             yscrollcommand=self.scrollbar.set,
-            selectmode=tk.SINGLE
+            selectmode = tk.SINGLE
         )
-        self.profile_listbox.pack(fill=tk.BOTH, expand=True)
-        self.scrollbar.config(command=self.profile_listbox.yview)
+        self.profile_listbox.pack(fill = 'both' , expand=True, side = 'left')
+        self.scrollbar.config(orient=tk.VERTICAL, command=self.profile_listbox.yview)
         
         # Profile list buttons
         button_frame = ttk.Frame(list_frame)
-        button_frame.pack(fill=tk.X, padx=5, pady=5)
+        button_frame.pack(fill='x', padx=5, pady=5)
         
         self.load_button = ttk.Button(button_frame, text="Load", command=self.load_profile)
-        self.load_button.pack(side=tk.LEFT, padx=2, expand=True)
+        self.load_button.pack(side='left', padx=3, expand=True)
         
         self.delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_profile)
-        self.delete_button.pack(side=tk.LEFT, padx=2, expand=True)
-        
-        self.new_button = ttk.Button(button_frame, text="New", command=self.show_new_profile_dialog)
-        self.new_button.pack(side=tk.LEFT, padx=2, expand=True)
+        self.delete_button.pack(side='left', padx=3, expand=True)
         
         # Right panel - Profile editor
-        editor_frame = ttk.LabelFrame(self.main_frame, text="Profile Editor")
-        editor_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        editor_frame = ttk.LabelFrame(self.main_frame, text="Editing The Profile")
+        editor_frame.pack(side='right', fill = 'both' , expand=True, padx=5, pady=5)
         
         # Profile info
         info_frame = ttk.Frame(editor_frame)
-        info_frame.pack(fill=tk.X, padx=5, pady=5)
+        info_frame.pack(fill='both', padx=5, pady=5)
         
-        ttk.Label(info_frame, text="Name:").pack(side=tk.LEFT)
+        ttk.Label(info_frame, text="Name:").pack(side='left')
         self.name_var = tk.StringVar()
         self.name_entry = ttk.Entry(info_frame, textvariable=self.name_var)
-        self.name_entry.pack(side=tk.LEFT, padx=5, expand=True, fill=tk.X)
+        self.name_entry.pack(side='left', padx=5, expand=True, fill='x')
         
-        ttk.Label(info_frame, text="Description:").pack(side=tk.LEFT)
+        ttk.Label(info_frame, text="Description:").pack(side='left')
         self.desc_var = tk.StringVar()
         self.desc_entry = ttk.Entry(info_frame, textvariable=self.desc_var)
-        self.desc_entry.pack(side=tk.LEFT, padx=5, expand=True, fill=tk.X)
+        self.desc_entry.pack(side='left', padx=5, expand=True, fill='x')
         
         # Steps table
         steps_frame = ttk.Frame(editor_frame)
-        steps_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
         
+        #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.steps_tree = ttk.Treeview(
             steps_frame, 
             columns=("time", "flow", "temp", "valve"), 
@@ -534,76 +535,76 @@ class ProfileTab:
         )
         self.steps_tree.heading("time", text="Time (s)")
         self.steps_tree.heading("flow", text="Flow (mL/min)")
-        self.steps_tree.heading("temp", text="Temp (°C)")
-        self.steps_tree.heading("valve", text="Valve Pos")
+        self.steps_tree.heading("temp", text="Temperature (°C)")
+        self.steps_tree.heading("valve", text="Valve Position (1 or 2)")
         
         self.steps_tree.column("time", width=80, anchor=tk.CENTER)
         self.steps_tree.column("flow", width=100, anchor=tk.CENTER)
         self.steps_tree.column("temp", width=100, anchor=tk.CENTER)
         self.steps_tree.column("valve", width=80, anchor=tk.CENTER)
         
-        self.steps_tree.pack(fill=tk.BOTH, expand=True)
+        self.steps_tree.pack(fill = 'both' , expand=True)
         
         # Step controls
         step_controls_frame = ttk.Frame(editor_frame)
-        step_controls_frame.pack(fill=tk.X, padx=5, pady=5)
+        step_controls_frame.pack(fill='x', padx=5, pady=5)
         
-        ttk.Label(step_controls_frame, text="Time (s):").pack(side=tk.LEFT)
+        ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
         self.step_time_var = tk.IntVar()
         self.step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.step_time_var, width=8)
-        self.step_time_entry.pack(side=tk.LEFT, padx=2)
+        self.step_time_entry.pack(side='left', padx=2)
         
-        ttk.Label(step_controls_frame, text="Flow:").pack(side=tk.LEFT)
+        ttk.Label(step_controls_frame, text="Flow (mL/min):").pack(side='left')
         self.step_flow_var = tk.DoubleVar()
         self.step_flow_entry = ttk.Entry(step_controls_frame, textvariable=self.step_flow_var, width=8)
-        self.step_flow_entry.pack(side=tk.LEFT, padx=2)
+        self.step_flow_entry.pack(side='left', padx=2)
         
-        ttk.Label(step_controls_frame, text="Temp:").pack(side=tk.LEFT)
+        ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
         self.step_temp_var = tk.DoubleVar()
         self.step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.step_temp_var, width=8)
-        self.step_temp_entry.pack(side=tk.LEFT, padx=2)
+        self.step_temp_entry.pack(side='left', padx=2)
         
-        ttk.Label(step_controls_frame, text="Valve:").pack(side=tk.LEFT)
-        self.step_valve_var = tk.IntVar()
+        ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
+        self.step_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
         self.step_valve_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.step_valve_var, 
             values=[1, 2], 
             width=5
         )
-        self.step_valve_combo.pack(side=tk.LEFT, padx=2)
+        self.step_valve_combo.pack(side='left', padx=2)
         
         # Step buttons
         step_buttons_frame = ttk.Frame(editor_frame)
-        step_buttons_frame.pack(fill=tk.X, padx=5, pady=5)
+        step_buttons_frame.pack(fill='both')
         
         self.add_step_button = ttk.Button(step_buttons_frame, text="Add Step", command=self.add_step)
-        self.add_step_button.pack(side=tk.LEFT, padx=2)
+        self.add_step_button.pack(side='left', padx=2)
         
         self.remove_step_button = ttk.Button(step_buttons_frame, text="Remove Step", command=self.remove_step)
-        self.remove_step_button.pack(side=tk.LEFT, padx=2)
+        self.remove_step_button.pack(side='left', padx=2)
         
-        self.clear_steps_button = ttk.Button(step_buttons_frame, text="Clear Steps", command=self.clear_steps)
-        self.clear_steps_button.pack(side=tk.LEFT, padx=2)
+        self.clear_steps_button = ttk.Button(step_buttons_frame, text="Clear All Steps", command=self.clear_steps)
+        self.clear_steps_button.pack(side='left', padx=2)
         
         # Save and run buttons
         action_buttons_frame = ttk.Frame(editor_frame)
-        action_buttons_frame.pack(fill=tk.X, padx=5, pady=5)
+        action_buttons_frame.pack(fill='both')
         
         self.save_button = ttk.Button(action_buttons_frame, text="Save Profile", command=self.save_profile)
-        self.save_button.pack(side=tk.LEFT, padx=2)
+        self.save_button.pack(side='left', padx=2)
         
         self.run_button = ttk.Button(action_buttons_frame, text="Run Profile", command=self.run_profile)
-        self.run_button.pack(side=tk.LEFT, padx=2)
+        self.run_button.pack(side='left', padx=2)
         
         self.stop_button = ttk.Button(action_buttons_frame, text="Stop", command=self.stop_profile)
-        self.stop_button.pack(side=tk.LEFT, padx=2)
+        self.stop_button.pack(side='left', padx=2)
         self.stop_button.config(state=tk.DISABLED)
         
-        # Status bar
-        self.status_var = tk.StringVar()
-        self.status_bar = ttk.Label(editor_frame, textvariable=self.status_var, relief=tk.SUNKEN)
-        self.status_bar.pack(fill=tk.X, padx=5, pady=5)
+        # Status bar, to show what has been adjusted
+        self.status_var = tk.StringVar() 
+        self.status_bar = ttk.Label(editor_frame, textvariable=self.status_var)
+        self.status_bar.pack(fill='both', padx=5, pady=5)
         
         # Initialize variables
         self.running = False
@@ -611,26 +612,34 @@ class ProfileTab:
     
     def update_profile_list(self):
         """Refresh the list of available profiles"""
+        #https://youtu.be/Vm0ivVxNaA8
+        
+        #Delete all the items from the listbox
         self.profile_listbox.delete(0, tk.END)
+        
+        #Add all the profiles to the listbox
         for profile in self.profile_manager.get_profiles():
-            self.profile_listbox.insert(tk.END, profile)
+            self.profile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
     
     def load_profile(self):
         """Load the selected profile into the editor"""
+        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
         selection = self.profile_listbox.curselection()
         if not selection:
             messagebox.showwarning("Warning", "Please select a profile to load")
             return
             
-        profile_name = self.profile_listbox.get(selection[0])
+        profile_name = self.profile_listbox.get(selection[0]) #To ensure that you only select the first selected
         profile = self.profile_manager.load_profile(profile_name)
         
         if profile:
             self.current_loaded_profile = profile_name
+            #Update the name in the field
             self.name_var.set(profile_name)
+            #Update the description in the field
             self.desc_var.set(profile.get("description", ""))
             
-            # Clear existing steps
+            # Clear the already existing steps in the field
             for item in self.steps_tree.get_children():
                 self.steps_tree.delete(item)
             
@@ -647,35 +656,23 @@ class ProfileTab:
     
     def delete_profile(self):
         """Delete the selected profile"""
+        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
         selection = self.profile_listbox.curselection()
         if not selection:
             messagebox.showwarning("Warning", "Please select a profile to delete")
             return
             
-        profile_name = self.profile_listbox.get(selection[0])
+        profile_name = self.profile_listbox.get(selection[0]) #To ensure that you only select the first selected
         
         if messagebox.askyesno("Confirm", f"Delete profile '{profile_name}'?"):
             if self.profile_manager.delete_profile(profile_name):
-                self.update_profile_list()
+                #Updating the new profile list
+                self.update_profile_list() 
+                #Changing the status
                 self.status_var.set(f"Deleted profile: {profile_name}")
             else:
-                messagebox.showerror("Error", f"Failed to delete profile '{profile_name}'")
+                messagebox.showerror("Error", f"Failed to delete the profile: '{profile_name}'")
     
-    def show_new_profile_dialog(self):
-        """Show dialog to create a new profile"""
-        dialog = tk.Toplevel(self.parent)
-        dialog.title("New Profile")
-        dialog.transient(self.parent)
-        dialog.grab_set()
-        
-        ttk.Label(dialog, text="Profile Name:").grid(row=0, column=0, padx=5, pady=5)
-        name_var = tk.StringVar()
-        ttk.Entry(dialog, textvariable=name_var).grid(row=0, column=1, padx=5, pady=5)
-        
-        ttk.Label(dialog, text="Description:").grid(row=1, column=0, padx=5, pady=5)
-        desc_var = tk.StringVar()
-        ttk.Entry(dialog, textvariable=desc_var).grid(row=1, column=1, padx=5, pady=5)
-        
         def create_profile():
             name = name_var.get().strip()
             if not name:
@@ -709,20 +706,20 @@ class ProfileTab:
             if time_val < 0:
                 raise ValueError("Time cannot be negative")
             if valve_val not in [1, 2]:
-                raise ValueError("Valve position must be 1 or 2")
+                raise ValueError("Position of the valve must be 1 or 2")
             
-            # Check if time already exists
+            # Check if the time already exists
             for child in self.steps_tree.get_children():
                 if int(self.steps_tree.item(child, "values")[0]) == time_val:
                     if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
-                        return
+                        return #if True, thus no then return
                     self.steps_tree.delete(child)
                     break
             
             self.steps_tree.insert("", tk.END, values=(time_val, flow_val, temp_val, valve_val))
             
-        except ValueError as e:
-            messagebox.showerror("Error", f"Invalid input: {e}")
+        except ValueError as error:
+            messagebox.showerror("Error", f"Invalid input: {error}")
     
     def remove_step(self):
         """Remove the selected step"""
@@ -733,12 +730,16 @@ class ProfileTab:
     def clear_steps(self):
         """Clear all steps"""
         if messagebox.askyesno("Confirm", "Clear all steps?"):
+            #Obtain all the steps and delete all the steps
             for item in self.steps_tree.get_children():
                 self.steps_tree.delete(item)
     
     def save_profile(self):
         """Save the current profile"""
+        #Getting the name
         name = self.name_var.get().strip()
+        
+        #Ensuring that the name isn't empty
         if not name:
             messagebox.showwarning("Warning", "Profile name cannot be empty")
             return
@@ -746,6 +747,7 @@ class ProfileTab:
         # Collect steps from treeview
         steps = []
         for child in self.steps_tree.get_children():
+            #To obtain all the values of the steps
             values = self.steps_tree.item(child, "values")
             steps.append({
                 "time": int(values[0]),
@@ -755,13 +757,12 @@ class ProfileTab:
             })
         
         # Sort steps by time
-        steps = sorted(steps, key=lambda x: x["time"])
+        #https://docs.python.org/3/howto/sorting.html
+        steps = sorted(steps, key=lambda steps: steps["time"])
         
         # Create profile data
         profile_data = {
             "description": self.desc_var.get(),
-            "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "modified": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "steps": steps
         }
         
@@ -781,15 +782,17 @@ class ProfileTab:
             messagebox.showwarning("Warning", "Please load or create a profile first")
             return
             
-        # Save current state before running
-        self.save_profile()
+        # Save the profile before running
+        # self.save_profile()
         
-        # Load the profile to run
+        # Load the profile that needs to be runned
         profile = self.profile_manager.load_profile(name)
         if not profile:
             messagebox.showerror("Error", f"Failed to load profile '{name}'")
             return
-            
+        
+        
+        ###???    
         # Disable controls during run
         self.set_controls_state(False)
         self.running = True
@@ -810,7 +813,7 @@ class ProfileTab:
             self.status_var.set("Running profile...")
             
             def update_callback(status):
-                self.parent.after(0, lambda: self.update_run_status(status))
+                self.notebook.after(0, lambda: self.update_run_status(status))
                 
             self.profile_manager.run_profile(
                 self.devices["mfc"],
@@ -819,9 +822,9 @@ class ProfileTab:
                 update_callback
             )
             
-            self.parent.after(0, self.profile_complete)
+            self.notebook.after(0, self.profile_complete)
         except Exception as e:
-            self.parent.after(0, lambda: self.profile_error(str(e)))
+            self.notebook.after(0, lambda: self.profile_error(str(e)))
     
     def update_run_status(self, status):
         """Update UI with current run status"""
@@ -862,7 +865,6 @@ class ProfileTab:
         state = tk.NORMAL if enabled else tk.DISABLED
         self.load_button.config(state=state)
         self.delete_button.config(state=state)
-        self.new_button.config(state=state)
         self.add_step_button.config(state=state)
         self.remove_step_button.config(state=state)
         self.clear_steps_button.config(state=state)
@@ -1040,122 +1042,7 @@ class MicrofluidicGasSupplySystemUI:
         # Label to show the current port for valve at the bottom
         self.valve_current_port_label = ttk.Label(valve_tab, text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
         self.valve_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
-    
-        # def create_profile_tab(self):
-        # profile_frame = ttk.Frame(self.notebook)
-        # self.notebook.add(profile_frame, text="Profile Management")
-        
-        # # Split into two frames
-        # left_frame = ttk.Frame(profile_frame)
-        # left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # right_frame = ttk.Frame(profile_frame)
-        # right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # # Profile list frame
-        # list_frame = ttk.LabelFrame(left_frame, text="Available Profiles")
-        # list_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # # Profile listbox
-        # self.profile_listbox = tk.Listbox(list_frame)
-        # self.profile_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        # self.update_profile_list()
-        
-        # # Profile buttons
-        # button_frame = ttk.Frame(list_frame)
-        # button_frame.pack(fill=tk.X, pady=5)
-        
-        # load_button = ttk.Button(button_frame, text="Load", command=self.load_selected_profile)
-        # load_button.pack(side=tk.LEFT, padx=5)
-        
-        # delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_profile)
-        # delete_button.pack(side=tk.LEFT, padx=5)
-        
-        # # Profile editor frame
-        # editor_frame = ttk.LabelFrame(right_frame, text="Profile Editor")
-        # editor_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # # Profile name
-        # name_frame = ttk.Frame(editor_frame)
-        # name_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        # ttk.Label(name_frame, text="Profile Name:").pack(side=tk.LEFT, padx=5)
-        # self.profile_name_var = tk.StringVar()
-        # name_entry = ttk.Entry(name_frame, textvariable=self.profile_name_var, width=30)
-        # name_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-        
-        # # Profile description
-        # desc_frame = ttk.Frame(editor_frame)
-        # desc_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        # ttk.Label(desc_frame, text="Description:").pack(side=tk.LEFT, padx=5)
-        # self.profile_desc_var = tk.StringVar()
-        # desc_entry = ttk.Entry(desc_frame, textvariable=self.profile_desc_var, width=30)
-        # desc_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-        
-        # # Profile steps
-        # steps_frame = ttk.LabelFrame(editor_frame, text="Profile Steps")
-        # steps_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        # # Steps table
-        # self.steps_tree = ttk.Treeview(steps_frame, 
-        #                               columns=("Time", "Flow", "Temperature", "Valve"), 
-        #                               show="headings")
-        # self.steps_tree.heading("Time", text="Time (s)")
-        # self.steps_tree.heading("Flow", text="Flow (mL/min)")
-        # self.steps_tree.heading("Temperature", text="Temp (°C)")
-        # self.steps_tree.heading("Valve", text="Valve Pos")
-        
-        # self.steps_tree.column("Time", width=80)
-        # self.steps_tree.column("Flow", width=80)
-        # self.steps_tree.column("Temperature", width=80)
-        # self.steps_tree.column("Valve", width=80)
-        
-        # self.steps_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        # # Step editor
-        # step_editor = ttk.Frame(editor_frame)
-        # step_editor.pack(fill=tk.X, padx=5, pady=5)
-        
-        # ttk.Label(step_editor, text="Time (s):").grid(row=0, column=0, padx=5, pady=5)
-        # self.step_time_var = tk.IntVar(value=0)
-        # time_entry = ttk.Entry(step_editor, textvariable=self.step_time_var, width=8)
-        # time_entry.grid(row=0, column=1, padx=5, pady=5)
-        
-        # ttk.Label(step_editor, text="Flow:").grid(row=0, column=2, padx=5, pady=5)
-        # self.step_flow_var = tk.DoubleVar(value=5.0)
-        # flow_entry = ttk.Entry(step_editor, textvariable=self.step_flow_var, width=8)
-        # flow_entry.grid(row=0, column=3, padx=5, pady=5)
-        
-        # ttk.Label(step_editor, text="Temp:").grid(row=0, column=4, padx=5, pady=5)
-        # self.step_temp_var = tk.DoubleVar(value=25.0)
-        # temp_entry = ttk.Entry(step_editor, textvariable=self.step_temp_var, width=8)
-        # temp_entry.grid(row=0, column=5, padx=5, pady=5)
-        
-        # ttk.Label(step_editor, text="Valve:").grid(row=0, column=6, padx=5, pady=5)
-        # self.step_valve_var = tk.IntVar(value=1)
-        # valve_combo = ttk.Combobox(step_editor, textvariable=self.step_valve_var, values=list(range(1, 7)), width=5)
-        # valve_combo.grid(row=0, column=7, padx=5, pady=5)
-        
-        # # Step buttons
-        # step_buttons = ttk.Frame(editor_frame)
-        # step_buttons.pack(fill=tk.X, padx=5, pady=5)
-        
-        # add_step_button = ttk.Button(step_buttons, text="Add Step", command=self.add_profile_step)
-        # add_step_button.pack(side=tk.LEFT, padx=5)
-        
-        # remove_step_button = ttk.Button(step_buttons, text="Remove Step", command=self.remove_profile_step)
-        # remove_step_button.pack(side=tk.LEFT, padx=5)
-        
-        # clear_steps_button = ttk.Button(step_buttons, text="Clear Steps", command=self.clear_profile_steps)
-        # clear_steps_button.pack(side=tk.LEFT, padx=5)
-        
-        # # Save profile button
-        # save_frame = ttk.Frame(editor_frame)
-        # save_frame.pack(fill=tk.X, padx=5, pady=10)
-        
-        # save_button = ttk.Button(save_frame, text="Save Profile", command=self.save_profile)
-        # save_button.pack(side=tk.RIGHT, padx=5)
+
         
     def connect_MFC(self):
         if self.MFC.connect():
