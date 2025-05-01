@@ -1,0 +1,8 @@
+TO DO
+
+Profile management:
+- New profile button: makes the Name, description steps empty, Now you can't add a new profile if you already have loaded one profile
+- If you run the profile, that when there is no device connected, that it is one error with that no device is connected instead of repeating errors
+- Adding the status of the flows so how much it is flowing right now
+- Letten op CPU, dus maybe na sommige functions een time.sleep()
+- RVM communciation
