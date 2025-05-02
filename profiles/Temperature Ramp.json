@@ -1,11 +1,19 @@
 {
     "description": "Gradually increase temperature",
+    "created": "2025-04-30 14:21:57",
+    "modified": "2025-04-30 14:21:57",
     "steps": [
         {
             "time": 0,
             "flow": 5.0,
             "temperature": 25.0,
             "valve": 1
+        },
+        {
+            "time": 150,
+            "flow": 2.0,
+            "temperature": 3.0,
+            "valve": 2
         },
         {
             "time": 300,

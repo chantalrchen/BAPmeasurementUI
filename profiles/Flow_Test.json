@@ -1,0 +1,49 @@
+{
+    "description": "Test flow rate changes",
+    "created": "2025-04-30 14:21:24",
+    "modified": "2025-04-30 14:21:24",
+    "steps": [
+        {
+            "time": 0,
+            "flow": 0.5,
+            "temperature": 25.0,
+            "valve": 1
+        },
+        {
+            "time": 10,
+            "flow": 1.0,
+            "temperature": 25.0,
+            "valve": 1
+        },
+        {
+            "time": 14,
+            "flow": 1.0,
+            "temperature": 1.0,
+            "valve": 1
+        },
+        {
+            "time": 20,
+            "flow": 1.5,
+            "temperature": 25.0,
+            "valve": 1
+        },
+        {
+            "time": 25,
+            "flow": 0.0,
+            "temperature": 0.0,
+            "valve": 1
+        },
+        {
+            "time": 30,
+            "flow": 1.0,
+            "temperature": 25.0,
+            "valve": 1
+        },
+        {
+            "time": 40,
+            "flow": 0.5,
+            "temperature": 25.0,
+            "valve": 1
+        }
+    ]
+}

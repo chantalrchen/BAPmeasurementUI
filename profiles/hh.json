@@ -1,0 +1,25 @@
+{
+    "description": "s",
+    "created": "2025-04-30 14:31:53",
+    "modified": "2025-04-30 14:31:53",
+    "steps": [
+        {
+            "time": 0,
+            "flow": 2.0,
+            "temperature": 1.0,
+            "valve": 1
+        },
+        {
+            "time": 1,
+            "flow": 1.0,
+            "temperature": 2.0,
+            "valve": 2
+        },
+        {
+            "time": 2,
+            "flow": 1.0,
+            "temperature": 2.0,
+            "valve": 2
+        }
+    ]
+}

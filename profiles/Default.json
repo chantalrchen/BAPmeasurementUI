@@ -1,0 +1,25 @@
+{
+    "description": "Default profile with safe values",
+    "created": "2025-04-28 10:36:07",
+    "modified": "2025-04-28 10:36:07",
+    "steps": [
+        {
+            "time": 0,
+            "flow": 0.5,
+            "temperature": 25.0,
+            "valve": 1
+        },
+        {
+            "time": 10,
+            "flow": 1.0,
+            "temperature": 20.0,
+            "valve": 1
+        },
+        {
+            "time": 20,
+            "flow": 0.5,
+            "temperature": 25.0,
+            "valve": 2
+        }
+    ]
+}

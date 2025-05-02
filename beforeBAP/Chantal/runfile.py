@@ -4,15 +4,13 @@ import propar   # Bronkhorst MFC
 import serial   # Cooling and Valve
 import time 
 import json #https://realpython.com/python-json/
-import os
-from datetime import datetime
-import tkinter as tk
-from tkinter import messagebox, ttk
-import propar   # Bronkhorst MFC
-import serial   # Cooling and Valve
-import time 
 import json
 import os
+import threading
+import time 
+import os
+from datetime import datetime
+
 
 class BronkhorstMFC:
     def __init__(self, port = "COM1"):
@@ -792,14 +790,13 @@ class ProfileTab:
             return
         
         
-        ###???    
-        # Disable controls during run
-        self.set_controls_state(False)
+        # Disable all the buttons during the run during profile
+        # self.set_controls_state(False)
         self.running = True
-        self.stop_button.config(state=tk.NORMAL)
+        #enabling the stop button, since the profile is running
+        self.stop_button.config(state=tk.NORMAL) 
         
         # Start profile in a separate thread
-        import threading
         self.profile_thread = threading.Thread(
             target=self._run_profile_thread,
             args=(profile,),

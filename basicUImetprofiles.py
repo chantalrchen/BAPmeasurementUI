@@ -754,7 +754,7 @@ class MicrofluidicGasSupplySystemUI:
         
         #Use pack for connection info labels
         self.connection_mfc_port_label = ttk.Label(step_buttons_frame, text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}")
-        self.connection_mfc_port_label.pack(side='top', padx=20, pady=5)
+        self.connection_mfc_port_label.pack(side='top', padx=10, pady=5)
         self.connection_cooling_port_label = ttk.Label(step_buttons_frame, text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         self.connection_cooling_port_label.pack(side='top', padx=10, pady=5)
         self.connection_valve_port_label = ttk.Label(step_buttons_frame, text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")

@@ -1,0 +1,29 @@
+{
+    "description": "",
+    "steps": [
+        {
+            "time": 1,
+            "flow": 2.0,
+            "temperature": 2.0,
+            "valve": 2
+        },
+        {
+            "time": 3,
+            "flow": 2.0,
+            "temperature": 3.0,
+            "valve": 2
+        },
+        {
+            "time": 5,
+            "flow": 0.0,
+            "temperature": 3.0,
+            "valve": 1
+        },
+        {
+            "time": 10,
+            "flow": 0.0,
+            "temperature": 3.0,
+            "valve": 1
+        }
+    ]
+}

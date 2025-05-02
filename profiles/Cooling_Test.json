@@ -1,0 +1,23 @@
+{
+    "description": "Test cooling performance",
+    "steps": [
+        {
+            "time": 0,
+            "flow": 0.5,
+            "temperature": 25,
+            "valve": 1
+        },
+        {
+            "time": 30,
+            "flow": 0.5,
+            "temperature": 10,
+            "valve": 1
+        },
+        {
+            "time": 60,
+            "flow": 0.5,
+            "temperature": 5,
+            "valve": 1
+        }
+    ]
+}
