@@ -1080,33 +1080,45 @@ class MicrofluidicGasSupplySystemUI:
         MFC_frame.pack(fill="both", padx=10, pady=10)
         
         ttk.Label(MFC_frame, text="Port:").grid(row=0, column=0, padx=5, pady=5)
-        self.MFC_port_var = tk.StringVar(value=self.MFC.port)
-        MFC_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC_port_var)
-        MFC_port_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.MFC1_port_var = tk.StringVar(value=self.MFC1.port)
+        MFC1_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC1_port_var)
+        MFC1_port_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        ttk.Label(MFC_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
+        self.MFC2_port_var = tk.StringVar(value=self.MFC2.port)
+        MFC2_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC2_port_var)
+        MFC2_port_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        ttk.Label(MFC_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
+        self.MFC3_port_var = tk.StringVar(value=self.MFC3.port)
+        MFC3_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC3_port_var)
+        MFC3_port_entry.grid(row=2, column=1, padx=5, pady=5)
         
         # Cooling settings
         cooling_frame = ttk.LabelFrame(settings_window, text="Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
         cooling_frame.pack(fill="both", padx=10, pady=10)
         
-        ttk.Label(cooling_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(cooling_frame, text="Port:").grid(row=3, column=0, padx=5, pady=5)
         self.cooling_port_var = tk.StringVar(value=self.cooling.port)
         cooling_port_entry = ttk.Entry(cooling_frame, textvariable=self.cooling_port_var)
-        cooling_port_entry.grid(row=1, column=1, padx=5, pady=5)
+        cooling_port_entry.grid(row=3, column=1, padx=5, pady=5)
         
         # valve settings
         valve_frame = ttk.LabelFrame(settings_window, text="RVM Industrial Microfluidic Rotary valve ")
         valve_frame.pack(fill="both", padx=10, pady=10)
         
-        ttk.Label(valve_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
+        ttk.Label(valve_frame, text="Port:").grid(row=4, column=0, padx=5, pady=5)
         self.valve_port_var = tk.StringVar(value=self.valve.port)
         valve_port_entry = ttk.Entry(valve_frame, textvariable=self.valve_port_var)
-        valve_port_entry.grid(row=2, column=1, padx=5, pady=5)
+        valve_port_entry.grid(row=4, column=1, padx=5, pady=5)
             
         save_button = ttk.Button(settings_window, text="Save", command=self.save_settings)
         save_button.pack(pady=10)
         
     def save_settings(self):
-        self.MFC.port = self.MFC_port_var.get()
+        self.MFC1.port = self.MFC1_port_var.get()
+        self.MFC2.port = self.MFC2_port_var.get()
+        self.MFC3.port = self.MFC3_port_var.get()
         self.cooling.port = self.cooling_port_var.get()
         self.valve.port = self.valve_port_var.get()
         
