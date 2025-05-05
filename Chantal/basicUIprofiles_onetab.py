@@ -108,7 +108,7 @@ class BronkhorstMFC:
                 )
                 return False  # Operation failed
         else:
-            messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
+            messagebox.showerror("Error", "The Bronkhorst MFCs is not connected.")
             return False  # Operation failed
         ##
 
@@ -194,17 +194,18 @@ class Koelingsblok:
                     return False  # Operation failed
         ##
 
-    def set_temperature(self, value: float):
+    def set_temperature(self, value: float, temp_ambient):
 
         ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
         #if self.connected and self.instrument is not None: 
         if self.connected:
-            current_temp = self.get_temperature(0)
             try:
                 #the cooling system can only lower the temperature by 30 degrees below ambient
-                min_temp = current_temp - 30
+                min_temp = temp_ambient - 30
+                print(temp_ambient, min_temp)
                 if value < min_temp:
-                    messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {current_temp:.2f}. The temperature may not exceed {min_temp:.2f} °C")
+                    print("hoi")
+                    messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {temp_ambient:.2f}. The temperature may not exceed {min_temp:.2f} °C")
                     self.targettemperature = min_temp
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
                     # self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
@@ -319,7 +320,7 @@ class RVM:
         return valve_position
 
 class ProfileManager:
-    def __init__(self, profiles_dir="profiles"):
+    def __init__(self, profiles_dir="profiles_onetab"):
         #profiles_dir is the path where the profile will be saved
         self.profiles_dir = profiles_dir
         self.current_profile = None
@@ -335,9 +336,8 @@ class ProfileManager:
                 ]
             }
         }
-        self.MFC1 = BronkhorstMFC(port = 'COM1')
-        self.MFC2 = BronkhorstMFC(port = 'COM2')
-        self.MFC3 = BronkhorstMFC(port = 'COM3')
+
+        self.mfcs = [BronkhorstMFC(port = 'COM1'),  BronkhorstMFC(port = 'COM2'), BronkhorstMFC(port = 'COM3')]
         self.cooling = Koelingsblok()
         self.valve = RVM()
         # Create profiles directory if it doesn't exist
@@ -390,44 +390,37 @@ class ProfileManager:
             os.remove(file_path)
             return True
         return False
-    
-    def create_new_profile(self, name, description="", steps=None):
-        """Create a new profile with given name and optional steps"""
-        if steps is None:
-            steps = []
-            
-        profile_data = {
-            "description": description,
-            "steps": steps
-        }
-        
-        return self.save_profile(name, profile_data) #saving the new created profile
 
-    def run_profile(self):
+    def run_profile(self, temp_ambient):
         """Run the current profile with the given device controllers"""
         # Ensuring that the MFC, cooling and valve are all connected
-        if not (self.MFC1.connected and self.MFC2.connected and self.MFC3.connected and self.cooling.connected and self.valve.connected):
-            return False
+        print(self.mfcs[0].port, self.mfcs[1].port, self.mfcs[2].port)
+        print(self.mfcs[0].connected , self.mfcs[1].connected , self.mfcs[2].connected , self.cooling.connected , self.valve.connected)
         
+        if temp_ambient is None:
+            messagebox.showwarning("Warning", "Please set the ambient temperature first")
+            
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
+            print("return")
+            return False
         if not self.current_profile:
             messagebox.showerror("Error", "No profile loaded")
             return False
-        
         steps = self.current_profile.get("steps", [])
         if not steps:
             messagebox.showerror("Error", "Profile has no steps")
             return False
-        
         # Sort steps by time
         steps = sorted(steps, key=lambda x: x["time"])
         
         start_time = time.time()
         current_step_index = 0
         profile_complete = False
-        
+        print(start_time)
+        print("hoi")
         while not profile_complete:
             elapsed_time = time.time() - start_time
-            
+
             # Check if we need to move to next step
             if current_step_index < len(steps) - 1:
                 next_step_time = steps[current_step_index + 1]["time"]
@@ -438,31 +431,43 @@ class ProfileManager:
             current_step = steps[current_step_index]
             
             # Set devices to current step values
-            self.MFC1.set_massflow(current_step["flow mfc1"])
-            self.MFC2.set_massflow(current_step["flow mfc2"])
-            self.MFC3.set_massflow(current_step["flow mfc3"])
-            self.cooling.set_temperature(current_step["temperature"])
+            self.mfcs[0].set_massflow(current_step["flow mfc1"])
+            self.mfcs[1].set_massflow(current_step["flow mfc2"])
+            self.mfcs[2].set_massflow(current_step["flow mfc3"])
+            self.cooling.set_temperature(current_step["temperature"], temp_ambient)
             self.valve.set_valve(current_step["valve"])
             
+            # #if update_callback is called then we need to update the status with the corresponding data
+            # if update_callback:
+            #         update_callback({
+            #         "elapsed_time": elapsed_time,
+            #         "current_step": current_step_index + 1,
+            #         "total_steps": len(steps),
+            #         "flow mfc1": current_step["flow mfc1"],
+            #         "flow mfc2": current_step["flow mfc2"],
+            #         "flow mfc3": current_step["flow mfc3"],
+            #         "temperature": current_step["temperature"],
+            #         "valve": current_step["valve"]
+            #     })
             # Check if profile is complete
             if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
                 profile_complete = True
         
         return True
 
-class MicrofluidicGasSupplySystemUI:
+class AutomatedSystemUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Microfluidic Gas Supply System")
-        self.root.geometry("1000x700")
+        self.root.title("Automated System")
+        self.root.geometry("1400x800")
         
-        # Initialize the devices
-        self.MFC1 = BronkhorstMFC(port = 'COM1')
-        self.MFC2 = BronkhorstMFC(port = 'COM2')
-        self.MFC3 = BronkhorstMFC(port = 'COM3')
-        self.cooling = Koelingsblok()
-        self.valve = RVM()
         self.profilemanager = ProfileManager()
+        
+        ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
+        ##Daarnaast zijn de porten dan ook niet aligned aahh
+        self.mfcs = self.profilemanager.mfcs
+        self.cooling = self.profilemanager.cooling
+        self.valve = self.profilemanager.valve
         
         # Header frame for connection and status
         header_frame = ttk.Frame(self.root)
@@ -472,26 +477,45 @@ class MicrofluidicGasSupplySystemUI:
         connection_frame = ttk.Frame(header_frame)
         connection_frame.pack(side='right', padx=10)
         
+        ttk.Label(connection_frame, text="Device Connections", font=("Arial", 11, "bold")).pack(fill = 'both', expand = True)
         # Connection status labels
         self.connection_mfc1_port_label = ttk.Label(connection_frame, 
-                                                 text=f"MFC Port: {self.MFC1.port}, Connected: {self.MFC1.connected}")
-        self.connection_mfc1_port_label.pack(anchor='e')
+                                                 text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
+        self.connection_mfc1_port_label.pack(fill='both', expand=True)
         
         self.connection_mfc2_port_label = ttk.Label(connection_frame, 
-                                                 text=f"MFC Port: {self.MFC2.port}, Connected: {self.MFC2.connected}")
-        self.connection_mfc2_port_label.pack(anchor='e')
+                                                 text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
+        self.connection_mfc2_port_label.pack(fill='both', expand=True)
         
         self.connection_mfc3_port_label = ttk.Label(connection_frame, 
-                                                 text=f"MFC Port: {self.MFC3.port}, Connected: {self.MFC3.connected}")
-        self.connection_mfc3_port_label.pack(anchor='e')
+                                                 text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
+        self.connection_mfc3_port_label.pack(fill='both', expand=True)
         
+        # Cooling        
         self.connection_cooling_port_label = ttk.Label(connection_frame, 
                                                      text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
-        self.connection_cooling_port_label.pack(anchor='e')
+        self.connection_cooling_port_label.pack(fill='both', expand=True)
         
         self.connection_valve_port_label = ttk.Label(connection_frame, 
                                                   text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
-        self.connection_valve_port_label.pack(anchor='e')
+        self.connection_valve_port_label.pack(fill='both', expand=True)
+        
+        connect_all_button = ttk.Button(connection_frame, text = "Connect all devices", command = self.connect_all_devices)
+        connect_all_button.pack(side='right', fill = 'both', expand = 'true')
+        
+        othervar_frame  = ttk.Frame(header_frame)
+        othervar_frame.pack(side='right', padx=10)
+        
+        # Ambient temperature section
+        ttk.Label(othervar_frame, text="Set Ambient Temperature", font=("Arial", 11, "bold")).pack(fill='both', expand=True)
+        # Label and Entry for ambient temperature
+        self.ambient_temp_label = tk.Label(othervar_frame, text=f"Ambient Temperature (°C): not set")
+        self.ambient_temp_label.pack(fill='both', expand=True)
+        self.ambient_temp = tk.DoubleVar()  # Use DoubleVar for floating-point values
+        self.ambient_temp_entry = tk.Entry(othervar_frame, textvariable = self.ambient_temp)
+        self.ambient_temp_entry.pack(fill='both', expand=True)
+        ambient_temp_button = ttk.Button(othervar_frame, text = "Set ambient temperature", command = self.set_ambient_temp)
+        ambient_temp_button.pack(fill='both', expand=True)
         
         # Status bar, to show what has been adjusted
         # Status label
@@ -499,6 +523,9 @@ class MicrofluidicGasSupplySystemUI:
         self.status_var.set("Status:")
         status_bar = ttk.Label(header_frame, text='Status', textvariable=self.status_var)
         status_bar.pack(fill='both', padx=5, pady=5)
+        
+        self.running_var_bar = tk.Label(header_frame, text="")
+        self.running_var_bar.pack(side= 'bottom', fill='x')
         
         # Notebook for tabs
         self.notebook = ttk.Notebook(self.root)
@@ -510,7 +537,39 @@ class MicrofluidicGasSupplySystemUI:
         # self.create_cooling_tab()
         # self.create_valve_tab()
         self.create_profile_tab()
+        
+    def set_ambient_temp(self):
+        """
+        Retrieve the ambient temperature from the entry box and set it.
+        """
+        try:
+            # Get the value from the entry box
+            self.ambient_temp = float(self.ambient_temp_entry.get())
+            # Update the status bar to show the ambient temperature has been set
+            self.ambient_temperature_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
+            self.ambient_temp_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
+            self.status_var.set(f"Ambient temperature set to {self.ambient_temp} °C")
+        except ValueError:
+            self.status_var.set("Invalid input! Enter a floating number for the ambient temperature.")
+            messagebox.showerror("Invalid Input", "Please enter a floating number for ambient temperature.")
+            
+    def update_run_var(self):
+ 
+        # Get mass flow rates from MFCs
+        mass_flow_1 = f"{self.mfcs[0].get_massflow():.2f} mL/min" if self.mfcs[0].connected else "N/A"
+        mass_flow_2 = f"{self.mfcs[1].get_massflow():.2f} mL/min" if self.mfcs[1].connected else "N/A"
+        mass_flow_3 = f"{self.mfcs[2].get_massflow():.2f} mL/min" if self.mfcs[2].connected else "N/A"
 
+        # Get temperature from cooling system
+        temperature = f"{self.cooling.get_temperature(1):.2f} °C" if self.cooling.connected else "N/A"
+
+        # Get valve position from valve
+        valve_position = self.valve.current_valve_position() if self.valve.connected else "N/A"
+        self.running_var_bar.config(text=f"MFC 1 Mass Flow Rate: {mass_flow_1} | MFC 2 Mass Flow Rate: {mass_flow_2} | MFC 3 Mass Flow Rate: {mass_flow_3} | Temperature: {temperature} | Valve Position: {valve_position}")
+
+        # Schedule the next update
+        self.notebook.after(10, lambda: self.update_run_var)
+        
     def create_menu(self):
         menu = tk.Menu(self.root)
         
@@ -528,97 +587,84 @@ class MicrofluidicGasSupplySystemUI:
         self.notebook.pack(expand=True, fill='both')
         
         ############	MFC		###########################
-        #### MFC1
-        mfc1_frame = ttk.LabelFrame(device_tab, text='MFC 1')
-        mfc1_frame.pack(side = 'left', fill='x', padx=10, pady=5)
+        self.mfc_frames = []
+        self.massflow_vars = []
+        self.current_massflow_labels = []
+        self.target_massflow_labels = []
         
-        # Label for mass flow rate
-        massflow_label = tk.Label(mfc1_frame, text="Mass flow rate (mL/min):")
-        massflow_label.grid(row=0, column=0, padx=10, pady=10)
+        all_mfc_frame = ttk.LabelFrame(device_tab)
+        all_mfc_frame.pack(fill='x', padx=10, pady=5)
         
-        # entry field for mass flow rate 
-        self.massflow_var = tk.DoubleVar()
-        massflow_entry = tk.Entry(mfc1_frame, textvariable=self.massflow_var)
-        massflow_entry.grid(row=0, column=1, padx=10, pady=10)
-        
-        # button to set the mass flow rate
-        set_massflow_button = tk.Button(mfc1_frame, text="Set mass flow rate", command=self.set_MFCmassflow)
-        set_massflow_button.grid(row=1, column=0, columnspan=2, pady=10)
-        
-        # Label to display the current flow rate
-        self.current_massflow_label = tk.Label(mfc1_frame, text="Current mass flow rate: Not available")
-        self.current_massflow_label.grid(row=2, column=0, padx=10, pady=10)
-        
-        # Label to display the target flow rate
-        self.target_massflow_label = tk.Label(mfc1_frame, text=f"Target mass flow rate: {self.MFC1.targetmassflow:.2f} mL/min")
-        self.target_massflow_label.grid(row=2, column=1, padx=10, pady=10)
-        
-        # Connect button
-        MFC_connect_button = tk.Button(mfc1_frame, text="Connect", command=self.connect_MFC1)
-        MFC_connect_button.grid(row=3, column=0, padx=10, pady=10)
-        
-        # Disconnect button
-        MFC_disconnect_button = tk.Button(mfc1_frame, text="Disconnect", command=self.disconnect_MFC1)
-        MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
-        
-        ############ MFC2
-        mfc2_frame = ttk.LabelFrame(device_tab, text='MFC 2')
-        mfc2_frame.pack(side = 'left', fill='x', padx=10, pady=5)
-        
-        # Label for mass flow rate
-        massflow_label = tk.Label(mfc2_frame, text="Mass flow rate (mL/min):")
-        massflow_label.grid(row=0, column=0, padx=10, pady=10)
-        
-        # entry field for mass flow rate 
-        self.massflow_var = tk.DoubleVar()
-        massflow_entry = tk.Entry(mfc2_frame, textvariable=self.massflow_var)
-        massflow_entry.grid(row=0, column=1, padx=10, pady=10)
-        
-        # button to set the mass flow rate
-        set_massflow_button = tk.Button(mfc2_frame, text="Set mass flow rate", command=self.set_MFCmassflow)
-        set_massflow_button.grid(row=1, column=0, columnspan=2, pady=10)
-        
-        # Label to display the current flow rate
-        self.current_massflow_label = tk.Label(mfc2_frame, text="Current mass flow rate: Not available")
-        self.current_massflow_label.grid(row=2, column=0, padx=10, pady=10)
-        
-        # Label to display the target flow rate
-        self.target_massflow_label = tk.Label(mfc2_frame, text=f"Target mass flow rate: {self.MFC2.targetmassflow:.2f} mL/min")
-        self.target_massflow_label.grid(row=2, column=1, padx=10, pady=10)
-        
-        # Connect button
-        MFC_connect_button = tk.Button(mfc2_frame, text="Connect", command=self.connect_MFC2)
-        MFC_connect_button.grid(row=3, column=0, padx=10, pady=10)
-        
-        # Disconnect button
-        MFC_disconnect_button = tk.Button(mfc2_frame, text="Disconnect", command=self.disconnect_MFC2)
-        MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        for index in range(len(self.mfcs)):
+            # Create a frame for the MFC
+            mfc_frame = ttk.LabelFrame(all_mfc_frame, text=f'MFC {index+1}')
+            mfc_frame.grid(row = 0, column = index, padx=10, pady=5)
+            self.mfc_frames.append(mfc_frame)  # Store the frame reference
+
+            # Label for mass flow rate
+            massflow_label = tk.Label(mfc_frame, text="Mass flow rate (mL/min):")
+            massflow_label.grid(row=0, column=0, padx=10, pady=10)
+
+            # Entry field for mass flow rate
+            massflow_var = tk.DoubleVar()
+            massflow_entry = tk.Entry(mfc_frame, textvariable=massflow_var)
+            massflow_entry.grid(row=0, column=1, padx=10, pady=10)
+            self.massflow_vars.append(massflow_var)  # Store the variable reference
+
+            # Button to set the mass flow rate
+            # lambda: anonymous function means that the function is without a name. 
+            # using lambda, such that it doesn't run the function when initiating the program, and passes the value index to the function
+            # https://www.geeksforgeeks.org/using-lambda-in-gui-programs-in-python/
+            set_massflow_button = tk.Button(mfc_frame, text="Set mass flow rate", command=lambda i = index : self.set_MFCmassflow(i))
+            set_massflow_button.grid(row=1, column=0, columnspan=2, pady=10)
+
+            # Label to display the current flow rate
+            current_massflow_label = tk.Label(mfc_frame, text="Current mass flow rate: Not available")
+            current_massflow_label.grid(row=2, column=0, padx=10, pady=10)
+            self.current_massflow_labels.append(current_massflow_label)  # Store the label reference
+
+            # Label to display the target flow rate
+            target_massflow_label = tk.Label(mfc_frame, text=f"Target mass flow rate: {self.mfcs[index].targetmassflow:.2f} mL/min")
+            target_massflow_label.grid(row=2, column=1, padx=10, pady=10)
+            self.target_massflow_labels.append(target_massflow_label)  # Store the label reference
+
+            # Connect button
+            MFC_connect_button = tk.Button(mfc_frame, text="Connect", command=lambda i = index :self.connect_MFC(i))
+            MFC_connect_button.grid(row=3, column=0, padx=10, pady=10)
+
+            # Disconnect button
+            MFC_disconnect_button = tk.Button(mfc_frame, text="Disconnect", command= lambda i = index : self.disconnect_MFC(i))
+            MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
         ############	COOLING		###########################
         cooling_frame = ttk.LabelFrame(device_tab, text='Cooling')
         cooling_frame.pack(fill='x', padx=10, pady=5)
-
-		# label for the mass flow rate
+        
+		# label for the temp
         temperature_label = tk.Label(cooling_frame, text="Temperature (°C):")
         temperature_label.grid(row=0, column=0, padx=10, pady=10)
         
-        # entry field for mass flow rate 
+        # entry field for temp
         self.temperature_var = tk.DoubleVar()
         temperature_entry = tk.Entry(cooling_frame, textvariable=self.temperature_var)
         temperature_entry.grid(row=0, column=1, padx=10, pady=10)
         
-        # button to set the mass flow rate
+        # button to set the temp
         set_temperature_button = tk.Button(cooling_frame, text="Set temperature", command=self.set_temperature)
         set_temperature_button.grid(row=1, column=0, columnspan=2, pady=10)
+
+        # Label to display the ambient temp
+        self.ambient_temperature_label = tk.Label(cooling_frame, text=f"Ambient temperature: Not set")
+        self.ambient_temperature_label.grid(row=2, column=0, padx=10, pady=10)
         
-        # Label to display the current flow rate
+        # Label to display the current temp
         self.current_temperature_label = tk.Label(cooling_frame, text="Current temperature: Not available")
-        self.current_temperature_label.grid(row=2, column=0, padx=10, pady=10)
+        self.current_temperature_label.grid(row=2, column=1, padx=10, pady=10)
         
-        # Label to display the target flow rate
+        # Label to display the target temp
         self.target_temperature_label = tk.Label(cooling_frame, text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
-        self.target_temperature_label.grid(row=2, column=1, padx=10, pady=10)
-    
+        self.target_temperature_label.grid(row=2, column=2, padx=10, pady=10)
+
         # Connect button
         cooling_connect_button = tk.Button(cooling_frame, text="Connect", command=self.connect_cooling)
         cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
@@ -848,15 +894,21 @@ class MicrofluidicGasSupplySystemUI:
         info_frame = ttk.Frame(edit_frame)
         info_frame.pack(fill='both', padx=5, pady=5)
         
-        ttk.Label(info_frame, text="Name:").pack(side='left')
-        self.name_var = tk.StringVar()
-        self.name_entry = ttk.Entry(info_frame, textvariable=self.name_var)
-        self.name_entry.pack(side='left', padx=5, expand=True, fill='x')
+        self.new_profile_label = ttk.Label(info_frame, text="")
+        self.new_profile_label.pack(side = 'left', padx=5, expand=True, fill='x')
         
-        ttk.Label(info_frame, text="Description:").pack(side='left')
+        profile_name_label = ttk.Label(info_frame, text="Name:").pack(side='left')
+        self.name_var = tk.StringVar()
+        name_entry = ttk.Entry(info_frame, textvariable=self.name_var)
+        name_entry.pack(side='left', padx=5, expand=True, fill='x')
+        
+        profile_desc_label = ttk.Label(info_frame, text="Description:").pack(side='left')
         self.desc_var = tk.StringVar()
-        self.desc_entry = ttk.Entry(info_frame, textvariable=self.desc_var)
-        self.desc_entry.pack(side='left', padx=5, expand=True, fill='x')
+        desc_entry = ttk.Entry(info_frame, textvariable=self.desc_var)
+        desc_entry.pack(side='left', padx=5, expand=True, fill='x')
+        
+        new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_profile)
+        new_profile_btn.pack(side='right', padx=3, expand=True)
         
         # Steps in the right/frame
         steps_frame = ttk.Frame(edit_frame)
@@ -865,49 +917,62 @@ class MicrofluidicGasSupplySystemUI:
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.steps_tree = ttk.Treeview(
             steps_frame, 
-            columns=("time", "flow", "temp", "valve"), 
+            columns=("time", "flow mfc1", "flow mfc2", "flow mfc3", "temp", "valve"), 
             show="headings"
         )
         self.steps_tree.heading("time", text="Time (s)")
-        self.steps_tree.heading("flow", text="Flow (mL/min)")
+        self.steps_tree.heading("flow mfc1", text="Flow MFC 1 (mL/min)")
+        self.steps_tree.heading("flow mfc2", text="Flow MFC 2 (mL/min)")
+        self.steps_tree.heading("flow mfc3", text="Flow MFC 3 (mL/min)")
         self.steps_tree.heading("temp", text="Temperature (°C)")
         self.steps_tree.heading("valve", text="Valve Position (1 or 2)")
         
         self.steps_tree.column("time", width=80, anchor=tk.CENTER)
-        self.steps_tree.column("flow", width=100, anchor=tk.CENTER)
+        self.steps_tree.column("flow mfc1", width=100, anchor=tk.CENTER)
+        self.steps_tree.column("flow mfc2", width=100, anchor=tk.CENTER)
+        self.steps_tree.column("flow mfc3", width=100, anchor=tk.CENTER)
         self.steps_tree.column("temp", width=100, anchor=tk.CENTER)
         self.steps_tree.column("valve", width=80, anchor=tk.CENTER)
         
         self.steps_tree.pack(fill = 'both' , expand=True)
         
-        ## Steps in right frame/edit frame
         step_controls_frame = ttk.Frame(edit_frame)
         step_controls_frame.pack(fill='x', padx=5, pady=5)
         
-        ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
-        self.step_time_var = tk.IntVar()
-        self.step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.step_time_var, width=8)
-        self.step_time_entry.pack(side='left', padx=2)
+        self.profile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
+        self.step_time_var = tk.DoubleVar()
+        step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.step_time_var, width=8)
+        step_time_entry.pack(side='left', padx=2)
         
-        ttk.Label(step_controls_frame, text="Flow (mL/min):").pack(side='left')
-        self.step_flow_var = tk.DoubleVar()
-        self.step_flow_entry = ttk.Entry(step_controls_frame, textvariable=self.step_flow_var, width=8)
-        self.step_flow_entry.pack(side='left', padx=2)
+        self.profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow MFC 1 (mL/min):").pack(side='left')
+        self.step_flow1_var = tk.DoubleVar()
+        step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.step_flow1_var, width=8)
+        step_flow1_entry.pack(side='left', padx=2)
+
+        self.profile_mfc2_label = ttk.Label(step_controls_frame, text="Flow MFC 2 (mL/min):").pack(side='left')
+        self.step_flow2_var = tk.DoubleVar()
+        step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.step_flow2_var, width=8)
+        step_flow2_entry.pack(side='left', padx=2)
+
+        self.profile_mfc3_label = ttk.Label(step_controls_frame, text="Flow MFC 3 (mL/min):").pack(side='left')
+        self.step_flow3_var = tk.DoubleVar()
+        step_flow3_entry = ttk.Entry(step_controls_frame, textvariable=self.step_flow3_var, width=8)
+        step_flow3_entry.pack(side='left', padx=2)
         
-        ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
+        self.profile_mfc4_label = ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
         self.step_temp_var = tk.DoubleVar()
-        self.step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.step_temp_var, width=8)
-        self.step_temp_entry.pack(side='left', padx=2)
+        step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.step_temp_var, width=8)
+        step_temp_entry.pack(side='left', padx=2)
         
-        ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
+        self.profile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
         self.step_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        self.step_valve_combo = ttk.Combobox(
+        step_valve_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.step_valve_var, 
             values=[1, 2], 
             width=5
         )
-        self.step_valve_combo.pack(side='left', padx=2)
+        step_valve_combo.pack(side='left', padx=2)
         
         # Step buttons
         step_buttons_frame = ttk.Frame(edit_frame)
@@ -922,17 +987,6 @@ class MicrofluidicGasSupplySystemUI:
         clear_steps_button = ttk.Button(step_buttons_frame, text="Clear All Steps", command=self.clear_steps)
         clear_steps_button.pack(side='left', padx=2)
         
-        connect_all_button = ttk.Button(step_buttons_frame, text = "Connect all devices", command = self.connect_all_devices)
-        connect_all_button.pack(side='right', padx = 2)
-        
-        # #Use pack for connection info labels
-        # self.connection_mfc_port_label = ttk.Label(step_buttons_frame, text=f"MFC Port: {self.MFC.port}, Connected: {self.MFC.connected}")
-        # self.connection_mfc_port_label.pack(side='top', padx=10, pady=5)
-        # self.connection_cooling_port_label = ttk.Label(step_buttons_frame, text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
-        # self.connection_cooling_port_label.pack(side='top', padx=10, pady=5)
-        # self.connection_valve_port_label = ttk.Label(step_buttons_frame, text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
-        # self.connection_valve_port_label.pack(side='top', padx=10, pady=5)
-
         # Save and run buttons
         action_buttons_frame = ttk.Frame(edit_frame)
         action_buttons_frame.pack(fill='both')
@@ -955,54 +1009,22 @@ class MicrofluidicGasSupplySystemUI:
         # Initialize variables
         self.current_loaded_profile = None
         
-    def connect_MFC1(self):
-        if self.MFC1.connect():
+    def connect_MFC(self, index):
+        if self.mfcs[index].connect():
             #messagebox.showinfo("Connection", "MFC successfully connected.")
             #updating the connection info
             self.update_connection_devices()
-            self.status_var.set(f"MFC 1 connected")
+            self.status_var.set(f"MFC {index + 1} connected")
         else:
-            messagebox.showinfo("Connection Failed", "MFC 1 is not connected")
-        
-    def connect_MFC2(self):
-        if self.MFC2.connect():
-            #messagebox.showinfo("Connection", "MFC successfully connected.")
-            #updating the connection info
-            self.update_connection_devices()
-            self.status_var.set(f"MFC 2 connected")
-        else:
-            messagebox.showinfo("Connection Failed", "MFC 2 is not connected")
+            messagebox.showinfo("Connection Failed", f"MFC {index + 1} is not connected")
 
-    def connect_MFC3(self):
-        if self.MFC3.connect():
-            #messagebox.showinfo("Connection", "MFC successfully connected.")
-            #updating the connection info
-            self.update_connection_devices()
-            self.status_var.set(f"MFC 3 connected")
-        else:
-            messagebox.showinfo("Connection Failed", "MFC 3 is not connected")
-        
-    def disconnect_MFC1(self):
-        self.MFC1.disconnect()
+    def disconnect_MFC(self, index):
+        self.mfcs[index].disconnect()
         #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
         #updating the connection info
         self.update_connection_devices()
-        self.status_var.set(f"MFC 1 disconnected")
+        self.status_var.set(f"MFC {index + 1} disconnected")
     
-    def disconnect_MFC2(self):
-        self.MFC2.disconnect()
-        #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
-        #updating the connection info
-        self.update_connection_devices()
-        self.status_var.set(f"MFC 2 disconnected")
-        
-    def disconnect_MFC3(self):
-        self.MFC3.disconnect()
-        #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
-        #updating the connection info
-        self.update_connection_devices()
-        self.status_var.set(f"MFC 3 disconnected")
-        
     def connect_cooling(self):  
         if self.cooling.connect():
             #messagebox.showinfo("Connection", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths successfully connected.")
@@ -1036,9 +1058,9 @@ class MicrofluidicGasSupplySystemUI:
         self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
 
     def connect_all_devices(self):
-        self.connect_MFC1()
-        self.connect_MFC2()
-        self.connect_MFC3()
+        self.connect_MFC(index = 0)
+        self.connect_MFC(index = 1)
+        self.connect_MFC(index = 2)
         self.connect_cooling()
         self.connect_valve()
         self.status_var.set(f"MFC, Torrey Pines IC20XR Digital Chilling/Heating Dry Baths and RVM Industrial Microfluidic Rotary valve connected")
@@ -1060,9 +1082,9 @@ class MicrofluidicGasSupplySystemUI:
         # self.valve_tab_cooling_current_port_label.config (text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         
         #Labels at the Header
-        self.connection_mfc1_port_label.config (text=f"MFC Port: {self.MFC1.port}, Connected: {self.MFC1.connected}")
-        self.connection_mfc2_port_label.config (text=f"MFC Port: {self.MFC2.port}, Connected: {self.MFC2.connected}")
-        self.connection_mfc3_port_label.config (text=f"MFC Port: {self.MFC3.port}, Connected: {self.MFC3.connected}")
+        self.connection_mfc1_port_label.config (text=f"MFC 1 Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
+        self.connection_mfc2_port_label.config (text=f"MFC 2 Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
+        self.connection_mfc3_port_label.config (text=f"MFC 3 Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
         self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
 
@@ -1070,7 +1092,7 @@ class MicrofluidicGasSupplySystemUI:
         #Opens een top level window
         settings_window = tk.Toplevel(self.root)
         settings_window.title("Connection Settings")
-        settings_window.geometry("400x300")
+        settings_window.geometry("400x400")
         
         #this forces all focus on the top level until the toplevel is closed
         settings_window.grab_set()
@@ -1080,17 +1102,17 @@ class MicrofluidicGasSupplySystemUI:
         MFC_frame.pack(fill="both", padx=10, pady=10)
         
         ttk.Label(MFC_frame, text="Port:").grid(row=0, column=0, padx=5, pady=5)
-        self.MFC1_port_var = tk.StringVar(value=self.MFC1.port)
+        self.MFC1_port_var = tk.StringVar(value=self.mfcs[0].port)
         MFC1_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC1_port_var)
         MFC1_port_entry.grid(row=0, column=1, padx=5, pady=5)
 
         ttk.Label(MFC_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
-        self.MFC2_port_var = tk.StringVar(value=self.MFC2.port)
+        self.MFC2_port_var = tk.StringVar(value=self.mfcs[1].port)
         MFC2_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC2_port_var)
         MFC2_port_entry.grid(row=1, column=1, padx=5, pady=5)
 
         ttk.Label(MFC_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
-        self.MFC3_port_var = tk.StringVar(value=self.MFC3.port)
+        self.MFC3_port_var = tk.StringVar(value=self.mfcs[2].port)
         MFC3_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC3_port_var)
         MFC3_port_entry.grid(row=2, column=1, padx=5, pady=5)
         
@@ -1116,42 +1138,57 @@ class MicrofluidicGasSupplySystemUI:
         save_button.pack(pady=10)
         
     def save_settings(self):
-        self.MFC1.port = self.MFC1_port_var.get()
-        self.MFC2.port = self.MFC2_port_var.get()
-        self.MFC3.port = self.MFC3_port_var.get()
+        self.mfcs[0].port = self.MFC1_port_var.get()
+        self.mfcs[1].port = self.MFC2_port_var.get()
+        self.mfcs[2].port = self.MFC3_port_var.get()
         self.cooling.port = self.cooling_port_var.get()
         self.valve.port = self.valve_port_var.get()
         
         self.update_connection_devices()
         self.status_var.set("Port connections are updated.")
 
-    def set_MFCmassflow(self):
-        massflowrate = self.massflow_var.get()
-        if self.MFC.set_massflow(massflowrate):
-            self.target_massflow_label.config(text=f"Target mass flow rate: {self.MFC.targetmassflow} mL/min")
-            self.update_massflow()
+    def set_MFCmassflow(self, index):
+        massflowrate = self.massflow_vars[index].get()
+        if self.mfcs[index].set_massflow(massflowrate):
+            self.target_massflow_labels[index].config(text=f"Target mass flow rate: {self.mfcs[index].targetmassflow} mL/min")
+            self.update_massflow(index)
         else:
             self.status_var.set("MFC: Failed to set mass flow rate.")
             
-    def update_massflow(self):
-        current_flow = self.MFC.get_massflow()
+    def update_massflow(self, index):
+        current_flow = self.mfcs[index].get_massflow()
+        self.update_run_var()
         if current_flow is not None:
-            self.current_massflow_label.config(text=f"Current mass flow rate: {current_flow:.2f} mL/min")
+            self.current_massflow_labels[index].config(text=f"Current mass flow rate: {current_flow:.2f} mL/min")
         else:
             self.status_var.set("Failed to read mass flow rate.")
         
-        self.root.after(1000, self.update_massflow) #updating the MFC flow rate reading each 1s
+        # Passing the index to the function by using lambda
+        # Lambda are anonymous function means that the function is without a name
+        # https://www.geeksforgeeks.org/using-lambda-in-gui-programs-in-python/
+        self.root.after(1000, lambda: self.update_massflow(index)) #updating the MFC flow rate reading each 1s
         
     def set_temperature(self):
-        temperature = self.temperature_var.get()
-        if self.cooling.set_temperature(temperature):
-            self.target_temperature_label.config(text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
-            self.update_temperature()
-        else:
-            self.status_var.set("Cooling: Failed to set the temperature.")
-    
+        if self.cooling.connected == False:
+            messagebox.showwarning("Device not connected", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected")
+            return False
+        elif not isinstance(self.ambient_temp, (int, float)):
+            messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
+            return False
+        else:    
+            try:
+                temperature = float(self.temperature_var.get())
+                self.cooling.set_temperature(temperature, self.ambient_temp)
+                self.target_temperature_label.config(text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
+                self.update_temperature()
+                
+                ##if non-floating number, tk.tclerror occurs
+            except tk.TclError as e:
+                messagebox.showerror("Invalid Input", f"Please enter a floating number for target temperature. {e}")
+                
     def update_temperature(self):
         current_temp = self.cooling.get_temperature(1)
+        self.update_run_var()
         if current_temp is not None:
             self.current_temperature_label.config(text=f"Current temperature: {current_temp:.2f} °C")
         else:
@@ -1159,7 +1196,7 @@ class MicrofluidicGasSupplySystemUI:
         
         #Updating temperature every 1s; otherwise the simulation/reading the data won't work. It would only happen one time.
         #https://www.geeksforgeeks.org/python-after-method-in-tkinter/
-        self.root.after(1000, self.update_temperature) 
+        self.notebook.after(1000, self.update_temperature) 
         
     def set_valve(self):
         position = self.valve_pos_var.get()
@@ -1168,6 +1205,7 @@ class MicrofluidicGasSupplySystemUI:
 
     def update_valve(self):
         current_position = self.valve.current_valve_position()
+        self.update_run_var()
         if current_position is not None:
             self.current_valve_label.config(text=f"Current position of the valve: {current_position}")
         else:
@@ -1183,7 +1221,7 @@ class MicrofluidicGasSupplySystemUI:
         #Add all the profiles to the listbox
         for profile in self.profilemanager.get_profiles():
             self.profile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
-    
+
     def load_profile(self):
         """Load the selected profile into the editor"""
         #https://pythonassets.com/posts/listbox-in-tk-tkinter/
@@ -1195,6 +1233,8 @@ class MicrofluidicGasSupplySystemUI:
         #To ensure that you only select the first selected
         profile_name = self.profile_listbox.get(selection[0])
         profile = self.profilemanager.load_profile(profile_name)
+        
+        self.new_profile_label.config(text = "")
         
         if profile:
             self.current_loaded_profile = profile_name
@@ -1211,13 +1251,15 @@ class MicrofluidicGasSupplySystemUI:
             for step in profile.get("steps", []):
                 self.steps_tree.insert("", tk.END, values=(
                     step["time"],
-                    step["flow"],
+                    step["flow mfc1"],
+                    step["flow mfc2"],
+                    step["flow mfc3"],
                     step["temperature"],
                     step["valve"]
                 ))
             
             self.status_var.set(f"Loaded profile: {profile_name}")
-    
+        
     def delete_profile(self):
         """Delete the selected profile"""
         #https://pythonassets.com/posts/listbox-in-tk-tkinter/
@@ -1236,11 +1278,30 @@ class MicrofluidicGasSupplySystemUI:
                 self.status_var.set(f"Deleted profile: {profile_name}")
             else:
                 messagebox.showerror("Error", f"Failed to delete the profile: '{profile_name}'")
+                
+    def create_new_profile(self):
+		#Clearing all input fields and steps
+        self.name_var.set("")
+        self.desc_var.set("")
+        self.step_time_var.set("0")
+        self.step_flow1_var.set("0")
+        self.step_flow2_var.set("0")
+        self.step_flow3_var.set("0")
+        self.step_temp_var.set("0")
+        self.step_valve_var.set("0")
+        
+        for item in self.steps_tree.get_children():
+            self.steps_tree.delete(item)
+        
+        self.new_profile_label.config(text = "New profile", foreground = "green")
+        
     def add_step(self):
         """Add a new step to the current profile"""
         try:
             time_val = int(self.step_time_var.get())
-            flow_val = float(self.step_flow_var.get())
+            flow1_val = float(self.step_flow1_var.get())
+            flow2_val = float(self.step_flow2_var.get())
+            flow3_val = float(self.step_flow3_var.get())
             temp_val = float(self.step_temp_var.get())
             valve_val = int(self.step_valve_var.get())
             
@@ -1257,7 +1318,7 @@ class MicrofluidicGasSupplySystemUI:
                     self.steps_tree.delete(child)
                     break
             
-            self.steps_tree.insert("", tk.END, values=(time_val, flow_val, temp_val, valve_val))
+            self.steps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val, temp_val, valve_val))
             
         except ValueError as error:
             messagebox.showerror("Error", f"Invalid input: {error}")
@@ -1292,9 +1353,11 @@ class MicrofluidicGasSupplySystemUI:
             values = self.steps_tree.item(child, "values")
             steps.append({
                 "time": int(values[0]),
-                "flow": float(values[1]),
-                "temperature": float(values[2]),
-                "valve": int(values[3])
+                "flow mfc1": float(values[1]),
+                "flow mfc2": float(values[2]),
+                "flow mfc3": float(values[3]),
+                "temperature": float(values[4]),
+                "valve": int(values[5])
             })
         
         # Sort steps by time
@@ -1315,9 +1378,9 @@ class MicrofluidicGasSupplySystemUI:
     
     def run_profile(self):
         """Run the current profile"""    
-        
-        if not self.MFC.connected or not self.cooling.connected or not self.valve.connected:
-            self.status_var.set("One or more devices are not connected")
+            
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
+            messagebox.showwarning("Error", "One or more devices are not connected")
             return False
           
         #Get the name of the profile without spaces, such that the .json file can be loaded later
@@ -1334,6 +1397,8 @@ class MicrofluidicGasSupplySystemUI:
             messagebox.showerror("Error", f"Failed to load profile: '{name}'")
             return
         
+        self.update_run_var()
+        print("hiha")
         #Enabling the stop button, since you can now stop a running profile
         self.stop_button.config(state=tk.NORMAL) 
         
@@ -1351,24 +1416,26 @@ class MicrofluidicGasSupplySystemUI:
         try:
             # Displaying which profile is running
             self.status_var.set(f"Running profile: {self.name_var.get()}")
-            self.profilemanager.run_profile()
-            
+            self.profilemanager.run_profile(self.ambient_temp)
+            # self.notebook.after(0, lambda: self.update_run_status)
             self.notebook.after(0, self.profile_complete)
 
         except Exception as e:
             self.notebook.after(0, lambda: self.profile_error(str(e)))
     
-    def update_run_status(self, status):
-        """Update UI with current run status"""
-        elapsed = status["elapsed_time"]
-        step = status["current_step"]
-        total = status["total_steps"]
-        self.status_var.set(
-            f"Running: {elapsed:.1f}s | Step {step}/{total} | "
-            f"Flow: {status['flow']} mL/min | "
-            f"Temp: {status['temperature']}°C | "
-            f"Valve: {status['valve']}"
-        )
+    # def update_run_status(self, status):
+    #     """Update UI with current run status"""
+    #     elapsed = status["elapsed_time"]
+    #     step = status["current_step"]
+    #     total = status["total_steps"]
+    #     self.status_var.set(
+    #         f"Running: {elapsed:.1f}s | Step {step}/{total} | "
+    #         f"Flow mfc1: {status['flow mfc1']} mL/min | "
+    #         f"Flow mfc2: {status['flow mfc2']} mL/min | "
+    #         f"Flow mfc3: {status['flow mfc3']} mL/min | "
+    #         f"Temp: {status['temperature']}°C | "
+    #         f"Valve: {status['valve']}"
+    #     )
     
     def profile_complete(self):
         """Called when profile completes successfully"""
@@ -1389,7 +1456,7 @@ class MicrofluidicGasSupplySystemUI:
         
 def main():
     root = tk.Tk()
-    app = MicrofluidicGasSupplySystemUI(root)
+    app = AutomatedSystemUI(root)
     root.mainloop()
     
 if __name__ == "__main__":
