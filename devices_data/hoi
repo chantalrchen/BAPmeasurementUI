@@ -1,0 +1,9 @@
+{
+    "connections": {
+        "mfc1_port": "COM11",
+        "mfc2_port": "COM21",
+        "mfc3_port": "COM31",
+        "cooling_device_port": "COM41",
+        "valve_port": "COM51"
+    }
+}
