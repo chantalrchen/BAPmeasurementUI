@@ -33,8 +33,18 @@ class BronkhorstMFC:
         self.connected = True
         return self.connected
     
-    
-    # def disconnect(self):
+    #reset the value, fsetpoint = 0 
+    def disconnect(self):
+        try:
+            param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
+            self.instrument.writeParameter(param) #Fsetpoint
+            
+        except Exception as err:
+            messagebox.showerror("Error",
+             f"An error occurred while disconnecting the Bronkhorst MFC: {err}")
+     
+
+
     #     self.connected = False
     #     self.instrument = None
         
@@ -42,13 +52,10 @@ class BronkhorstMFC:
     def initialize(self):
         # try:
         #     # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
-        #     self.instrument.writeParameter(432, 0)
+        #     param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 32000}]
+        #     self.instrument.writeParameter(param)
             
-        #     # sensor type = gas volume; manual flex-bus
-        #     self.instrument.writeParameter(22, 3)
-            
-        #     # capacity unit index = 2 (mln/min)
-        #     self.instrument.writeParameter(23, 2)
+
         # except Exception as err:
         #     messagebox.showerror("Error",
         #         f"An error occurred while initializing the Bronkhorst MFC with channel {self.channel}: {err}"
@@ -62,7 +69,8 @@ class BronkhorstMFC:
         # ##the following should be connected when connected with Bronkhorst MFC
         # if self.connected and self.instrument is not None:  # device is connected and assigned
         #     try:
-        #         self.massflow = self.instrument.readParameter(205) #Fmeasure
+        #         param = [{'proc_nr':  33, 'parm_nr': 0, 'parm_type': propar.PP_TYPE_FLOAT}] #Fmeasure
+        #         self.massflow = self.instrument.readParameter(param) 
         #         return self.massflow  
         #     except Exception as err:
         #         messagebox.showerror("Error",
@@ -101,12 +109,14 @@ class BronkhorstMFC:
                     messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow:.2f} mL/min. The mass flow rate will be set to {self.maxmassflow:.2f} mL/min.")
                     self.targetmassflow = self.maxmassflow
                     ##the following should be connected when connected with Bronkhorst MFC
-                    #self.instrument.writeParameter(206, self.maxmassflow)
+                    param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
+                    self.instrument.writeParameter(param)
                     return True
                 else:
                     self.targetmassflow = value
                     ##the following should be connected when connected with Bronkhorst MFC
-                    #self.instrument.writeParameter(206, value) #Fsetpoint
+                    param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
+                    self.instrument.writeParameter(param1) #Fsetpoint
                 return True  
             except Exception as err:
                 messagebox.showerror("Error",
@@ -246,6 +256,9 @@ class RVM:
 
     def connect(self):
         valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+
+        valve : amfTools.Device = None
+        self.instrument : amfTools.AMF = None
         for valve in valve_list:
             if "RVM" in valve.deviceType:
                 self.instrument = amfTools.AMF(valve)
