@@ -38,7 +38,7 @@ class BronkhorstMFC:
     def disconnect(self):
         try:
             param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
-            self.instrument.writeParameter(param) #Fsetpoint
+            self.instrument.write_parameters(param) #Fsetpoint
             
         except Exception as err:
             messagebox.showerror("Error",
@@ -54,7 +54,7 @@ class BronkhorstMFC:
         # try:
         #     # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
         #     param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 32000}]
-        #     self.instrument.writeParameter(param)
+        #     self.instrument.write_parameters(param)
             
 
         # except Exception as err:
@@ -71,7 +71,7 @@ class BronkhorstMFC:
         # if self.connected and self.instrument is not None:  # device is connected and assigned
         #     try:
         #         param = [{'proc_nr':  33, 'parm_nr': 0, 'parm_type': propar.PP_TYPE_FLOAT}] #Fmeasure
-        #         self.massflow = self.instrument.readParameter(param) 
+        #         self.massflow = self.instrument.read_parameters(param)
         #         return self.massflow  
         #     except Exception as err:
         #         messagebox.showerror("Error",
@@ -109,15 +109,23 @@ class BronkhorstMFC:
                 elif value > self.maxmassflow:
                     messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow:.2f} mL/min. The mass flow rate will be set to {self.maxmassflow:.2f} mL/min.")
                     self.targetmassflow = self.maxmassflow
-                    ##the following should be connected when connected with Bronkhorst MFC
-                    param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
-                    self.instrument.writeParameter(param)
+                    
+                    # ####
+                    # ##the following should be connected when connected with Bronkhorst MFC
+                    # param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
+                    # self.instrument.write_parameters(param)
+                    # ###
+                    
                     return True
                 else:
                     self.targetmassflow = value
-                    ##the following should be connected when connected with Bronkhorst MFC
-                    param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
-                    self.instrument.writeParameter(param1) #Fsetpoint
+                    
+                    #####
+                    ###the following should be connected when connected with Bronkhorst MFC
+                    ## param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
+                    ## self.instrument.write_parameters(param1) #Fsetpoint
+                    ####
+                    
                 return True  
             except Exception as err:
                 messagebox.showerror("Error",
@@ -162,7 +170,7 @@ class Koelingsblok:
     # reset the MFC value, flow rate to 0
     def disconnect(self):
         param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
-        self.instrument.writeParameter(param) #Fsetpoint
+        self.instrument.write_parameters(param) #Fsetpoint
 
         #self.connected = False
         #self.instrument = None
@@ -255,25 +263,26 @@ class RVM:
         self.port = port
         self.connected = False
         self.instrument = None
-        self.currentposition = 0 #home status
+        self.currentposition = 1 #home status
         self.rotation_delay = 0.4  #the rotation time for 180 degree for RVMLP (1.5 s) and RVMFS (400 ms / 0.4s),
 
     def connect(self):
-        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+        #Following should be 
+        # valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
 
-        valve : amfTools.Device = None
-        self.instrument : amfTools.AMF = None
-        for valve in valve_list:
-            if "RVM" in valve.deviceType:
-                self.instrument = amfTools.AMF(valve)
-                break
+        # valve : amfTools.Device = None
+        # self.instrument : amfTools.AMF = None
+        # for valve in valve_list:
+        #     if "RVM" in valve.deviceType:
+        #         self.instrument = amfTools.AMF(valve)
+        #         break
 
-        if self.instrument is None:
-            # Try forced port connection if no RVM detected
-            self.instrument = amfTools.AMF(self.port)
+        # if self.instrument is None:
+        #     # Try forced port connection if no RVM detected
+        #     self.instrument = amfTools.AMF(self.port)
 
-        self.instrument.connect() 
-        self.initialize_valve()
+        # self.instrument.connect() 
+        # self.initialize_valve()
         
        ##the following is used only for simulation
         self.connected = True
@@ -319,7 +328,7 @@ class RVM:
         if self.connected:
             if position != 1 and position != 2:
                 messagebox.showerror("Error",
-                    f"The position of the RVM Industrial Microfluidic Rotary Valve can only be 1 or 2, but received: {position}"
+                    f"The position of the RVM Industrial Microfluidic Rotary Valve can only be 1 (ON) or 2 (OFF), but received: {position}"
                 )
                 return False
         else:
@@ -331,16 +340,17 @@ class RVM:
             if position == 2:
                 # Move to position 2
                 try:
-                    self.instrument.valveShortestPath(2)
-                    time.sleep(self.rotation_delay)
-                    self.currentposition = 2
-                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
+        
+                    # self.instrument.valveShortestPath(2)
+                    # time.sleep(self.rotation_delay)
+                    # self.currentposition = 2
+                    # print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
                     return True
                 except Exception as err:
                     messagebox.showerror("Error",
                         f"An error occurred while moving to position 2/OFF state : {err}")
             elif position == 1:
-                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}")
+                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/OFF state")
             else:
                 print(f"Invalid position: {position}")
            
@@ -348,15 +358,16 @@ class RVM:
             if position == 1:
                 # Move to position 1
                 try:
-                    self.instrument.valveShortestPath(1)
-                    self.currentposition = 1
-                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
+                    # self.instrument.valveShortestPath(1)
+                    # time.sleep(self.rotation_delay)
+                    # self.currentposition = 1
+                    # print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
                     return True
                 except Exception as err:
                    messagebox.showerror("Error",
                         f"An error occurred while moving to position 1/ON tate : {err}")
             elif position == 2:
-                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}")
+                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
             else:
                 print(f"Invalid position: {position}")
 
@@ -465,11 +476,11 @@ class AutomatedSystemUI:
         temperature = f"{self.cooling.get_temperature(1):.2f} °C" if self.cooling.connected else "N/A"
 
         # Get valve position from valve
-        valve_position = self.valve.current_valve_position() if self.valve.connected else "N/A"
+        valve_position = self.valve.currentposition if self.valve.connected else "N/A"
         self.running_var_bar.config(text=f"MFC 1 Mass Flow Rate: {mass_flow_1} | MFC 2 Mass Flow Rate: {mass_flow_2} | MFC 3 Mass Flow Rate: {mass_flow_3} | Temperature: {temperature} | Valve Position: {valve_position}")
 
         # Schedule the next update
-        self.notebook.after(10, lambda: self.update_run_var)
+        self.notebook.after(10, self.update_run_var)
         
     def create_menu(self):
         menu = tk.Menu(self.root)
@@ -639,7 +650,11 @@ class AutomatedSystemUI:
             #messagebox.showinfo("Connection", "RVM Industrial Microfluidic Rotary valve is successfully connected.")
             #updating the connection info
             self.update_connection_devices()
-            self.status_var.set(f"RVM Industrial Microfluidic Rotary valve connected")
+            
+            #initializing the home position of the valve
+            self.currentposition = 1
+            
+            self.status_var.set(f"RVM Industrial Microfluidic Rotary valve connected and set to home position 1")
         else:
             messagebox.showinfo("Connection Failed", "RVM is not connected")
          
@@ -781,10 +796,14 @@ class AutomatedSystemUI:
             self.update_valve()
 
     def update_valve(self):
-        current_position = self.valve.current_valve_position()
+        target_position = self.valve.currentposition
         self.update_run_var()
-        if current_position is not None:
-            self.current_valve_label.config(text=f"Current position of the valve: {current_position}")
+        if target_position is not None:
+            if self.currentposition != target_position:                
+                self.current_valve_label.config(text=f"Current position of the valve: {target_position}")
+                self.status_var.set(f"The position is set to {target_position}.")
+            else:
+                self.status_var.set(f"The target position is the current position, position {target_position}.")
         else:
             self.status_var.set("Failed to read the position of the valve.")
     
