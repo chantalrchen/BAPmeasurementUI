@@ -21,6 +21,7 @@ class BronkhorstMFC:
         # try:
         #     self.instrument = propar.instrument(self.port, channel = self.channel)
         #     self.connected = True
+        #     self.initialize()
         #     return self.connected
         # except Exception as err:
         #     messagebox.showerror("Error",
@@ -158,9 +159,13 @@ class Koelingsblok:
         return self.connected
         ##
     
+    # reset the MFC value, flow rate to 0
     def disconnect(self):
-        self.connected = False
-        self.instrument = None
+        param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
+        self.instrument.writeParameter(param) #Fsetpoint
+
+        #self.connected = False
+        #self.instrument = None
         
     def get_temperature(self, dummy):
     
@@ -188,14 +193,10 @@ class Koelingsblok:
             elif dummy == 1:                
                 if self.connected:
                     try:
-                        if self.temperature < self.targettemperature:
-                            self.temperature += (self.targettemperature - self.temperature)/10
-                            return self.temperature
-                        elif self.temperature > self.targettemperature:
-                            self.temperature -= (self.targettemperature - self.temperature)/10
-                            return self.temperature
-                        else:
-                            return self.temperature
+                        self.temperature += (self.targettemperature - self.temperature) * 0.1
+                        if abs(self.temperature - self.targettemperature) < 0.001:
+                            self.temperature = self.targettemperature
+                        return self.temperature
                     except Exception as err:
                         messagebox.showerror("Error",
                             f"An error occurred while reading the temperature: {err}"
@@ -214,11 +215,11 @@ class Koelingsblok:
             try:
                 #the cooling system can only lower the temperature by 30 degrees below ambient
                 min_temp = temp_ambient - 30
-                print(temp_ambient, min_temp)
                 if value < min_temp:
-                    print("hoi")
                     messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {temp_ambient:.2f}. The temperature may not exceed {min_temp:.2f} °C")
                     self.targettemperature = min_temp
+                    
+                    ###OFFICIAL
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
                     # self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
                     
@@ -229,11 +230,14 @@ class Koelingsblok:
                     return True
                 else:
                     self.targettemperature = value
+                    
+                    ##OFFICIAL
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
                     # self.instrument.write(b"n" + str(value).encode() + "\r") 
                     
                     #if the above does not work, try: self.instrument.write(f"n{value}\r".encode()) 
                     # 100ms delay after each command sent (after \r)
+                    
                     time.sleep(0.1) 
                     return True
             except Exception as err:
@@ -269,6 +273,7 @@ class RVM:
             self.instrument = amfTools.AMF(self.port)
 
         self.instrument.connect() 
+        self.initialize_valve()
         
        ##the following is used only for simulation
         self.connected = True
@@ -589,14 +594,14 @@ class AutomatedSystemUI:
         # Connect button
         valve_connect_button = tk.Button(valve_frame, text="Connect", command=self.connect_valve)
         valve_connect_button.grid(row=1, column=1, padx=10, pady=10)
-        
+    
+        # Disconnect button
+        valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
+        valve_disconnect_button.grid(row=1, column=2, padx=10, pady=10)
+
         # Label to display the current position of the valve
         self.current_valve_label = tk.Label(valve_frame, text="Current position of the valve: Not available") ## 2 positions available: ON and OFF
         self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
-    
-        # Disconnect button
-        # valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
-        # valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
     def connect_MFC(self):
         for index in range(3):
@@ -638,12 +643,12 @@ class AutomatedSystemUI:
         else:
             messagebox.showinfo("Connection Failed", "RVM is not connected")
          
-    # def disconnect_valve(self):
-    #     self.valve.disconnect()
-    #     #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
-    #     #updating the connection info
-    #     self.update_connection_devices()
-    #     self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
+    def disconnect_valve(self):
+        self.valve.disconnect()
+        #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
+        #updating the connection info
+        self.update_connection_devices()
+        self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
 
     def connect_all_devices(self):
         self.connect_MFC()

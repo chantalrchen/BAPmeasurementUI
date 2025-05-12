@@ -68,11 +68,10 @@ class BronkhorstMFC:
         ##the following is used just for simulating
         if self.connected:
             try:
-                if self.massflow < self.targetmassflow:
-                    self.massflow += (self.targetmassflow - self.massflow)/10
-                elif self.massflow > self.targetmassflow:
-                    self.massflow -= (self.targetmassflow - self.massflow)/10
-                return self.massflow
+                self.massflow += (self.targetmassflow - self.massflow) * 0.1
+                if abs(self.massflow - self.targetmassflow) < 0.001:
+                    self.massflow = self.targetmassflow
+                return self.massflow          
             except Exception as err:
                 messagebox.showerror("Error",
                     f"An error occurred while reading the mass flow rate: {err}"
@@ -176,14 +175,10 @@ class Koelingsblok:
             elif dummy == 1:                
                 if self.connected:
                     try:
-                        if self.temperature < self.targettemperature:
-                            self.temperature += (self.targettemperature - self.temperature)/10
-                            return self.temperature
-                        elif self.temperature > self.targettemperature:
-                            self.temperature -= (self.targettemperature - self.temperature)/10
-                            return self.temperature
-                        else:
-                            return self.temperature
+                        self.temperature += (self.targettemperature - self.temperature) * 0.1
+                        if abs(self.temperature - self.targettemperature) < 0.001:
+                            self.temperature = self.targettemperature
+                        return self.temperature
                     except Exception as err:
                         messagebox.showerror("Error",
                             f"An error occurred while reading the temperature: {err}"

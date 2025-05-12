@@ -5,6 +5,7 @@ import serial   # Cooling and Valve
 import time 
 import json
 import os
+import amfTools
 
 class BronkhorstMFC:
     def __init__(self, port = "COM1"):
@@ -36,9 +37,9 @@ class BronkhorstMFC:
     def ensure_units(self):
         ##the following should be connected when connected with Bronkhorst MFC
         # if self.connected and self.instrument is not None:
-        #     unit_index = self.instrument.readParameter(23)
+        #     unit_index = self.instrument.readParameter(23)           
         #     if unit_index != 2:
-        #         self.instrument.writeParameter(23, 2)
+        #         self.instrument.writeParameter(23, 2)             #see page 21 not sure about this
         #     return True
         # else:
         #     messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
@@ -122,7 +123,7 @@ class Koelingsblok:
         self.instrument = None
         self.temperature = 0
         self.targettemperature = 0
-        self.dummy = 0;
+        self.dummy = 0
     
     def connect(self):
         
@@ -231,25 +232,30 @@ class Koelingsblok:
             messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
             return False #Operation failed
 
+## old version
 class RVM:
     def __init__(self, port = "COM3"):
         self.port = port
         self.connected = False
         self.instrument = None
-        self.currentposition = 0
+        self.currentposition = 0# 2 postions 
+        self.rotation_delay = 0.4  #the rotation time for 180 degree for RVMLP (1.5 s) and RVMFS (400 ms / 0.4s),
+
 
     def connect(self):
         # ##the following should be connected when connected with Bronkhorst MFC
         # try:
-        #     self.instrument = serial.Serial(self.port, 9600, 8, None, 1, 1000)
-        #     # Baudrate = 9600, Data bits = 8, Parity = None, Stop bit = 1, Timeout = 1000 sec!!!!;
+        #     self.instrument = serial.Serial(self.port, 9600, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, 0.6)
+        #     # Baudrate = 9600, Data bits = 8, Parity = None, Stop bit = 1, Timeout = 0.6 sec!!!!;     #RVMLP: timeout = 2.25 ; RVMFS: timeout = 0.6
         #     ##TIMEOUT SHOULD BE CHANGED AFTER WE KNOW WHAT KIND OF RVM IT IS!!!!
-        #     self.connected = True
-        # except Exception as err:
+        #     self.connected = True 
+        #     return True 
+        # except serial.SerialException as err:
         #     messagebox.showerror("Error",
         #         f"An error occurred while connecting the RVM Industrial Microfluidic Rotary Valve: {err}"
         #     )
-        # return False  # Operation failed
+        #     self.connected = False
+        #     return False  # Operation failed
         # ##
         
         ##the following is used only for simulation
@@ -258,9 +264,15 @@ class RVM:
         ##
     
     def disconnect(self):
+        if self.instrument and self.instrument.is_open:  #to check self.instrument is connect and the port is open
+            try: 
+                self.instrument.close()                      # close the port immediately
+            except serial.SerialException as err:
+                messagebox.showerror("Error", f"An error occurred while disconnecting the RVM Industrial Microfluidic Rotary Valve: {err}")
         self.connected = False
         self.instrument = None
-    
+
+     
     def initialize_valve(self):
         #when the instrument is connected use the following
         #if self.connected and self.instrument is not None:
@@ -268,16 +280,17 @@ class RVM:
         if self.connected:
             try:
                 self.instrument.write(b"/1ZR\r")
-                self.currentposition = 1
+                self.currentposition = 1  # default pair 1 (1-2) after init
                 return True
             except Exception as err:
                 messagebox.showerror("Error",
                     f"An error occurred while initializing the valve: {err}"
                 )
-                return False
+                return None
         else:
             return False #Operation Failed
-    
+
+
     def set_valve(self, position: int):
         #when the instrument is connected use the following
         #if self.connected and self.instrument is not None:
@@ -292,6 +305,7 @@ class RVM:
             try:
                 #self.instrument.write(b"/1b" + str(position).encode() + "R\r")
                 #if the above does not work, try: 
+                # self.instrument.write(b"/1B{position}R\r".encode())          #B or other rotation options (b, I, O) see commands page 35   #End line: Carriage Return (\r)
                 # self.instrument.write(f"/1b{position}R\r".encode()) 
                 self.currentposition = position
                 return True
@@ -304,6 +318,18 @@ class RVM:
             messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve is not connected.")
             return False #Operation failed
 
+
+    def set_valve(self, position):
+        if position not in [1, 2]:
+            messagebox.showerror("Error", "Position must be 1 or 2")
+            return False
+            
+        response = self.send_command(f"B{position}") #B or other rotation options (b, I, O) see commands page 35
+        if response and "@" in response:
+            self.current_position = position
+            return True
+        return False
+
     def current_valve_position(self):
         # Following when connected to the devices
         # self.instrument.write(b"/1?6R\r")  
@@ -314,8 +340,50 @@ class RVM:
         #valve_position =  self.instrument.readline().decode().strip()
         
         ##this is pure to simulate
-        valve_position = self.currentposition
+        response = self.send_command("?6")
+
+        valve_position = self.switch_pairs.get(self.currentposition)
         return valve_position
+
+
+class ProfileData:
+    def __init__(self, profiles_dir="profiles"):
+        self.profiles_dir = profiles_dir
+        self.current_profile = None
+        self.standard_profiles = {
+        }
+        
+        # Create profiles directory if it doesn't exist
+        if not os.path.exists(profiles_dir):
+            os.makedirs(profiles_dir)
+            
+        # Save standard profiles if they don't exist
+        for name, profile in self.standard_profiles.items():
+            file_path = os.path.join(self.profiles_dir, f"{name}.json")
+            if not os.path.exists(file_path):
+                with open(file_path, 'w') as f:
+                    json.dump(profile, f, indent=4)
+    
+    def get_profiles(self):
+        profiles = []
+        for filename in os.listdir(self.profiles_dir):
+            if filename.endswith('.json'):
+                profiles.append(filename[:-5])  # Remove .json extension
+        return profiles
+    
+    def load_profile(self, name):
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                self.current_profile = json.load(f)
+                return self.current_profile
+        return None
+    
+    def save_profile(self, name, profile):
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        with open(file_path, 'w') as f:
+            json.dump(profile, f, indent=4)
+        return True
 
 class MicrofluidicGasSupplySystemUI:
     def __init__(self, root):
@@ -468,6 +536,122 @@ class MicrofluidicGasSupplySystemUI:
         # Label to show the current port for valve at the bottom
         self.valve_current_port_label = ttk.Label(valve_tab, text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
         self.valve_current_port_label.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
+    
+        # def create_profile_tab(self):
+        # profile_frame = ttk.Frame(self.notebook)
+        # self.notebook.add(profile_frame, text="Profile Management")
+        
+        # # Split into two frames
+        # left_frame = ttk.Frame(profile_frame)
+        # left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # right_frame = ttk.Frame(profile_frame)
+        # right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # # Profile list frame
+        # list_frame = ttk.LabelFrame(left_frame, text="Available Profiles")
+        # list_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # # Profile listbox
+        # self.profile_listbox = tk.Listbox(list_frame)
+        # self.profile_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # self.update_profile_list()
+        
+        # # Profile buttons
+        # button_frame = ttk.Frame(list_frame)
+        # button_frame.pack(fill=tk.X, pady=5)
+        
+        # load_button = ttk.Button(button_frame, text="Load", command=self.load_selected_profile)
+        # load_button.pack(side=tk.LEFT, padx=5)
+        
+        # delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_profile)
+        # delete_button.pack(side=tk.LEFT, padx=5)
+        
+        # # Profile editor frame
+        # editor_frame = ttk.LabelFrame(right_frame, text="Profile Editor")
+        # editor_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # # Profile name
+        # name_frame = ttk.Frame(editor_frame)
+        # name_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        # ttk.Label(name_frame, text="Profile Name:").pack(side=tk.LEFT, padx=5)
+        # self.profile_name_var = tk.StringVar()
+        # name_entry = ttk.Entry(name_frame, textvariable=self.profile_name_var, width=30)
+        # name_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        
+        # # Profile description
+        # desc_frame = ttk.Frame(editor_frame)
+        # desc_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        # ttk.Label(desc_frame, text="Description:").pack(side=tk.LEFT, padx=5)
+        # self.profile_desc_var = tk.StringVar()
+        # desc_entry = ttk.Entry(desc_frame, textvariable=self.profile_desc_var, width=30)
+        # desc_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        
+        # # Profile steps
+        # steps_frame = ttk.LabelFrame(editor_frame, text="Profile Steps")
+        # steps_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # # Steps table
+        # self.steps_tree = ttk.Treeview(steps_frame, 
+        #                               columns=("Time", "Flow", "Temperature", "Valve"), 
+        #                               show="headings")
+        # self.steps_tree.heading("Time", text="Time (s)")
+        # self.steps_tree.heading("Flow", text="Flow (mL/min)")
+        # self.steps_tree.heading("Temperature", text="Temp (°C)")
+        # self.steps_tree.heading("Valve", text="Valve Pos")
+        
+        # self.steps_tree.column("Time", width=80)
+        # self.steps_tree.column("Flow", width=80)
+        # self.steps_tree.column("Temperature", width=80)
+        # self.steps_tree.column("Valve", width=80)
+        
+        # self.steps_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # # Step editor
+        # step_editor = ttk.Frame(editor_frame)
+        # step_editor.pack(fill=tk.X, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Time (s):").grid(row=0, column=0, padx=5, pady=5)
+        # self.step_time_var = tk.IntVar(value=0)
+        # time_entry = ttk.Entry(step_editor, textvariable=self.step_time_var, width=8)
+        # time_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Flow:").grid(row=0, column=2, padx=5, pady=5)
+        # self.step_flow_var = tk.DoubleVar(value=5.0)
+        # flow_entry = ttk.Entry(step_editor, textvariable=self.step_flow_var, width=8)
+        # flow_entry.grid(row=0, column=3, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Temp:").grid(row=0, column=4, padx=5, pady=5)
+        # self.step_temp_var = tk.DoubleVar(value=25.0)
+        # temp_entry = ttk.Entry(step_editor, textvariable=self.step_temp_var, width=8)
+        # temp_entry.grid(row=0, column=5, padx=5, pady=5)
+        
+        # ttk.Label(step_editor, text="Valve:").grid(row=0, column=6, padx=5, pady=5)
+        # self.step_valve_var = tk.IntVar(value=1)
+        # valve_combo = ttk.Combobox(step_editor, textvariable=self.step_valve_var, values=list(range(1, 7)), width=5)
+        # valve_combo.grid(row=0, column=7, padx=5, pady=5)
+        
+        # # Step buttons
+        # step_buttons = ttk.Frame(editor_frame)
+        # step_buttons.pack(fill=tk.X, padx=5, pady=5)
+        
+        # add_step_button = ttk.Button(step_buttons, text="Add Step", command=self.add_profile_step)
+        # add_step_button.pack(side=tk.LEFT, padx=5)
+        
+        # remove_step_button = ttk.Button(step_buttons, text="Remove Step", command=self.remove_profile_step)
+        # remove_step_button.pack(side=tk.LEFT, padx=5)
+        
+        # clear_steps_button = ttk.Button(step_buttons, text="Clear Steps", command=self.clear_profile_steps)
+        # clear_steps_button.pack(side=tk.LEFT, padx=5)
+        
+        # # Save profile button
+        # save_frame = ttk.Frame(editor_frame)
+        # save_frame.pack(fill=tk.X, padx=5, pady=10)
+        
+        # save_button = ttk.Button(save_frame, text="Save Profile", command=self.save_profile)
+        # save_button.pack(side=tk.RIGHT, padx=5)
         
     def connect_MFC(self):
         if self.MFC.connect():
