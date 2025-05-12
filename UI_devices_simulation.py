@@ -3,6 +3,7 @@ from tkinter import messagebox, ttk
 import propar   # Bronkhorst MFC
 import serial   # Cooling and Valve
 import time 
+import amfTools
 
 ###
 #MFC
@@ -28,7 +29,7 @@ class BronkhorstMFC:
         # return False  
 
 
-		##FOR SIMULATION
+        ##FOR SIMULATION
         self.connected = True
         return self.connected
     
@@ -54,8 +55,8 @@ class BronkhorstMFC:
         #     )
         # return False  
     
-    	#FOR SIMULATION
-     	return True
+        #FOR SIMULATION
+         return True
   
     def get_massflow(self):
         # ##the following should be connected when connected with Bronkhorst MFC
@@ -72,7 +73,7 @@ class BronkhorstMFC:
         #     messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
         #     return False  
 
-		##FOR SIMULATION
+        ##FOR SIMULATION
         if self.connected:
             try:
                 self.massflow += (self.targetmassflow - self.massflow) * 0.1
@@ -251,6 +252,7 @@ class RVM:
             self.instrument = amfTools.AMF(self.port)
 
         self.instrument.connect() 
+        
        ##the following is used only for simulation
         self.connected = True
         return self.connected
@@ -289,9 +291,9 @@ class RVM:
         except Exception as err:
             messagebox.showerror("Error",
                  f"An error occurred while initializing the RVM Industrial Microfluidic Rotary Valve : {err}")
+            
     
-    def set_valve(self, position: int):
-        
+    def set_valve(self, position: int):  
         if self.connected:
             if position != 1 and position != 2:
                 messagebox.showerror("Error",
@@ -301,8 +303,8 @@ class RVM:
         else:
             messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve  is not connected.")
             return False #Operation failed
-                
-        ## check if is in position 1 then move to postion 2 otherwise move to postion 1   
+        
+        ## check if is in position 1 then move to postion 2 otherwise give a warning
         if self.currentposition == 1:
             if position == 2:
                 # Move to position 2
@@ -311,6 +313,7 @@ class RVM:
                     time.sleep(self.rotation_delay)
                     self.currentposition = 2
                     print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
+                    return True
                 except Exception as err:
                     messagebox.showerror("Error",
                         f"An error occurred while moving to position 2/OFF state : {err}")
@@ -326,6 +329,7 @@ class RVM:
                     self.instrument.valveShortestPath(1)
                     self.currentposition = 1
                     print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
+                    return True
                 except Exception as err:
                    messagebox.showerror("Error",
                         f"An error occurred while moving to position 1/ON tate : {err}")
@@ -507,15 +511,15 @@ class AutomatedSystemUI:
         MFC_connect_button = tk.Button(all_mfc_frame, text="Connect All MFCs", command= lambda: self.connect_MFC())
         MFC_connect_button.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky='ew')
 
-		# # Disconnect button
-		# MFC_disconnect_button = tk.Button(mfc_frame, text="Disconnect", command= lambda i = index : self.disconnect_MFC(i))
-		# MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        # # Disconnect button
+        # MFC_disconnect_button = tk.Button(mfc_frame, text="Disconnect", command= lambda i = index : self.disconnect_MFC(i))
+        # MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
         ############	COOLING		###########################
         cooling_frame = ttk.LabelFrame(device_tab, text='Cooling')
         cooling_frame.pack(fill='x', padx=10, pady=5)
         
-		# label for the temp
+        # label for the temp
         temperature_label = tk.Label(cooling_frame, text="Temperature (°C):")
         temperature_label.grid(row=0, column=0, padx=10, pady=10)
         
@@ -557,7 +561,10 @@ class AutomatedSystemUI:
         ttk.Label(valve_frame, text="Valve Position:").grid(row=0, column=0, padx=10, pady=10)
         self.valve_pos_var = tk.IntVar(value=1)
         ttk.Combobox(valve_frame, textvariable=self.valve_pos_var, values=[1, 2], width=5).grid(row=0, column=1, padx=10, pady=10)
-        
+
+        # # button to switch the position
+        # set_valve_button = tk.Button(valve_frame, text="Switch position", command=self.set_valve)
+        # set_valve_button.grid(row=1, column=0, columnspan=2, pady=10)
         # button to set the position of the valve
         set_valve_button = tk.Button(valve_frame, text="Set valve", command=self.set_valve)
         set_valve_button.grid(row=1, column=0, columnspan=2, pady=10)
@@ -567,10 +574,10 @@ class AutomatedSystemUI:
         valve_connect_button.grid(row=1, column=1, padx=10, pady=10)
         
         # Label to display the current position of the valve
-        self.current_valve_label = tk.Label(valve_frame, text="Current position of the valve: Not available")
+        self.current_valve_label = tk.Label(valve_frame, text="Current position of the valve: Not available") ## 2 positions available: ON and OFF
         self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
     
-        # # Disconnect button
+        # Disconnect button
         # valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
         # valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
