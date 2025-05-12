@@ -3,6 +3,7 @@ from tkinter import messagebox, ttk
 import propar   # Bronkhorst MFC
 import serial   # Cooling and Valve
 import time 
+import amfTools
 
 ###
 #MFC
@@ -20,6 +21,7 @@ class BronkhorstMFC:
         try:
             self.instrument = propar.instrument(self.port, channel = self.channel)
             self.connected = True
+            self.initialize()
             return self.connected
         except Exception as err:
             messagebox.showerror("Error",
@@ -175,6 +177,112 @@ class Koelingsblok:
             return False #Operation failed
 
 ####CLASS RVM AHAHHSDAHASIJDKKJSAHDKJASHDJKSAH
+class RVM:
+    def __init__(self, port = "COM5"):
+        self.port = port
+        self.connected = False
+        self.instrument = None
+        self.currentposition = 0 #home status
+        self.rotation_delay = 0.4  #the rotation time for 180 degree for RVMLP (1.5 s) and RVMFS (400 ms / 0.4s),
+
+    def connect(self):
+        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+        for valve in valve_list:
+            if "RVM" in valve.deviceType:
+                self.instrument = amfTools.AMF(valve)
+                break
+
+        if self.instrument is None:
+            # Try forced port connection if no RVM detected
+            self.instrument = amfTools.AMF(self.port)
+
+        self.instrument.connect() 
+        self.initialize_valve()
+        
+       ##the following is used only for simulation
+        self.connected = True
+        return self.connected
+        ##
+    
+    def disconnect(self):
+        if self.connected and self.instrument:
+            try:
+                self.instrument.disconnect()
+                print("RVM disconnected.")
+            except Exception as err: 
+                messagebox.showerror("Error",
+                    f"An error occurred while disconnecting RVM Industrial Microfluidic Rotary Valve: {err}")
+        self.connected = False
+
+    #home status 
+    def initialize_valve(self): 
+        if not self.connected:
+            raise ConnectionError("RVM Industrial Microfluidic Rotary Valve is not connected.")
+        
+        # Check if the product is homed (if not, home it)
+        try:
+            if not self.instrument.getHomeStatus(): 
+                self.instrument.home()
+                time.sleep(self.rotation_delay)  # Give time for homing
+
+            else:
+                print("RVM Industrial Microfluidic Rotary Valve is already homed.")
+
+            # Always move to position 1 after homing (default start position)
+            self.instrument.valveShortestPath(1)
+            time.sleep(self.rotation_delay) #give time for rotation
+            self.currentposition = 1
+            print("RVM Industrial Microfluidic Rotary Valve moved to position 1/ON State.")
+
+        except Exception as err:
+            messagebox.showerror("Error",
+                 f"An error occurred while initializing the RVM Industrial Microfluidic Rotary Valve : {err}")
+            
+    
+    def set_valve(self, position: int):  
+        if self.connected:
+            if position != 1 and position != 2:
+                messagebox.showerror("Error",
+                    f"The position of the RVM Industrial Microfluidic Rotary Valve can only be 1 or 2, but received: {position}"
+                )
+                return False
+        else:
+            messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve  is not connected.")
+            return False #Operation failed
+        
+        ## check if is in position 1 then move to postion 2 otherwise give a warning
+        if self.currentposition == 1:
+            if position == 2:
+                # Move to position 2
+                try:
+                    self.instrument.valveShortestPath(2)
+                    time.sleep(self.rotation_delay)
+                    self.currentposition = 2
+                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
+                    return True
+                except Exception as err:
+                    messagebox.showerror("Error",
+                        f"An error occurred while moving to position 2/OFF state : {err}")
+            elif position == 1:
+                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}")
+            else:
+                print(f"Invalid position: {position}")
+           
+        elif self.currentposition == 2:
+            if position == 1:
+                # Move to position 1
+                try:
+                    self.instrument.valveShortestPath(1)
+                    self.currentposition = 1
+                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
+                    return True
+                except Exception as err:
+                   messagebox.showerror("Error",
+                        f"An error occurred while moving to position 1/ON tate : {err}")
+            elif position == 2:
+                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}")
+            else:
+                print(f"Invalid position: {position}")
 
 class AutomatedSystemUI:
     def __init__(self, root):
@@ -494,15 +602,6 @@ class AutomatedSystemUI:
         MFC1_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC_port_var)
         MFC1_port_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        # ttk.Label(MFC_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
-        # self.MFC2_port_var = tk.StringVar(value=self.mfcs[1].port)
-        # MFC2_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC2_port_var)
-        # MFC2_port_entry.grid(row=1, column=1, padx=5, pady=5)
-
-        # ttk.Label(MFC_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
-        # self.MFC3_port_var = tk.StringVar(value=self.mfcs[2].port)
-        # MFC3_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC3_port_var)
-        # MFC3_port_entry.grid(row=2, column=1, padx=5, pady=5)
         
         # Cooling settings
         cooling_frame = ttk.LabelFrame(settings_window, text="Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")

@@ -21,6 +21,7 @@ class BronkhorstMFC:
         # try:
         #     self.instrument = propar.instrument(self.port, channel = self.channel)
         #     self.connected = True
+        #     self.initialize()
         #     return self.connected
         # except Exception as err:
         #     messagebox.showerror("Error",
@@ -200,11 +201,11 @@ class Koelingsblok:
             try:
                 #the cooling system can only lower the temperature by 30 degrees below ambient
                 min_temp = temp_ambient - 30
-                print(temp_ambient, min_temp)
                 if value < min_temp:
-                    print("hoi")
                     messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {temp_ambient:.2f}. The temperature may not exceed {min_temp:.2f} °C")
                     self.targettemperature = min_temp
+                    
+                    ###OFFICIAL
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
                     # self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
                     
@@ -215,11 +216,14 @@ class Koelingsblok:
                     return True
                 else:
                     self.targettemperature = value
+                    
+                    ##OFFICIAL
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
                     # self.instrument.write(b"n" + str(value).encode() + "\r") 
                     
                     #if the above does not work, try: self.instrument.write(f"n{value}\r".encode()) 
                     # 100ms delay after each command sent (after \r)
+                    
                     time.sleep(0.1) 
                     return True
             except Exception as err:
@@ -242,6 +246,9 @@ class RVM:
 
     def connect(self):
         valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+        
+        valve: amfTools.Device = None
+        self.instrument: amfTools.AMF = None
         for valve in valve_list:
             if "RVM" in valve.deviceType:
                 self.instrument = amfTools.AMF(valve)
@@ -252,6 +259,7 @@ class RVM:
             self.instrument = amfTools.AMF(self.port)
 
         self.instrument.connect() 
+        self.initialize_valve()
         
        ##the following is used only for simulation
         self.connected = True
@@ -578,8 +586,8 @@ class AutomatedSystemUI:
         self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
     
         # Disconnect button
-        # valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
-        # valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
+        valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
     def connect_MFC(self):
         for index in range(3):
@@ -621,12 +629,12 @@ class AutomatedSystemUI:
         else:
             messagebox.showinfo("Connection Failed", "RVM is not connected")
          
-    # def disconnect_valve(self):
-    #     self.valve.disconnect()
-    #     #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
-    #     #updating the connection info
-    #     self.update_connection_devices()
-    #     self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
+    def disconnect_valve(self):
+        self.valve.disconnect()
+        #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
+        #updating the connection info
+        self.update_connection_devices()
+        self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
 
     def connect_all_devices(self):
         self.connect_MFC()

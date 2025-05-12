@@ -327,7 +327,6 @@ class MicrofluidicGasSupplySystemUI:
         self.MFC = BronkhorstMFC()
         self.cooling = Koelingsblok()
         self.valve = RVM()
-        self.profiledata = ProfileData()
         
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill='both', expand=True)
