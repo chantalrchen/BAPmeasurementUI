@@ -265,7 +265,7 @@ class RVM:
         self.instrument = None
         self.currentposition = 1 #home status
         self.rotation_delay = 0.4  #the rotation time for 180 degree for RVMLP (1.5 s) and RVMFS (400 ms / 0.4s),
-
+        
     def connect(self):
         #Following should be 
         # valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
@@ -332,27 +332,32 @@ class RVM:
                 )
                 return False
         else:
-            messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve  is not connected.")
+            messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve is not connected.")
             return False #Operation failed
         
+        print(self.currentposition)
         ## check if is in position 1 then move to postion 2 otherwise give a warning
         if self.currentposition == 1:
             if position == 2:
                 # Move to position 2
                 try:
-        
                     # self.instrument.valveShortestPath(2)
                     # time.sleep(self.rotation_delay)
-                    # self.currentposition = 2
-                    # print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
+                    self.currentposition = 2
+                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
+                    # print('IT IS RUNNNINGGGG IN POSITION RUNNING TO 2')
                     return True
                 except Exception as err:
                     messagebox.showerror("Error",
                         f"An error occurred while moving to position 2/OFF state : {err}")
+                    return False
             elif position == 1:
                 print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/OFF state")
+                # print(" SAME POSITION ERRR")
+                return False
             else:
                 print(f"Invalid position: {position}")
+                return False
            
         elif self.currentposition == 2:
             if position == 1:
@@ -360,19 +365,22 @@ class RVM:
                 try:
                     # self.instrument.valveShortestPath(1)
                     # time.sleep(self.rotation_delay)
-                    # self.currentposition = 1
-                    # print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
+                    self.currentposition = 1
+                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
+                    # print('IT IS RUNNNINGGGG IN POSITION RUNNING TO 1')
                     return True
                 except Exception as err:
                    messagebox.showerror("Error",
                         f"An error occurred while moving to position 1/ON tate : {err}")
+                   return False
             elif position == 2:
                 print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
+                # print(" SAME POSITION ERRR")
+                return False
             else:
                 print(f"Invalid position: {position}")
+                return False
 
-
-    
 class AutomatedSystemUI:
     def __init__(self, root):
         self.root = root
@@ -652,7 +660,7 @@ class AutomatedSystemUI:
             self.update_connection_devices()
             
             #initializing the home position of the valve
-            self.currentposition = 1
+            self.currentposition = self.valve.currentposition
             
             self.status_var.set(f"RVM Industrial Microfluidic Rotary valve connected and set to home position 1")
         else:
@@ -791,21 +799,23 @@ class AutomatedSystemUI:
         self.notebook.after(1000, self.update_temperature) 
         
     def set_valve(self):
-        position = self.valve_pos_var.get()
-        if self.valve.set_valve(position):
+        target_position = self.valve_pos_var.get()
+        if self.valve.set_valve(target_position):
             self.update_valve()
+        else:
+            self.status_var.set(f"The target position is the current position: {self.valve.currentposition}.")
+            self.update_run_var()
+            return False
 
     def update_valve(self):
-        target_position = self.valve.currentposition
+        position = self.valve.currentposition
         self.update_run_var()
-        if target_position is not None:
-            if self.currentposition != target_position:                
-                self.current_valve_label.config(text=f"Current position of the valve: {target_position}")
-                self.status_var.set(f"The position is set to {target_position}.")
-            else:
-                self.status_var.set(f"The target position is the current position, position {target_position}.")
+        if position is not None:
+            self.current_valve_label.config(text=f"Current position of the valve: {position}")
+            self.status_var.set(f"Valve moved to position {position}.")
         else:
             self.status_var.set("Failed to read the position of the valve.")
+
     
         
 def main():
