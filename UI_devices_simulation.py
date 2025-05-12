@@ -803,7 +803,7 @@ class AutomatedSystemUI:
         if self.valve.set_valve(target_position):
             self.update_valve()
         else:
-            self.status_var.set(f"The target position is the current position: {self.valve.currentposition}.")
+            self.status_var.set(f"The target position is the current position: {self.valve.currentposition}. The position of the valve will not be changed.")
             self.update_run_var()
             return False
 
