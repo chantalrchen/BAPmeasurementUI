@@ -25,7 +25,7 @@ class BronkhorstMFC:
             return self.connected
         except Exception as err:
             messagebox.showerror("Error",
-                f"An error occurred while connecting the Bronkhorst MFC with channel "#{self.channel}: {err}"
+                f"An error occurred while connecting the Bronkhorst MFC with port {self.port}: {err}"
             )
         return False  
 
@@ -549,10 +549,10 @@ class AutomatedSystemUI:
             target_massflow_label = tk.Label(mfc_frame, text=f"Target mass flow rate: {self.mfcs[index].targetmassflow:.2f} mL/min")
             target_massflow_label.grid(row=2, column=1, padx=10, pady=10)
             self.target_massflow_labels.append(target_massflow_label)  # Store the label reference
-        
-        # Connect button
-        MFC_connect_button = tk.Button(all_mfc_frame, text="Connect All MFCs", command= lambda: self.connect_MFC())
-        MFC_connect_button.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky='ew')
+            
+            # Connect button
+            MFC_connect_button = tk.Button(mfc_frame, text="Connect", command=lambda i = index :self.connect_MFC(i))
+            MFC_connect_button.grid(row=3, column=0, padx=10, pady=10)
 
         # # Disconnect button
         # MFC_disconnect_button = tk.Button(mfc_frame, text="Disconnect", command= lambda i = index : self.disconnect_MFC(i))
@@ -623,15 +623,16 @@ class AutomatedSystemUI:
         # Label to display the current position of the valve
         self.current_valve_label = tk.Label(valve_frame, text="Current position of the valve: Not available") ## 2 positions available: ON and OFF
         self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
-
-    def connect_MFC(self):
-        for index in range(3):
-            if self.mfcs[index].connect():
-                self.update_connection_devices()
-                self.status_var.set(f"MFC {index + 1} connected")
-            else:
-                messagebox.showinfo("Connection Failed", f"MFC {index + 1} is not connected")
-
+        
+    def connect_MFC(self, index):
+        if self.mfcs[index].connect():
+            #messagebox.showinfo("Connection", "MFC successfully connected.")
+            #updating the connection info
+            self.update_connection_devices()
+            self.status_var.set(f"MFC {index + 1} connected")
+        else:
+            messagebox.showinfo("Connection Failed", f"MFC {index + 1} is not connected")
+            
     # def disconnect_MFC(self, index):
     #     self.mfcs[index].disconnect()
     #     #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
@@ -676,7 +677,9 @@ class AutomatedSystemUI:
         self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
 
     def connect_all_devices(self):
-        self.connect_MFC()
+        self.connect_MFC(index = 0)
+        self.connect_MFC(index = 1)
+        self.connect_MFC(index = 2)
         self.connect_cooling()
         self.connect_valve()
         self.status_var.set(f"MFC, Torrey Pines IC20XR Digital Chilling/Heating Dry Baths and RVM Industrial Microfluidic Rotary valve connected")
@@ -704,19 +707,19 @@ class AutomatedSystemUI:
         MFC_frame.pack(fill="both", padx=10, pady=10)
         
         ttk.Label(MFC_frame, text="Port:").grid(row=0, column=0, padx=5, pady=5)
-        self.MFC_port_var = tk.StringVar(value=self.mfcs[0].port)
-        MFC1_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC_port_var)
+        self.MFC1_port_var = tk.StringVar(value=self.mfcs[0].port)
+        MFC1_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC1_port_var)
         MFC1_port_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        # ttk.Label(MFC_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
-        # self.MFC2_port_var = tk.StringVar(value=self.mfcs[1].port)
-        # MFC2_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC2_port_var)
-        # MFC2_port_entry.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(MFC_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
+        self.MFC2_port_var = tk.StringVar(value=self.mfcs[1].port)
+        MFC2_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC2_port_var)
+        MFC2_port_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        # ttk.Label(MFC_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
-        # self.MFC3_port_var = tk.StringVar(value=self.mfcs[2].port)
-        # MFC3_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC3_port_var)
-        # MFC3_port_entry.grid(row=2, column=1, padx=5, pady=5)
+        ttk.Label(MFC_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
+        self.MFC3_port_var = tk.StringVar(value=self.mfcs[2].port)
+        MFC3_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC3_port_var)
+        MFC3_port_entry.grid(row=2, column=1, padx=5, pady=5)
         
         # Cooling settings
         cooling_frame = ttk.LabelFrame(settings_window, text="Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
@@ -740,9 +743,9 @@ class AutomatedSystemUI:
         save_button.pack(pady=10)
         
     def save_settings(self):
-        self.mfcs[0].port = self.MFC_port_var.get()
-        self.mfcs[1].port = self.MFC_port_var.get()
-        self.mfcs[2].port = self.MFC_port_var.get()
+        self.mfcs[0].port = self.MFC1_port_var.get()
+        self.mfcs[1].port = self.MFC2_port_var.get()
+        self.mfcs[2].port = self.MFC3_port_var.get()
         self.cooling.port = self.cooling_port_var.get()
         self.valve.port = self.valve_port_var.get()
         
