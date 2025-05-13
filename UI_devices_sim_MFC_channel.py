@@ -20,6 +20,7 @@ class BronkhorstMFC:
     def connect(self):
         try:
             self.instrument = propar.instrument(self.port, channel = self.channel)
+            print("I am in the MFC connecting function. My port is ", self.port, "and my channel is", self.channel)
             self.connected = True
             self.initialize()
             return self.connected
@@ -153,6 +154,7 @@ class Koelingsblok:
         # # 100 ms delay, so a timeout of 1s should be enough
         try:
             self.instrument = serial.Serial(self.port, 9600, timeout = 1)
+            print("I am in the Cooling connecting function. My port is ", self.port)
             self.connected = True
             return self.connected
         except Exception as err:
@@ -282,6 +284,7 @@ class RVM:
             self.instrument = amfTools.AMF(self.port)
 
         self.instrument.connect() 
+        print("I am in the RVM connecting function. My port is ", self.port)
         self.initialize_valve()
         
        ##SIMULATION the following is used only for simulation
@@ -386,8 +389,6 @@ class AutomatedSystemUI:
         self.root.title("Automated System")
         self.root.geometry("1400x800")
         
-        ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
-        ##Daarnaast zijn de porten dan ook niet aligned aahh
         self.mfcs = [BronkhorstMFC(port = 'COM1', channel = 1),  BronkhorstMFC(port = 'COM1', channel = 2), BronkhorstMFC(port = 'COM1', channel = 3)]
         self.cooling = Koelingsblok()
         self.valve = RVM()
