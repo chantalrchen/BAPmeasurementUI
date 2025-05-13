@@ -8,24 +8,24 @@ import amfTools
 ###
 #MFC
 class BronkhorstMFC:
-    def __init__(self, port = "COM1", channel = 1):
+    def __init__(self, port = "COM3"):
         self.port = port
         self.connected = False
         self.instrument = None
-        self.channel = channel
+        # self.channel = channel
         self.massflow = 0
         self.targetmassflow = 0
         self.maxmassflow = 4.0
         
     def connect(self):
         try:
-            self.instrument = propar.instrument(self.port, channel = self.channel)
+            self.instrument = propar.instrument(self.port) # channel = self.channel)
             self.connected = True
             self.initialize()
             return self.connected
         except Exception as err:
             messagebox.showerror("Error",
-                f"An error occurred while connecting the Bronkhorst MFC with channel {self.channel}: {err}"
+                f"An error occurred while connecting the Bronkhorst MFC with channel "#{self.channel}: {err}"
             )
         return False  
 
@@ -59,7 +59,7 @@ class BronkhorstMFC:
 
         except Exception as err:
             messagebox.showerror("Error",
-                f"An error occurred while initializing the Bronkhorst MFC with channel {self.channel}: {err}"
+                f"An error occurred while initializing the Bronkhorst MFC with channel"# {self.channel}: {err}"
             )
         return False  
     
@@ -259,7 +259,7 @@ class Koelingsblok:
 
 
 class RVM:
-    def __init__(self, port = "COM5"):
+    def __init__(self, port = "COM4"):
         self.port = port
         self.connected = False
         self.instrument = None
@@ -268,20 +268,23 @@ class RVM:
 
     def connect(self):
         #Following should be 
-        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+        # valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
 
-        valve : amfTools.Device = None
-        self.instrument : amfTools.AMF = None
-        for valve in valve_list:
-            if "RVM" in valve.deviceType:
-                self.instrument = amfTools.AMF(valve)
-                break
+        # valve : amfTools.Device = None
+        # self.instrument : amfTools.AMF = None
+        # for valve in valve_list:
+        #     if "RVM" in valve.deviceType:
+        #         self.instrument = amfTools.AMF(valve)
+        #         break
 
-        if self.instrument is None:
-            # Try forced port connection if no RVM detected
-            self.instrument = amfTools.AMF(self.port)
+        # if self.instrument is None:
+        #     # Try forced port connection if no RVM detected
+        #     self.instrument = amfTools.AMF(self.port)
+
+        self.instrument = amfTools.AMF(self.port)
 
         self.instrument.connect() 
+        print("connection",self.connected)
         self.initialize_valve()
         
        ##SIMULATION the following is used only for simulation
@@ -388,7 +391,7 @@ class AutomatedSystemUI:
         
         ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
         ##Daarnaast zijn de porten dan ook niet aligned aahh
-        self.mfcs = [BronkhorstMFC(port = 'COM1', channel = 0),  BronkhorstMFC(port = 'COM1', channel = 1), BronkhorstMFC(port = 'COM1', channel = 2)]
+        self.mfcs = [BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM5')] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
         self.cooling = Koelingsblok()
         self.valve = RVM()
         
