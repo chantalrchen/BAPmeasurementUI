@@ -388,7 +388,7 @@ class AutomatedSystemUI:
         
         ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
         ##Daarnaast zijn de porten dan ook niet aligned aahh
-        self.mfcs = [BronkhorstMFC(port = 'COM1', channel = 0),  BronkhorstMFC(port = 'COM1', channel = 1), BronkhorstMFC(port = 'COM1', channel = 2)]
+        self.mfcs = [BronkhorstMFC(port = 'COM1', channel = 1),  BronkhorstMFC(port = 'COM1', channel = 2), BronkhorstMFC(port = 'COM1', channel = 3)]
         self.cooling = Koelingsblok()
         self.valve = RVM()
         
