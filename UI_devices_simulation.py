@@ -18,21 +18,21 @@ class BronkhorstMFC:
         self.maxmassflow = 4.0
         
     def connect(self):
-        # try:
-        #     self.instrument = propar.instrument(self.port, channel = self.channel)
-        #     self.connected = True
-        #     self.initialize()
-        #     return self.connected
-        # except Exception as err:
-        #     messagebox.showerror("Error",
-        #         f"An error occurred while connecting the Bronkhorst MFC with channel {self.channel}: {err}"
-        #     )
-        # return False  
+        try:
+            self.instrument = propar.instrument(self.port, channel = self.channel)
+            self.connected = True
+            self.initialize()
+            return self.connected
+        except Exception as err:
+            messagebox.showerror("Error",
+                f"An error occurred while connecting the Bronkhorst MFC with channel {self.channel}: {err}"
+            )
+        return False  
 
 
         ##FOR SIMULATION
-        self.connected = True
-        return self.connected
+        # self.connected = True
+        # return self.connected
     
     #reset the value, fsetpoint = 0 
     def disconnect(self):
@@ -51,57 +51,57 @@ class BronkhorstMFC:
         
     
     def initialize(self):
-        # try:
-        #     # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
-        #     param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 32000}]
-        #     self.instrument.write_parameters(param)
+        try:
+            # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
+            param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 32000}]
+            self.instrument.write_parameters(param)
             
 
-        # except Exception as err:
-        #     messagebox.showerror("Error",
-        #         f"An error occurred while initializing the Bronkhorst MFC with channel {self.channel}: {err}"
-        #     )
-        # return False  
+        except Exception as err:
+            messagebox.showerror("Error",
+                f"An error occurred while initializing the Bronkhorst MFC with channel {self.channel}: {err}"
+            )
+        return False  
     
         #FOR SIMULATION
-         return True
+        #  return True
   
     def get_massflow(self):
-        # ##the following should be connected when connected with Bronkhorst MFC
-        # if self.connected and self.instrument is not None:  # device is connected and assigned
-        #     try:
-        #         param = [{'proc_nr':  33, 'parm_nr': 0, 'parm_type': propar.PP_TYPE_FLOAT}] #Fmeasure
-        #         self.massflow = self.instrument.read_parameters(param)
-        #         return self.massflow  
-        #     except Exception as err:
-        #         messagebox.showerror("Error",
-        #             f"An error occurred while reading the mass flow rate: {err}"
-        #         )
-        #         return False  
-        # else:
-        #     messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
-        #     return False  
-
-        ##FOR SIMULATION
-        if self.connected:
+        ##the following should be connected when connected with Bronkhorst MFC
+        if self.connected and self.instrument is not None:  # device is connected and assigned
             try:
-                self.massflow += (self.targetmassflow - self.massflow) * 0.1
-                if abs(self.massflow - self.targetmassflow) < 0.001:
-                    self.massflow = self.targetmassflow
-                return self.massflow
+                param = [{'proc_nr':  33, 'parm_nr': 0, 'parm_type': propar.PP_TYPE_FLOAT}] #Fmeasure
+                self.massflow = self.instrument.read_parameters(param)
+                return self.massflow  
             except Exception as err:
                 messagebox.showerror("Error",
                     f"An error occurred while reading the mass flow rate: {err}"
                 )
-                return False
+                return False  
         else:
-            messagebox.showerror("Error","The Bronkhorst MFC is not connected.")
-            return False 
+            messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
+            return False  
+
+        ##FOR SIMULATION
+        # if self.connected:
+        #     try:
+        #         self.massflow += (self.targetmassflow - self.massflow) * 0.1
+        #         if abs(self.massflow - self.targetmassflow) < 0.001:
+        #             self.massflow = self.targetmassflow
+        #         return self.massflow
+        #     except Exception as err:
+        #         messagebox.showerror("Error",
+        #             f"An error occurred while reading the mass flow rate: {err}"
+        #         )
+        #         return False
+        # else:
+        #     messagebox.showerror("Error","The Bronkhorst MFC is not connected.")
+        #     return False 
 
     def set_massflow(self, value: float):
         ##the following should be connected when connected with Bronkhorst MFC
-        # if self.connected and self.instrument is not None:  # device is connected and assigned
-        if self.connected:
+        if self.connected and self.instrument is not None:  # device is connected and assigned
+        # if self.connected:
             try:
                 if value < 0:
                     messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
@@ -112,8 +112,8 @@ class BronkhorstMFC:
                     
                     # ####
                     # ##the following should be connected when connected with Bronkhorst MFC
-                    # param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
-                    # self.instrument.write_parameters(param)
+                    param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
+                    self.instrument.write_parameters(param)
                     # ###
                     
                     return True
@@ -122,11 +122,11 @@ class BronkhorstMFC:
                     
                     #####
                     ###the following should be connected when connected with Bronkhorst MFC
-                    ## param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
-                    ## self.instrument.write_parameters(param1) #Fsetpoint
+                    param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
+                    self.instrument.write_parameters(param1) #Fsetpoint
                     ####
                     
-                return True  
+                    return True  
             except Exception as err:
                 messagebox.showerror("Error",
                     f"An error occurred while setting the mass flow rate: {err}"
@@ -151,21 +151,21 @@ class Koelingsblok:
         # ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
         # # p24: 9600 baud, 1 stop bit, no parity, no hardware handshake, 100ms delay after each command sent (after \r)
         # # 100 ms delay, so a timeout of 1s should be enough
-        # try:
-        #     self.instrument = serial.Serial(self.port, 9600, timeout = 1)
-        #     self.connected = True
-        #     return self.connected
-        # except Exception as err:
-        #     messagebox.showerror("Error",
-        #         f"An error occurred while connecting the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths: {err}"
-        #     )
-        # return False  # Operation failed
+        try:
+            self.instrument = serial.Serial(self.port, 9600, timeout = 1)
+            self.connected = True
+            return self.connected
+        except Exception as err:
+            messagebox.showerror("Error",
+                f"An error occurred while connecting the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths: {err}"
+            )
+        return False  # Operation failed
         # ##
         
         ##the following is used only for simulation
-        self.connected = True
-        return self.connected
-        ##
+        # self.connected = True
+        # return self.connected
+        # ##
     
     # reset the MFC value, flow rate to 0
     def disconnect(self):
@@ -175,51 +175,51 @@ class Koelingsblok:
         #self.connected = False
         #self.instrument = None
         
-    def get_temperature(self, dummy):
+    def get_temperature(self):
     
         # ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-        # if self.connected and self.instrument is not None: 
-        #     try:
-        #         # sending a request to read the temperature; The current plate temperature will be returned in a text string terminated by <CR><LF>, e.g. 14.3\r
-        #         self.instrument.write(b"p\r")  
-        #         # 100ms delay after each command sent (after \r)
-        #         time.sleep(0.1)  
-        #         self.response = self.instrument.read_until(b"\r").decode().strip()  # reads until \r
-        #         return self.response
-        #     except Exception as err:
-        #         messagebox.showerror("Error",
-        #             f"An error occurred while getting the temperature: {err}"
-        #         )
-        #         return False  # Operation failed
-        # else:
-        #     return False #Operation failed
+        if self.connected and self.instrument is not None: 
+            try:
+                # sending a request to read the temperature; The current plate temperature will be returned in a text string terminated by <CR><LF>, e.g. 14.3\r
+                self.instrument.write(b"p\r")  
+                # 100ms delay after each command sent (after \r)
+                time.sleep(0.1)  
+                self.response = self.instrument.read_until(b"\r").decode().strip()  # reads until \r
+                return self.response
+            except Exception as err:
+                messagebox.showerror("Error",
+                    f"An error occurred while getting the temperature: {err}"
+                )
+                return False  # Operation failed
+        else:
+            return False #Operation failed
         # ##
         
             ##the following is used only for simulation
-            if dummy == 0:
-                return self.temperature
-            elif dummy == 1:                
-                if self.connected:
-                    try:
-                        self.temperature += (self.targettemperature - self.temperature) * 0.1
-                        if abs(self.temperature - self.targettemperature) < 0.001:
-                            self.temperature = self.targettemperature
-                        return self.temperature
-                    except Exception as err:
-                        messagebox.showerror("Error",
-                            f"An error occurred while reading the temperature: {err}"
-                        )
-                        return False
-                else:
-                    messagebox.showerror("Error","The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
-                    return False  # Operation failed
+            # if dummy == 0:
+            #     return self.temperature
+            # elif dummy == 1:                
+            #     if self.connected:
+            #         try:
+            #             self.temperature += (self.targettemperature - self.temperature) * 0.1
+            #             if abs(self.temperature - self.targettemperature) < 0.001:
+            #                 self.temperature = self.targettemperature
+            #             return self.temperature
+            #         except Exception as err:
+            #             messagebox.showerror("Error",
+            #                 f"An error occurred while reading the temperature: {err}"
+            #             )
+            #             return False
+            #     else:
+            #         messagebox.showerror("Error","The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
+            #         return False  # Operation failed
         ##
 
     def set_temperature(self, value: float, temp_ambient):
 
         ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-        #if self.connected and self.instrument is not None: 
-        if self.connected:
+        if self.connected and self.instrument is not None: 
+        # if self.connected:
             try:
                 #the cooling system can only lower the temperature by 30 degrees below ambient
                 min_temp = temp_ambient - 30
@@ -229,7 +229,7 @@ class Koelingsblok:
                     
                     ###OFFICIAL
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-                    # self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
+                    self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
                     
                     #if the above does not work, try: 
                     # self.instrument.write(f"n{value}\r".encode()) 
@@ -241,7 +241,7 @@ class Koelingsblok:
                     
                     ##OFFICIAL
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-                    # self.instrument.write(b"n" + str(value).encode() + "\r") 
+                    self.instrument.write(b"n" + str(value).encode() + "\r") 
                     
                     #if the above does not work, try: self.instrument.write(f"n{value}\r".encode()) 
                     # 100ms delay after each command sent (after \r)
@@ -265,28 +265,28 @@ class RVM:
         self.instrument = None
         self.currentposition = 1 #home status
         self.rotation_delay = 0.4  #the rotation time for 180 degree for RVMLP (1.5 s) and RVMFS (400 ms / 0.4s),
-        
+
     def connect(self):
         #Following should be 
-        # valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
 
-        # valve : amfTools.Device = None
-        # self.instrument : amfTools.AMF = None
-        # for valve in valve_list:
-        #     if "RVM" in valve.deviceType:
-        #         self.instrument = amfTools.AMF(valve)
-        #         break
+        valve : amfTools.Device = None
+        self.instrument : amfTools.AMF = None
+        for valve in valve_list:
+            if "RVM" in valve.deviceType:
+                self.instrument = amfTools.AMF(valve)
+                break
 
-        # if self.instrument is None:
-        #     # Try forced port connection if no RVM detected
-        #     self.instrument = amfTools.AMF(self.port)
+        if self.instrument is None:
+            # Try forced port connection if no RVM detected
+            self.instrument = amfTools.AMF(self.port)
 
-        # self.instrument.connect() 
-        # self.initialize_valve()
+        self.instrument.connect() 
+        self.initialize_valve()
         
-       ##the following is used only for simulation
-        self.connected = True
-        return self.connected
+       ##SIMULATION the following is used only for simulation
+        # self.connected = True
+        # return self.connected
         ##
     
     def disconnect(self):
@@ -332,55 +332,54 @@ class RVM:
                 )
                 return False
         else:
-            messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve is not connected.")
+            messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve  is not connected.")
             return False #Operation failed
         
-        print(self.currentposition)
         ## check if is in position 1 then move to postion 2 otherwise give a warning
         if self.currentposition == 1:
             if position == 2:
                 # Move to position 2
                 try:
-                    # self.instrument.valveShortestPath(2)
-                    # time.sleep(self.rotation_delay)
+                    ##VOOR SIMULATION UITZETTEN
+                    self.instrument.valveShortestPath(2)
+                    time.sleep(self.rotation_delay)
+                    ###
+                    
                     self.currentposition = 2
                     print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
-                    # print('IT IS RUNNNINGGGG IN POSITION RUNNING TO 2')
                     return True
                 except Exception as err:
                     messagebox.showerror("Error",
                         f"An error occurred while moving to position 2/OFF state : {err}")
-                    return False
             elif position == 1:
                 print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/OFF state")
-                # print(" SAME POSITION ERRR")
                 return False
             else:
                 print(f"Invalid position: {position}")
-                return False
+                # return False
            
         elif self.currentposition == 2:
             if position == 1:
                 # Move to position 1
                 try:
-                    # self.instrument.valveShortestPath(1)
-                    # time.sleep(self.rotation_delay)
+                    ## VOOR SIMULATION UITZETTEN
+                    self.instrument.valveShortestPath(1)
+                    time.sleep(self.rotation_delay)
+                    ###
+                    
                     self.currentposition = 1
                     print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
-                    # print('IT IS RUNNNINGGGG IN POSITION RUNNING TO 1')
                     return True
                 except Exception as err:
                    messagebox.showerror("Error",
                         f"An error occurred while moving to position 1/ON tate : {err}")
-                   return False
             elif position == 2:
                 print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
-                # print(" SAME POSITION ERRR")
-                return False
             else:
                 print(f"Invalid position: {position}")
-                return False
 
+
+    
 class AutomatedSystemUI:
     def __init__(self, root):
         self.root = root
@@ -481,7 +480,7 @@ class AutomatedSystemUI:
         mass_flow_3 = f"{self.mfcs[2].get_massflow():.2f} mL/min" if self.mfcs[2].connected else "N/A"
 
         # Get temperature from cooling system
-        temperature = f"{self.cooling.get_temperature(1):.2f} °C" if self.cooling.connected else "N/A"
+        temperature = f"{self.cooling.get_temperature():.2f} °C" if self.cooling.connected else "N/A"
 
         # Get valve position from valve
         valve_position = self.valve.currentposition if self.valve.connected else "N/A"
@@ -660,7 +659,7 @@ class AutomatedSystemUI:
             self.update_connection_devices()
             
             #initializing the home position of the valve
-            self.currentposition = self.valve.currentposition
+            self.currentposition = 1
             
             self.status_var.set(f"RVM Industrial Microfluidic Rotary valve connected and set to home position 1")
         else:
@@ -787,7 +786,7 @@ class AutomatedSystemUI:
                 messagebox.showerror("Invalid Input", f"Please enter a floating number for target temperature. {e}")
                 
     def update_temperature(self):
-        current_temp = self.cooling.get_temperature(1)
+        current_temp = self.cooling.get_temperature()
         self.update_run_var()
         if current_temp is not None:
             self.current_temperature_label.config(text=f"Current temperature: {current_temp:.2f} °C")
@@ -799,23 +798,21 @@ class AutomatedSystemUI:
         self.notebook.after(1000, self.update_temperature) 
         
     def set_valve(self):
-        target_position = self.valve_pos_var.get()
-        if self.valve.set_valve(target_position):
+        position = self.valve_pos_var.get()
+        if self.valve.set_valve(position):
             self.update_valve()
-        else:
-            self.status_var.set(f"The target position is the current position: {self.valve.currentposition}. The position of the valve will not be changed.")
-            self.update_run_var()
-            return False
 
     def update_valve(self):
-        position = self.valve.currentposition
+        target_position = self.valve.currentposition
         self.update_run_var()
-        if position is not None:
-            self.current_valve_label.config(text=f"Current position of the valve: {position}")
-            self.status_var.set(f"Valve moved to position {position}.")
+        if target_position is not None:
+            if self.currentposition != target_position:                
+                self.current_valve_label.config(text=f"Current position of the valve: {target_position}")
+                self.status_var.set(f"The position is set to {target_position}.")
+            else:
+                self.status_var.set(f"The target position is the current position, position {target_position}.")
         else:
             self.status_var.set("Failed to read the position of the valve.")
-
     
         
 def main():
