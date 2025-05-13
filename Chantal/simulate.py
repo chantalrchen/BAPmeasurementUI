@@ -35,10 +35,10 @@ class BronkhorstMFC:
 
 
         ##FOR SIMULATION
-        # self.connected = True
-        # return self.connected
+        self.connected = True
+        return self.connected
     
-    #reset the value, fsetpoint = 0 
+    # reset the value, fsetpoint = 0 
     def disconnect(self):
         # try:
         #     param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
@@ -267,9 +267,8 @@ class Koelingsblok:
             messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
             return False #Operation failed
 
-
 class RVM:
-    def __init__(self, port = b'P201-O00004062'):
+    def __init__(self, port = 'COM4'):
         self.port = port
         self.connected = False
         self.instrument = None
@@ -278,25 +277,32 @@ class RVM:
 
     def connect(self):
         #Following should be 
-        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
-
-        valve : amfTools.Device = None
-        self.instrument : amfTools.AMF = None
-        for valve in valve_list:
-            if "RVM" in valve.deviceType:
-                self.instrument = amfTools.AMF(valve)
-                break
-
-        if self.instrument is None:
-            # Try forced port connection if no RVM detected
-            self.instrument = amfTools.AMF(b'P201-O00004062')
+        try:
+            valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
             
-        self.port = b'P201-O00004062'
-        # self.instrument = amfTools.AMF(self.port)
-        print("I am in the rvm connecting function. My port is ", self.port)
-        self.instrument.connect() 
-        print("connection",self.connected)
-        self.initialize_valve()
+            valve : amfTools.Device = None
+            self.instrument : amfTools.AMF = None
+            for valve in valve_list:
+                if "RVM" in valve.deviceType:
+                    self.instrument = amfTools.AMF(valve)
+                    break
+            
+            if self.instrument is None:
+                # Try forced port connection if no RVM detected
+                self.instrument = amfTools.AMF(self.port)
+                
+            print("I am in the rvm connecting function. My port is ", self.port)
+            self.instrument.connect() 
+            self.connected = True
+            print("connection",self.connected)
+            self.initialize_valve()
+            return True
+        
+        except Exception as err:
+            messagebox.showerror("Error",
+                    f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}")
+            self.connected = False
+            return False
         
        ##SIMULATION the following is used only for simulation
         # self.connected = True
@@ -391,6 +397,80 @@ class RVM:
                 print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
             else:
                 print(f"Invalid position: {position}")
+
+class ProfileManager:
+    def __init__(self, base_profiles_dir="profiles"):
+        self.profiles_dirs = {
+            "mfc": os.path.join(base_profiles_dir, "mfc"),
+            "cooling": os.path.join(base_profiles_dir, "cooling"),
+            "valve": os.path.join(base_profiles_dir, "valve"),
+        }
+        self.current_profiles = {"mfc": None, "cooling": None, "valve": None}
+
+        for path in self.profiles_dirs.values():
+            os.makedirs(path, exist_ok=True)
+        
+
+    def get_profiles(self, category):
+        profiles = []
+        path = self.profiles_dirs[category]
+        for filename in os.listdir(path):
+            if filename.endswith('.json'):
+                profiles.append(filename[:-5])
+        return sorted(profiles)
+
+    def load_profile(self, category, name):
+        file_path = os.path.join(self.profiles_dirs[category], f"{name}.json")
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                self.current_profiles[category] = json.load(f)
+                return self.current_profiles[category]
+        return None
+
+    def save_profile(self, category, name, profile_data):
+        file_path = os.path.join(self.profiles_dirs[category], f"{name}.json")
+        with open(file_path, 'w') as f:
+            json.dump(profile_data, f, indent=4)
+        return True
+
+    def delete_profile(self, category, name):
+        file_path = os.path.join(self.profiles_dirs[category], f"{name}.json")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        return False
+
+    def get_current_profile(self, category):
+        return self.current_profiles.get(category)
+
+    def clear_profile(self, category):
+        self.current_profiles[category] = None
+
+    def run_profile(self, category, steps_callback):
+        profile = self.get_current_profile(category)
+        if not profile:
+            return False
+
+        steps = profile.get("steps", [])
+        if not steps:
+            return False
+
+        steps = sorted(steps, key=lambda x: x["time"])
+
+        start_time = time.time()
+        step_index = 0
+
+        while step_index < len(steps):
+            elapsed = time.time() - start_time
+            current_step = steps[step_index]
+
+            if elapsed >= current_step["time"]:
+                steps_callback(current_step)
+                step_index += 1
+            else:
+                time.sleep(0.1)
+
+        return True
     
 class AutomatedSystemUI:
     def __init__(self, root):
@@ -466,6 +546,57 @@ class AutomatedSystemUI:
 
         self.create_menu()
         self.create_device_tab()
+        self.create_mfc_profile_tab()
+        self.create_cooling_profile_tab()
+        self.create_valve_profile_tab()
+
+    def create_mfc_profile_tab(self):
+        mfc_tab = ttk.Frame(self.notebook)
+        self.notebook.add(mfc_tab, text="MFC Profiles")
+
+        ttk.Label(mfc_tab, text="Manage MFC Profiles", font=("Arial", 14)).pack(pady=10)
+
+        self._create_profile_controls(mfc_tab, "mfc")
+
+    def create_cooling_profile_tab(self):
+        cooling_tab = ttk.Frame(self.notebook)
+        self.notebook.add(cooling_tab, text="Cooling Profiles")
+
+        ttk.Label(cooling_tab, text="Manage Cooling Profiles", font=("Arial", 14)).pack(pady=10)
+
+        self._create_profile_controls(cooling_tab, "cooling")
+
+    def create_valve_profile_tab(self):
+        valve_tab = ttk.Frame(self.notebook)
+        self.notebook.add(valve_tab, text="Valve Profiles")
+
+        ttk.Label(valve_tab, text="Manage Valve Profiles", font=("Arial", 14)).pack(pady=10)
+
+        self._create_profile_controls(valve_tab, "valve")
+
+    def _create_profile_controls(self, parent, prefix):
+        profile_name_frame = ttk.Frame(parent)
+        profile_name_frame.pack(fill='x', padx=10, pady=5)
+        ttk.Label(profile_name_frame, text="Profile Name:").pack(side='left')
+        setattr(self, f"{prefix}_name_var", tk.StringVar())
+        ttk.Entry(profile_name_frame, textvariable=getattr(self, f"{prefix}_name_var")).pack(side='left', fill='x', expand=True)
+
+        profile_desc_frame = ttk.Frame(parent)
+        profile_desc_frame.pack(fill='x', padx=10, pady=5)
+        ttk.Label(profile_desc_frame, text="Description:").pack(side='left')
+        setattr(self, f"{prefix}_desc_var", tk.StringVar())
+        ttk.Entry(profile_desc_frame, textvariable=getattr(self, f"{prefix}_desc_var")).pack(side='left', fill='x', expand=True)
+
+        button_frame = ttk.Frame(parent)
+        button_frame.pack(fill='x', padx=10, pady=10)
+        ttk.Button(button_frame, text="Save Profile").pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Load Profile").pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Delete Profile").pack(side='left', padx=5)
+
+        listbox = tk.Listbox(parent)
+        listbox.pack(padx=10, pady=10, fill='both', expand=True)
+        setattr(self, f"{prefix}_profile_listbox", listbox)
+
         
     def set_ambient_temp(self):
         """
