@@ -20,6 +20,7 @@ class BronkhorstMFC:
     def connect(self):
         try:
             self.instrument = propar.instrument(self.port) # channel = self.channel)
+            print("I am in the MFC connecting function. My port is ", self.port)
             self.connected = True
             self.initialize()
             return self.connected
@@ -53,9 +54,10 @@ class BronkhorstMFC:
     def initialize(self):
         try:
             # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
-            param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 32000}]
+            param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 0}]
+            print("HI I AM IN MFC INITIALIZE FUNCTION MY CONNECTION IS", self.connected )
             self.instrument.write_parameters(param)
-            
+
 
         except Exception as err:
             messagebox.showerror("Error",
@@ -103,6 +105,8 @@ class BronkhorstMFC:
         if self.connected and self.instrument is not None:  # device is connected and assigned
         # if self.connected:
             try:
+                print("HI I AM IN THE SET_MASSFLOW LOOP AND SELF.CONNECTED IS", self.connected)
+                print(value, self.targetmassflow, self.maxmassflow)
                 if value < 0:
                     messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
                     return False             
@@ -114,6 +118,7 @@ class BronkhorstMFC:
                     # ##the following should be connected when connected with Bronkhorst MFC
                     param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
                     self.instrument.write_parameters(param)
+                    print("HI IM NOW SETTING A MASSFLOW TO ", self.maxmassflow)
                     # ###
                     
                     return True
@@ -124,6 +129,7 @@ class BronkhorstMFC:
                     ###the following should be connected when connected with Bronkhorst MFC
                     param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
                     self.instrument.write_parameters(param1) #Fsetpoint
+                    print("HI IM NOW SETTING A MASSFLOW TO ", value)
                     ####
                     
                     return True  
@@ -153,6 +159,7 @@ class Koelingsblok:
         # # 100 ms delay, so a timeout of 1s should be enough
         try:
             self.instrument = serial.Serial(self.port, 9600, timeout = 1)
+            print("I am in the cooling connecting function. My port is ", self.port)
             self.connected = True
             return self.connected
         except Exception as err:
@@ -259,7 +266,7 @@ class Koelingsblok:
 
 
 class RVM:
-    def __init__(self, port = "COM4"):
+    def __init__(self, port = b'P201-O00004062'):
         self.port = port
         self.connected = False
         self.instrument = None
@@ -268,21 +275,22 @@ class RVM:
 
     def connect(self):
         #Following should be 
-        # valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
 
-        # valve : amfTools.Device = None
-        # self.instrument : amfTools.AMF = None
-        # for valve in valve_list:
-        #     if "RVM" in valve.deviceType:
-        #         self.instrument = amfTools.AMF(valve)
-        #         break
+        valve : amfTools.Device = None
+        self.instrument : amfTools.AMF = None
+        for valve in valve_list:
+            if "RVM" in valve.deviceType:
+                self.instrument = amfTools.AMF(valve)
+                break
 
-        # if self.instrument is None:
-        #     # Try forced port connection if no RVM detected
-        #     self.instrument = amfTools.AMF(self.port)
-
-        self.instrument = amfTools.AMF(self.port)
-
+        if self.instrument is None:
+            # Try forced port connection if no RVM detected
+            self.instrument = amfTools.AMF(b'P201-O00004062')
+            
+        self.port = b'P201-O00004062'
+        # self.instrument = amfTools.AMF(self.port)
+        print("I am in the rvm connecting function. My port is ", self.port)
         self.instrument.connect() 
         print("connection",self.connected)
         self.initialize_valve()
@@ -389,9 +397,7 @@ class AutomatedSystemUI:
         self.root.title("Automated System")
         self.root.geometry("1400x800")
         
-        ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
-        ##Daarnaast zijn de porten dan ook niet aligned aahh
-        self.mfcs = [BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM5')] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
+        self.mfcs = [BronkhorstMFC(port = 'COM6'), BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM3')] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
         self.cooling = Koelingsblok()
         self.valve = RVM()
         
@@ -478,10 +484,12 @@ class AutomatedSystemUI:
     def update_run_var(self):
  
         # Get mass flow rates from MFCs
-        mass_flow_1 = f"{self.mfcs[0].get_massflow():.2f} mL/min" if self.mfcs[0].connected else "N/A"
-        mass_flow_2 = f"{self.mfcs[1].get_massflow():.2f} mL/min" if self.mfcs[1].connected else "N/A"
-        mass_flow_3 = f"{self.mfcs[2].get_massflow():.2f} mL/min" if self.mfcs[2].connected else "N/A"
-
+        mass_flow_1 = f"{self.mfcs[0].get_massflow()[0]['data']:} mL/min" if self.mfcs[0].connected else "N/A"
+        mass_flow_2 = f"{self.mfcs[1].get_massflow()[0]['data']:.2f} mL/min" if self.mfcs[1].connected else "N/A"
+        mass_flow_3 = f"{self.mfcs[2].get_massflow()[0]['data']:.2f} mL/min" if self.mfcs[2].connected else "N/A"
+        
+        print("what we get back from get_massflow()", self.mfcs[0].get_massflow()[0]['data'])
+        
         # Get temperature from cooling system
         temperature = f"{self.cooling.get_temperature():.2f} °C" if self.cooling.connected else "N/A"
 
@@ -761,8 +769,8 @@ class AutomatedSystemUI:
             self.status_var.set("MFC: Failed to set mass flow rate.")
             
     def update_massflow(self, index):
-        current_flow = self.mfcs[index].get_massflow()
-        self.update_run_var()
+        current_flow = self.mfcs[index].get_massflow()[0]['data']
+        # self.update_run_var()
         if current_flow is not None:
             self.current_massflow_labels[index].config(text=f"Current mass flow rate: {current_flow:.2f} mL/min")
         else:
