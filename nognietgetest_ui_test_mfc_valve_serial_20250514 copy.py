@@ -240,9 +240,10 @@ class Koelingsblok:
                     
                     ##OFFICIAL
                     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-                    self.instrument.write(b"n" + str(value).encode() + "\r") 
+                    # self.instrument.write(b"n" + str(value).encode() + "\r") 
                     
-                    #if the above does not work, try: self.instrument.write(f"n{value}\r".encode()) 
+                    #if the above does not work, try: 
+                    self.instrument.write(f"n{value}\r".encode()) 
                     # 100ms delay after each command sent (after \r)
                     
                     time.sleep(0.1) 
@@ -602,10 +603,10 @@ class AutomatedSystemUI:
         mass_flow_2 = f"{self.mfcs[1].get_massflow()[0]['data']:.2f} mL/min" if self.mfcs[1].connected else "N/A"
         mass_flow_3 = f"{self.mfcs[2].get_massflow()[0]['data']:.2f} mL/min" if self.mfcs[2].connected else "N/A"
         
-        print("what we get back from get_massflow()", self.mfcs[0].get_massflow()[0]['data'])
+        # print("what we get back from get_massflow()", self.mfcs[0].get_massflow()[0]['data'])
         
         # Get temperature from cooling system
-        temperature = f"{self.cooling.get_temperature():.2f} °C" if self.cooling.connected else "N/A"
+        temperature = f"{self.cooling.get_temperature()} °C" if self.cooling.connected else "N/A"
 
         # Get valve position from valve
         valve_position = self.valve.currentposition if self.valve.connected else "N/A"
@@ -917,7 +918,7 @@ class AutomatedSystemUI:
         current_temp = self.cooling.get_temperature()
         self.update_run_var()
         if current_temp is not None:
-            self.current_temperature_label.config(text=f"Current temperature: {current_temp:.2f} °C")
+            self.current_temperature_label.config(text=f"Current temperature: {current_temp} °C")
         else:
             self.status_var.set("Failed to read the temperature.")
         
