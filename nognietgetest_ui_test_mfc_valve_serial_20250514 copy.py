@@ -265,6 +265,7 @@ class Koelingsblok:
             return False #Operation failed
 
 
+
 class RVM:
     #### ALL COMMANDS
     START_COMMAND = '/'
@@ -410,7 +411,7 @@ class RVM:
 
     def connect(self):
         try:
-            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
+            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=)
             self.connected = True
             print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
 
@@ -491,17 +492,17 @@ class RVM:
     def read_response(self):
         response = self.instrument.read_until(self.END_ANSWER.encode()).decode('utf-8').strip()
         if not response.startswith('/'):
-            raise ValveError(f"Ongeldige respons: {response}")
+            raise ValveError(f"invalid response: {response}")
 
         response = response[2:]  # Verwijder '/' en adres
         error_code = response[0]
         data = response[1:].replace(self.END_ANSWER.strip(), '')
-        error = {'@': [0, 'Geen fout'], '`': [0, 'Geen fout']}.get(error_code, [999, 'Onbekende fout'])
+        error = {'@': [0, 'No error'], '`': [0, 'No error']}.get(error_code, [999, 'Invalid error'])
         return error, data
 
     def check_error(self, error):
         if error[0] != 0:
-            raise ValveError(f"Fout {error[0]}: {error[1]}")
+            raise ValveError(f"error {error[0]}: {error[1]}")
         
 #for rvm
 class ValveError(Exception):
@@ -511,128 +512,6 @@ class ValveError(Exception):
           message -- explanation of the error
     '''
 
-    def __init__(self, port = b'P201-O00004062'):
-        self.port = port
-        self.connected = False
-        self.instrument = None
-        self.currentposition = 1 #home status
-        self.rotation_delay = 0.4  #the rotation time for 180 degree for RVMLP (1.5 s) and RVMFS (400 ms / 0.4s),
-
-    def connect(self):
-        #Following should be 
-        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
-
-        valve : amfTools.Device = None
-        self.instrument : amfTools.AMF = None
-        for valve in valve_list:
-            if "RVM" in valve.deviceType:
-                self.instrument = amfTools.AMF(valve)
-                break
-
-        if self.instrument is None:
-            # Try forced port connection if no RVM detected
-            self.instrument = amfTools.AMF(b'P201-O00004062')
-            
-        self.port = b'P201-O00004062'
-        # self.instrument = amfTools.AMF(self.port)
-        print("I am in the rvm connecting function. My port is ", self.port)
-        self.instrument.connect() 
-        print("connection",self.connected)
-        self.initialize_valve()
-        
-       ##SIMULATION the following is used only for simulation
-        # self.connected = True
-        # return self.connected
-        ##
-    
-    def disconnect(self):
-        if self.connected and self.instrument:
-            try:
-                self.instrument.disconnect()
-                print("RVM disconnected.")
-            except Exception as err: 
-                messagebox.showerror("Error",
-                    f"An error occurred while disconnecting RVM Industrial Microfluidic Rotary Valve: {err}")
-        self.connected = False
-
-    #home status 
-    def initialize_valve(self): 
-        if not self.connected:
-            raise ConnectionError("RVM Industrial Microfluidic Rotary Valve is not connected.")
-        
-        # Check if the product is homed (if not, home it)
-        try:
-            if not self.instrument.getHomeStatus(): 
-                self.instrument.home()
-                time.sleep(self.rotation_delay)  # Give time for homing
-
-            else:
-                print("RVM Industrial Microfluidic Rotary Valve is already homed.")
-
-            # Always move to position 1 after homing (default start position)
-            self.instrument.valveShortestPath(1)
-            time.sleep(self.rotation_delay) #give time for rotation
-            self.currentposition = 1
-            print("RVM Industrial Microfluidic Rotary Valve moved to position 1/ON State.")
-
-        except Exception as err:
-            messagebox.showerror("Error",
-                 f"An error occurred while initializing the RVM Industrial Microfluidic Rotary Valve : {err}")
-            
-    
-    def set_valve(self, position: int):  
-        if self.connected:
-            if position != 1 and position != 2:
-                messagebox.showerror("Error",
-                    f"The position of the RVM Industrial Microfluidic Rotary Valve can only be 1 (ON) or 2 (OFF), but received: {position}"
-                )
-                return False
-        else:
-            messagebox.showerror("Error", "RVM Industrial Microfluidic Rotary Valve  is not connected.")
-            return False #Operation failed
-        
-        ## check if is in position 1 then move to postion 2 otherwise give a warning
-        if self.currentposition == 1:
-            if position == 2:
-                # Move to position 2
-                try:
-                    ##VOOR SIMULATION UITZETTEN
-                    self.instrument.valveShortestPath(2)
-                    time.sleep(self.rotation_delay)
-                    ###
-                    
-                    self.currentposition = 2
-                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
-                    return True
-                except Exception as err:
-                    messagebox.showerror("Error",
-                        f"An error occurred while moving to position 2/OFF state : {err}")
-            elif position == 1:
-                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/OFF state")
-                return False
-            else:
-                print(f"Invalid position: {position}")
-                # return False
-           
-        elif self.currentposition == 2:
-            if position == 1:
-                # Move to position 1
-                try:
-                    ## VOOR SIMULATION UITZETTEN
-                    self.instrument.valveShortestPath(1)
-                    time.sleep(self.rotation_delay)
-                    ###
-                    
-                    self.currentposition = 1
-                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
-                    return True
-                except Exception as err:
-                   messagebox.showerror("Error",
-                        f"An error occurred while moving to position 1/ON tate : {err}")
-            elif position == 2:
-                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
-            else:
-                print(f"Invalid position: {position}")
 
 class AutomatedSystemUI:
     def __init__(self, root):
