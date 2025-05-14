@@ -3,6 +3,7 @@ from tkinter import messagebox, ttk
 import propar   # Bronkhorst MFC
 import serial   # Cooling and Valve
 import time 
+import threading
 # import amfTools
 
 ###
@@ -158,7 +159,18 @@ class Koelingsblok:
         # # p24: 9600 baud, 1 stop bit, no parity, no hardware handshake, 100ms delay after each command sent (after \r)
         # # 100 ms delay, so a timeout of 1s should be enough
         try:
-            self.instrument = serial.Serial(self.port, 9600, timeout=1)
+            self.instrument = serial.Serial(
+                self.port,
+                baudrate=9600,
+                timeout=3,
+                write_timeout=2,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                rtscts=False,
+                dsrdtr=False,
+                xonxoff=False
+            )
             print("I am in the cooling connecting function. My port is ", self.port)
             self.connected = True
             return self.connected
@@ -214,50 +226,93 @@ class Koelingsblok:
             #         return False  # Operation failed
         ##
 
+    # def set_temperature(self, value: float, temp_ambient):
+
+    #     ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+    #     if self.connected and self.instrument is not None: 
+    #     # if self.connected:
+    #         try:
+    #             #the cooling system can only lower the temperature by 30 degrees below ambient
+    #             min_temp = temp_ambient - 30
+    #             if value < min_temp:
+    #                 messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {temp_ambient:.2f}. The temperature may not exceed {min_temp:.2f} °C")
+    #                 self.targettemperature = min_temp
+                    
+    #                 ###OFFICIAL
+    #                 ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+    #                 # self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
+                    
+    #                 #if the above does not work, try: 
+    #                 self.instrument.write(f"n{value}\r".encode()) 
+    #                 # 100ms delay after each command sent (after \r)
+    #                 time.sleep(0.1) 
+    #                 return True
+    #             else:
+    #                 self.targettemperature = value
+                    
+    #                 ##OFFICIAL
+    #                 ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
+    #                 # self.instrument.write(b"n" + str(value).encode() + "\r") 
+                    
+    #                 #if the above does not work, try: 
+    #                 self.instrument.write(f"n{value}\r".encode()) 
+    #                 # 100ms delay after each command sent (after \r)
+                    
+    #                 time.sleep(0.1) 
+    #                 return True
+    #         except Exception as err:
+    #             messagebox.showerror("Error",
+    #                 f"An error occurred while setting the temperature: {err}"
+    #             )
+    #             return False  # Operation failed
+    #     else:
+    #         messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
+    #         return False #Operation failed
+        
     def set_temperature(self, value: float, temp_ambient):
+        if not self.connected:
+            messagebox.showwarning("Device not connected", "Cooling device is not connected.")
+            return
 
-        ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-        if self.connected and self.instrument is not None: 
-        # if self.connected:
-            try:
-                #the cooling system can only lower the temperature by 30 degrees below ambient
-                min_temp = temp_ambient - 30
-                if value < min_temp:
-                    messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {temp_ambient:.2f}. The temperature may not exceed {min_temp:.2f} °C")
-                    self.targettemperature = min_temp
-                    
-                    ###OFFICIAL
-                    ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-                    # self.instrument.write(b"n" + str(min_temp).encode() + "\r") 
-                    
-                    #if the above does not work, try: 
-                    self.instrument.write(f"n{value}\r".encode()) 
-                    # 100ms delay after each command sent (after \r)
-                    time.sleep(0.1) 
-                    return True
-                else:
-                    self.targettemperature = value
-                    
-                    ##OFFICIAL
-                    ##the following should be connected when connected with the Torrey Pines IC20XR Digital Chilling/Heating Dry Baths
-                    # self.instrument.write(b"n" + str(value).encode() + "\r") 
-                    
-                    #if the above does not work, try: 
-                    self.instrument.write(f"n{value}\r".encode()) 
-                    # 100ms delay after each command sent (after \r)
-                    
-                    time.sleep(0.1) 
-                    return True
-            except Exception as err:
-                messagebox.showerror("Error",
-                    f"An error occurred while setting the temperature: {err}"
-                )
-                return False  # Operation failed
-        else:
-            messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
-            return False #Operation failed
+        if not isinstance(temp_ambient, (int, float)):
+            messagebox.showwarning("Ambient Temp Missing", "Set the ambient temperature first.")
+            return
 
+        # Launch background thread
+        threading.Thread(target=self.threaded_set_temperature, args=(value, temp_ambient), daemon=True).start()
+    
+    def threaded_set_temperature(self, target_temp, temp_ambient):
+        min_temp = temp_ambient - 30
 
+        if target_temp < min_temp:
+            messagebox.showwarning(
+                "Temperature Too Low",
+                f"Temperature can't be lower than {min_temp:.2f} °C based on ambient {temp_ambient:.2f} °C. It will be set to {min_temp:.2f} °C."
+            )
+            target_temp = min_temp
+
+        try:
+            if self.instrument.out_waiting > 0:
+                self.instrument.reset_output_buffer()
+            self.instrument.reset_input_buffer()
+
+            command = f"n{target_temp:.1f}\r"
+            print(f"[Cooling] Sending: {repr(command)}")
+            written = self.instrument.write(command.encode('ascii'))
+            print(f"[Cooling] Bytes written: {written}")
+            
+            time.sleep(12)  # Give time to process
+            response = self.instrument.read_until(b"\r").decode().strip()
+            print(f"[Cooling] Response: {response}")
+
+            self.targettemperature = target_temp
+
+        except serial.SerialTimeoutException:
+            messagebox.showerror("Serial Timeout", f"Timeout writing to {self.port}.")
+        except serial.SerialException as err:
+            messagebox.showerror("Serial Error", f"Serial communication error: {err}")
+        except Exception as err:
+            messagebox.showerror("Unknown Error", f"Unexpected error: {err}")
 
 class RVM:
     #### ALL COMMANDS
