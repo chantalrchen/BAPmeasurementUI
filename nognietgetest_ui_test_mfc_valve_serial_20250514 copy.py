@@ -1013,7 +1013,7 @@ class AutomatedSystemUI:
             
     def update_massflow(self, index):
         current_flow = self.mfcs[index].get_massflow()[0]['data']
-        # self.update_run_var()
+        self.update_run_var()
         if current_flow is not None:
             self.current_massflow_labels[index].config(text=f"Current mass flow rate: {current_flow:.2f} mL/min")
         else:
