@@ -408,7 +408,7 @@ class RVM:
         try:
             self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
             self.connected = True
-            print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
+            print(f"RVM Industrial Microfluidic Rotary Valve is connected to {self.port}")
 
             # Basisconfiguratie
             self.send_command(self.SET_ADDRESS, self.address)

@@ -1,0 +1,77 @@
+import serial   # Cooling and Valve
+import time 
+
+
+class Koelingsblok:
+    #### ALL COMMANDS
+    MODEL_VERSION = 'v'
+    SERIAL_NUMBER = 'V'
+    SET_POINT_TEMPERATURE = 's'
+    SET_STORE_NEW_SET_POINT_TEMPERATURE = 'n'
+    SET_IDLE_MODE = 'i'
+    CLEAR_IDLE_MODE = 'I'
+    CURRENT_PLATE_TEMPRATURE = 'p'
+    CURRENT_LOG_FILE = 'I'
+    CLEAR_LOG_FILE = 'Ic'
+    START_LOGGING = 'Is'
+    STOP_PAUSE_LOGGING = 'Ip'
+    SET_LOGGING_PERIOD_TO_1S ='Ie'
+    SET_LOGGING_PERIOD_TO_1MIN = 'Im'
+    SET_LOGGING_PERIOD_TO_5MIN= 'I5'
+    RESET_UNIT_TO_DEFAULT_CONFIGURATION = '#Z'
+    CF ='\r'
+    LF ='\n'
+
+
+    def __init__(self, port='COM 7', baudrate=9600, timeout=1):
+        self.port = port
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.connected = False
+        self.instrument = None
+
+    def connect(self):
+        try:
+            self.instrument = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.timeout)
+            self.connected = True
+        except serial.SerialException as err:
+            messagebox.showerror("Error",
+                    f"An error occurred while connecting the cooling system: {err}") 
+            self.connected = False
+
+    def disconnect(self):
+        try:
+            if self.connected:
+                self.instrument.close()
+                self.connected = False
+                print("Cooling system is disconnected")
+        except serial.SerialException as err:
+            messagebox.showerror("Error",
+                    f"An error occurred while disconnecting the cooling system: {err}") 
+            self.connected = False      
+
+    def send_command(self, command):
+        if not self.connected:
+            print("Cooling system is not connected")
+        self.instrument.write(f"{command}{self.CF}".encode('ascii'))  #-> self.CF = \r'
+         # 100ms delay after each command sent (after \r)
+        time.sleep(0.1)
+        response = self.instrument.readline().decode('ascii').strip() #-> readline will read till <LF> = \n and then stops
+        return response
+    
+    def get_current_plate_temperature(self):
+        response = self.send_command(self.CURRENT_PLATE_TEMPRATURE)
+        print(f"Current plate temperature is {response}")
+        return response
+
+    def set_temperature(self, temperature):
+        response = self.send_command(f"{self.SET_STORE_NEW_SET_POINT_TEMPERATURE}{temperature}")
+        if response.lower() == "ok":
+            print(f"Temperature successfully set to {temperature}°C")
+        else:
+            print(f"Failed to set temperature: {response}")
+
+
+
+
+
