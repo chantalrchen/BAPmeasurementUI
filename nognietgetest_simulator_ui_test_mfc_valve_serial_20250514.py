@@ -286,36 +286,46 @@ class RVM:
         self.connected = False
         self.instrument = None
         self.current_position = None
+        
 
     def connect(self):
-        try:
-            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=)
-            self.connected = True
-            print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
+        # try:
+        #     self.instrument = serial.Serial(self.port, baudrate=9600, timeout=)
+        #     self.connected = True
+        #     print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
 
-            # Basisconfiguratie
-            self.send_command(self.SET_ADDRESS, self.address)
-            self.send_command(self.SET_ANSWER_MODE, self.mode)
-            self.send_command(self.SET_VALVE_CONFIGURATION, self.valve_port)
+        #     # Basisconfiguratie
+        #     self.send_command(self.SET_ADDRESS, self.address)
+        #     self.send_command(self.SET_ANSWER_MODE, self.mode)
+        #     self.send_command(self.SET_VALVE_CONFIGURATION, self.valve_port)
 
-            # Valve initialiseren
-            self.home()
-            self.switch_position(1)
+        #     # Valve initialiseren
+        #     self.home()
+        #     self.switch_position(1)
 
-        except serial.SerialException as err:
-            messagebox.showerror("Error",
-                    f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}") 
-            self.connected = False
+        # except serial.SerialException as err:
+        #     messagebox.showerror("Error",
+        #             f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}") 
+        #     self.connected = False
+
+        ## for simulation
+        self.connected = True
+        return True
 
     def disconnect(self):
-        if self.connected:
-            self.instrument.close()
-            self.connected = False
-            print("RVM Industrial Microfluidic Rotary Valve is disconnected")
+        # if self.connected:
+        #     self.instrument.close()
+        #     self.connected = False
+        #     print("RVM Industrial Microfluidic Rotary Valve is disconnected")
+
+        ##for simulation
+        self.connected = False
+        self.instrument = None
+
 
     def home(self):
         print("Homing RVM Industrial Microfluidic Rotary Valve...")
-        self.send_command(self.HOME)
+        self.send_command(self.HOME) #/1ZR (see send command)
         time.sleep(self.ROTATION_DELAY)
         self.check_status()
         print("RVM Industrial Microfluidic Rotary Valve homed")
@@ -323,32 +333,38 @@ class RVM:
     def switch_position(self, position: int):
         if position not in [1, 2]:
             raise ValueError("The position of the valve can only be 1 or 2")
-
+            
         print(f"Switching RVM Industrial Microfluidic Rotary Valve to position {position}")
-        self.send_command(self.SWITCH_SHORTEST, position)
+        #self.send_command(self.SWITCH_SHORTEST_FORCE, position)  #switch command:/1B position R [see build_command]
         time.sleep(self.ROTATION_DELAY)
         self.check_status()
         self.current_position = position
         print(f"RVM Industrial Microfluidic Rotary Valve is in positie {position}.")
 
+        #for simulation
+        return True
+
+
+
+
     def get_position(self):
-        pos = self.send_command(self.GET_VALVE_POSITION)
-        self.current_position = int(pos)
+        position = self.send_command(self.GET_VALVE_POSITION)
+        self.current_position = int(position)
         print(f"The current position of RVM Industrial Microfluidic Rotary Valve is {self.current_position}")
         return self.current_position
 
     def check_status(self):
         while True:
             status = self.send_command(self.GET_STATUS_DETAILS)
-            if status == '0':
+            if status == '0':  #'Done', Valve available for next instruction (see status_codes)
                 break
-            elif status == '255':
+            elif status == '255': # 'Sensor error', Unable to read position sensor. This probably means that the cable is disconnected (see status_codes)
                 time.sleep(self.POLLING_PERIOD)
             else:
                 raise ValveError(f"invalid status: {status}")
 
     def build_command(self, command, parameter=None):
-        cmd = f"{self.START_COMMAND}{self.ADDRESS}{command}"
+        cmd = f"{self.START_COMMAND}{self.ADDRESS}{command}" #self.START_COMMAND = / and Self.ADDRESS = 1 (unit)
         if parameter is not None:
             cmd += str(parameter)
         if command[0] not in self.NO_R_REQUIRED:
@@ -372,7 +388,7 @@ class RVM:
         if not response.startswith('/'):
             raise ValveError(f"invalid response: {response}")
 
-        response = response[2:]  # Verwijder '/' en adres
+        response = response[2:]  
         error_code = response[0]
         data = response[1:].replace(self.END_ANSWER.strip(), '')
         error = {'@': [0, 'No error'], '`': [0, 'No error']}.get(error_code, [999, 'Invalid error'])
