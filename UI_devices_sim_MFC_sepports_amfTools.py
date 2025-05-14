@@ -268,11 +268,7 @@ class Koelingsblok:
 
 
 class RVM:
-<<<<<<< HEAD
     def __init__(self, port = 'COM4'):
-=======
-    def __init__(self, port = b'P201-O00004062'):
->>>>>>> f982bde6223c4c7d68c41c925697f196f5523a21
         self.port = port
         self.connected = False
         self.instrument = None
@@ -281,7 +277,6 @@ class RVM:
 
     def connect(self):
         #Following should be 
-<<<<<<< HEAD
         try:
             product_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
 
@@ -308,27 +303,6 @@ class RVM:
                     f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}")
             self.connected = False
             return False
-=======
-        valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
-
-        valve : amfTools.Device = None
-        self.instrument : amfTools.AMF = None
-        for valve in valve_list:
-            if "RVM" in valve.deviceType:
-                self.instrument = amfTools.AMF(valve)
-                break
-
-        if self.instrument is None:
-            # Try forced port connection if no RVM detected
-            self.instrument = amfTools.AMF(b'P201-O00004062')
-            
-        self.port = b'P201-O00004062'
-        # self.instrument = amfTools.AMF(self.port)
-        print("I am in the rvm connecting function. My port is ", self.port)
-        self.instrument.connect() 
-        print("connection",self.connected)
-        self.initialize_valve()
->>>>>>> f982bde6223c4c7d68c41c925697f196f5523a21
         
        ##SIMULATION the following is used only for simulation
         # self.connected = True
