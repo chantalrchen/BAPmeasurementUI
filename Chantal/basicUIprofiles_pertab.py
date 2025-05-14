@@ -2059,7 +2059,10 @@ class AutomatedSystemUI:
         if not self.cooling.connected:
             messagebox.showwarning("Error", "One or more devices are not connected")
             return False
-          
+        
+        if not isinstance(self.ambient_temp, (int, float)):
+            messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
+            return False
         #Get the name of the profile without spaces, such that the .json file can be loaded later
         name = self.coolingname_var.get().strip()
         
