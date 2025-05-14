@@ -370,13 +370,13 @@ class RVM:
                     ###
                     
                     self.currentposition = 2
-                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
+                    # print(f"RVM Industrial Microfluidic Rotary Valve moved to position 2/OFF state.")
                     return True
                 except Exception as err:
                     messagebox.showerror("Error",
                         f"An error occurred while moving to position 2/OFF state : {err}")
             elif position == 1:
-                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/OFF state")
+                # print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/OFF state")
                 return False
             else:
                 print(f"Invalid position: {position}")
@@ -392,13 +392,14 @@ class RVM:
                     ###
                     
                     self.currentposition = 1
-                    print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
+                    # print(f"RVM Industrial Microfluidic Rotary Valve moved to position 1/ON state")
                     return True
                 except Exception as err:
                    messagebox.showerror("Error",
                         f"An error occurred while moving to position 1/ON tate : {err}")
             elif position == 2:
-                print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
+                return False
+                # print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
             else:
                 print(f"Invalid position: {position}")
 
@@ -817,7 +818,7 @@ class AutomatedSystemUI:
         self.mfcs = self.mfcprofilemanager.mfcs
         self.cooling = self.coolingprofilemanager.cooling
         self.valve = self.valveprofilemanager.valve
-        
+
         # Header frame for connection and status
         header_frame = ttk.Frame(self.root)
         header_frame.pack(side='top', fill='x', padx=5, pady=5)
@@ -876,10 +877,13 @@ class AutomatedSystemUI:
         self.running_var_bar = tk.Label(header_frame, text="", anchor="w", relief="sunken")
         self.running_var_bar.pack(side='top', fill='x')
         
+        overview_profile = ttk.Frame(self.root)
+        overview_profile.pack(fill="x", padx=10, pady=5)
+        
         ######PROFILE STATUS
         # Create a frame to contain the grid-like status table
-        self.profile_status_frame = ttk.LabelFrame(self.root, text="Profile Overview")
-        self.profile_status_frame.pack(fill="x", padx=10, pady=5)
+        self.profile_status_frame = ttk.LabelFrame(overview_profile, text="Profile Overview")
+        self.profile_status_frame.pack(side = "left", padx=10, pady=5)
 
         # Column headers
         ttk.Label(self.profile_status_frame, text="Profile", font=("Arial", 8, "bold")).grid(row=0, column=0, padx=5, sticky="w")
@@ -915,6 +919,57 @@ class AutomatedSystemUI:
         self.valve_value_label.grid(row=3, column=3, padx=5, sticky="w")
 
         #####
+        selectprofiles_frame = ttk.LabelFrame(overview_profile, text="Multiple Profile Runner")
+        selectprofiles_frame.pack(side="right")
+
+        # Label row
+
+        ttk.Label(selectprofiles_frame, text="Valve Profiles").grid(row=0, column=1)
+        ttk.Label(selectprofiles_frame, text="Cooling Profiles").grid(row=0, column=2)
+
+        # MFC listbox with scrollbar
+        ttk.Label(selectprofiles_frame, text="MFC Profiles").grid(row=0, column=0)
+        mfc_listbox_frame = ttk.Frame(selectprofiles_frame)
+        mfc_listbox_frame.grid(row=1, column=0, padx=5, pady=5)
+        # # https://www.pythontutorial.net/tkinter/tkinter-listbox/#adding-a-scrollbar-to-the-listbox
+        # # Making an empty profile listbox
+        # Exportseleciton = False, such that when you select another listbox you still can have your selection
+        self.selprof_mfc_listbox = tk.Listbox(mfc_listbox_frame, height=2, exportselection=False)
+        self.selprof_mfc_listbox.pack(side='left', fill='y')
+        mfc_v_scrollbar = ttk.Scrollbar(mfc_listbox_frame, orient=tk.VERTICAL, command=self.selprof_mfc_listbox.yview)
+        mfc_v_scrollbar.pack(side='right', fill='y')
+        self.selprof_mfc_listbox.config(yscrollcommand=mfc_v_scrollbar.set)
+        
+        # Valve Listbox with scrollbar
+        valve_listbox_frame = ttk.Frame(selectprofiles_frame)
+        valve_listbox_frame.grid(row=1, column=1, padx=5, pady=5)
+        self.selprof_valve_listbox = tk.Listbox(valve_listbox_frame, height=2, exportselection=False)
+        self.selprof_valve_listbox.pack(side='left', fill='y')
+        valve_v_scrollbar = ttk.Scrollbar(valve_listbox_frame, orient=tk.VERTICAL, command=self.selprof_valve_listbox.yview)
+        valve_v_scrollbar.pack(side='right', fill='y')
+        self.selprof_valve_listbox.config(yscrollcommand=valve_v_scrollbar.set)
+
+        # Cooling Listbox with scrollbar
+        cooling_listbox_frame = ttk.Frame(selectprofiles_frame)
+        cooling_listbox_frame.grid(row=1, column=2, padx=5, pady=5)
+        self.selprof_cooling_listbox = tk.Listbox(cooling_listbox_frame, height=2, exportselection=False)
+        self.selprof_cooling_listbox.pack(side='left', fill='y')
+        cooling_v_scrollbar = ttk.Scrollbar(cooling_listbox_frame, orient=tk.VERTICAL, command=self.selprof_cooling_listbox.yview)
+        cooling_v_scrollbar.pack(side='right', fill='y')
+        self.selprof_cooling_listbox.config(yscrollcommand=cooling_v_scrollbar.set)
+
+
+        # Populate listboxes
+        for profile in self.mfcprofilemanager.get_profiles():
+            self.selprof_mfc_listbox.insert(tk.END, profile)
+        for profile in self.valveprofilemanager.get_profiles():
+            self.selprof_valve_listbox.insert(tk.END, profile)
+        for profile in self.coolingprofilemanager.get_profiles():
+            self.selprof_cooling_listbox.insert(tk.END, profile)
+
+        # Run Button
+        ttk.Button(selectprofiles_frame, text="Run Selected Profiles", command=self.run_selected_profiles).grid(row=1, column=3, padx=10)
+
         
         # Notebook for tabs
         self.notebook = ttk.Notebook(self.root)
@@ -940,20 +995,68 @@ class AutomatedSystemUI:
         except ValueError:
             self.status_var.set("Invalid input! Enter a floating number for the ambient temperature.")
             messagebox.showerror("Invalid Input", "Please enter a floating number for ambient temperature.")
-            
+    
     def update_run_var(self):
  
-        # Get mass flow rates from MFCs
-        mass_flow_1 = f"{self.mfcs[0].get_massflow():.2f} mL/min" if self.mfcs[0].connected else "N/A"
-        mass_flow_2 = f"{self.mfcs[1].get_massflow():.2f} mL/min" if self.mfcs[1].connected else "N/A"
-        mass_flow_3 = f"{self.mfcs[2].get_massflow():.2f} mL/min" if self.mfcs[2].connected else "N/A"
+        # ###update status bar
+        # # Get mass flow rates from MFCs
+        # mass_flow_1 = f"{self.mfcs[0].get_massflow():.2f} mL/min" if self.mfcs[0].connected else "N/A"
+        # mass_flow_2 = f"{self.mfcs[1].get_massflow():.2f} mL/min" if self.mfcs[1].connected else "N/A"
+        # mass_flow_3 = f"{self.mfcs[2].get_massflow():.2f} mL/min" if self.mfcs[2].connected else "N/A"
 
-        # Get temperature from cooling system
-        temperature = f"{self.cooling.get_temperature():.2f} °C" if self.cooling.connected else "N/A"
+        # # Get temperature from cooling system
+        # temperature = f"{self.cooling.get_temperature():.2f} °C" if self.cooling.connected else "N/A"
 
-        # Get valve position from valve
-        valve_position = self.valve.currentposition if self.valve.connected else "N/A"
-        self.running_var_bar.config(text=f"Reading Values   : MFC 1 Mass Flow Rate: {mass_flow_1} | MFC 2 Mass Flow Rate: {mass_flow_2} | MFC 3 Mass Flow Rate: {mass_flow_3} | Temperature: {temperature} | Valve Position: {valve_position}")
+        # # Get valve position from valve
+        # valve_position = self.valve.currentposition if self.valve.connected else "N/A"
+        # self.running_var_bar.config(text=f"Reading Values   : MFC 1 Mass Flow Rate: {mass_flow_1} | MFC 2 Mass Flow Rate: {mass_flow_2} | MFC 3 Mass Flow Rate: {mass_flow_3} | Temperature: {temperature} | Valve Position: {valve_position}")
+        # ####
+        
+        ##update device tab
+        massflows = []
+        
+        for i in range(3):
+            if self.mfcs[i].connected:
+                flow = self.mfcs[i].get_massflow()
+                flow_str = f"{flow:.2f} mL/min"
+            else:
+                flow = None
+                flow_str = "N/A"
+            massflows.append(flow_str)
+            self.current_massflow_labels[i].config(text=f"Current mass flow rate: {flow_str}")
+
+        if self.cooling.connected:
+            temp = self.cooling.get_temperature()
+            temp_str = f"{temp:.2f} °C"
+        else:
+            temp = None
+            temp_str = "N/A"
+        self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
+
+        if self.valve.connected:
+            pos = self.valve.currentposition
+        else:
+            pos = "N/A"
+        self.current_valve_label.config(text=f"Current position of the valve: {pos}")
+
+        # Summary bar uses same values
+        self.running_var_bar.config(
+            text=(
+                f"Reading Values   : "
+                f"MFC 1 Mass Flow Rate: {massflows[0]} | "
+                f"MFC 2 Mass Flow Rate: {massflows[1]} | "
+                f"MFC 3 Mass Flow Rate: {massflows[2]} | "
+                f"Temperature: {temp_str} | "
+                f"Valve Position: {pos}"
+            )
+        )
+
+        self.root.after(1000, self.update_run_var)
+
+
+
+
+
 
         # Schedule the next update, per 1s
         self.notebook.after(1000, self.update_run_var)
@@ -1624,7 +1727,7 @@ class AutomatedSystemUI:
         # Passing the index to the function by using lambda
         # Lambda are anonymous function means that the function is without a name
         # https://www.geeksforgeeks.org/using-lambda-in-gui-programs-in-python/
-        self.root.after(1000, lambda: self.update_massflow(index)) #updating the MFC flow rate reading each 1s
+        self.notebook.after(1000, lambda: self.update_massflow(index)) #updating the MFC flow rate reading each 1s
         
     def set_temperature(self):
         if self.cooling.connected is False:
@@ -2077,10 +2180,11 @@ class AutomatedSystemUI:
             messagebox.showerror("Error", f"Failed to load profile: '{name}'")
             return
         
+        self.update_run_var()
         #Enabling the stop button, since you can now stop a running profile
         self.coolingstop_button.config(state=tk.NORMAL) 
         
-        self.update_run_var()
+
         
         # Start profile in a separate thread, such that the UI doesn't freeze until it finishes
         # And you'll still be able to see what happens, e.g. popup of not connection
@@ -2348,7 +2452,54 @@ class AutomatedSystemUI:
         self.valve_value_label.config(text=f"Position {status['valve']}")
         # Schedule the next update, per 1s
         self.notebook.after(1000, lambda: self.update_valveprofile_var)
-             
+
+    def run_selected_profiles(self):
+        mfc_sel = self.selprof_mfc_listbox.curselection()
+        valve_sel = self.selprof_valve_listbox.curselection()
+        cooling_sel = self.selprof_cooling_listbox.curselection()
+
+        if not mfc_sel or not valve_sel or not cooling_sel:
+            messagebox.showwarning("Selection Error", "Please select a profile from each list.")
+            return
+
+        mfc_name = self.selprof_mfc_listbox.get(mfc_sel[0])
+        cooling_name = self.selprof_cooling_listbox.get(cooling_sel[0])
+        valve_name = self.selprof_valve_listbox.get(valve_sel[0])
+
+        # Load profiles
+        if not self.mfcprofilemanager.load_profile(mfc_name):
+            messagebox.showerror("Error", f"Failed to load MFC profile '{mfc_name}'")
+            return
+        if not self.coolingprofilemanager.load_profile(cooling_name):
+            messagebox.showerror("Error", f"Failed to load Cooling profile '{cooling_name}'")
+            return
+        if not self.valveprofilemanager.load_profile(valve_name):
+            messagebox.showerror("Error", f"Failed to load Valve profile '{valve_name}'")
+            return
+
+        # Check devices and ambient temp
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
+            messagebox.showerror("Connection Error", "One or more MFCs not connected.")
+            return
+        if not self.cooling.connected:
+            messagebox.showerror("Connection Error", "Cooling not connected.")
+            return
+        if not self.valve.connected:
+            messagebox.showerror("Connection Error", "Valve not connected.")
+            return
+        if not isinstance(self.ambient_temp, (int, float)):
+            messagebox.showerror("Error", "Ambient temperature must be set.")
+            return
+        
+        self.update_run_var()
+        
+        # Start all three profiles in threads
+        threading.Thread(target=self.run_mfcprofile_thread, daemon=True).start()
+        threading.Thread(target=self.run_coolingprofile_thread, daemon=True).start()
+        threading.Thread(target=self.run_valveprofile_thread, daemon=True).start()
+
+        self.status_var.set(f"Running MFC: {mfc_name}, Valve: {valve_name}, Cooling: {cooling_name}")
+    
 def main():
     root = tk.Tk()
     app = AutomatedSystemUI(root)
