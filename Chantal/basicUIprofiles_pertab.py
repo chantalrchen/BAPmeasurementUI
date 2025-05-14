@@ -51,8 +51,6 @@ class BronkhorstMFC:
         #     messagebox.showerror("Error",
         #      f"An error occurred while disconnecting the Bronkhorst MFC: {err}")
      
-
-
         self.connected = False
         self.instrument = None
         
@@ -279,72 +277,75 @@ class RVM:
         self.rotation_delay = 0.4  #the rotation time for 180 degree for RVMLP (1.5 s) and RVMFS (400 ms / 0.4s),
 
     def connect(self):
-        #Following should be 
-        try:
-            valve_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
-            
-            valve : amfTools.Device = None
-            self.instrument : amfTools.AMF = None
-            for valve in valve_list:
-                if "RVM" in valve.deviceType:
-                    self.instrument = amfTools.AMF(valve)
-                    break
-            
-            if self.instrument is None:
-                # Try forced port connection if no RVM detected
-                self.instrument = amfTools.AMF(self.port)
-                
-            print("I am in the rvm connecting function. My port is ", self.port)
-            self.instrument.connect() 
-            self.connected = True
-            print("connection",self.connected)
-            self.initialize_valve()
-            return True
-        
-        except Exception as err:
-            messagebox.showerror("Error",
-                    f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}")
-            self.connected = False
-            return False
-        
-       ##SIMULATION the following is used only for simulation
-        # self.connected = True
-        # return self.connected
-        ##
+        # #Following should be 
+        # try:
+        #     product_list = amfTools.util.getProductList() # get the list of AMF products connected to the computer
+
+        #     product : amfTools.Device = None
+        #     self.instrument : amfTools.AMF = None
+        #     for product in product_list:
+        #         if "RVM" in product.deviceType:
+        #             self.instrument = amfTools.AMF(product)
+        #             break
+
+        #     if self.instrument is None:
+        #     # Try forced port connection if no RVM detected
+        #        self.instrument = amfTools.AMF(self.port)
+
+
+        #     self.instrument.connect() 
+        #     self.connected = True
+        #     print("connection",self.connected)
+        #     self.initialize_valve()
+        #     return True
     
+        # except Exception as err:
+        #     messagebox.showerror("Error",
+        #             f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}")
+        #     self.connected = False
+        #     return False
+        
+       #SIMULATION the following is used only for simulation
+        self.connected = True
+        return self.connected
+        #
+
     def disconnect(self):
-        if self.connected and self.instrument:
-            try:
-                self.instrument.disconnect()
-                print("RVM disconnected.")
-            except Exception as err: 
-                messagebox.showerror("Error",
-                    f"An error occurred while disconnecting RVM Industrial Microfluidic Rotary Valve: {err}")
+        # if self.connected and self.instrument:
+        #     try:
+        #         self.instrument.disconnect()
+        #         print("RVM disconnected.")
+        #     except Exception as err: 
+        #         messagebox.showerror("Error",
+        #             f"An error occurred while disconnecting RVM Industrial Microfluidic Rotary Valve: {err}")
         self.connected = False
 
     #home status 
     def initialize_valve(self): 
-        if not self.connected:
-            raise ConnectionError("RVM Industrial Microfluidic Rotary Valve is not connected.")
+        # if not self.connected:
+        #     raise ConnectionError("RVM Industrial Microfluidic Rotary Valve is not connected.")
         
-        # Check if the product is homed (if not, home it)
-        try:
-            if not self.instrument.getHomeStatus(): 
-                self.instrument.home()
-                time.sleep(self.rotation_delay)  # Give time for homing
+        # # Check if the product is homed (if not, home it)
+        # try:
+        #     if not self.instrument.getHomeStatus(): 
+        #         self.instrument.home()
+        #         time.sleep(self.rotation_delay)  # Give time for homing
 
-            else:
-                print("RVM Industrial Microfluidic Rotary Valve is already homed.")
+        #     else:
+        #         print("RVM Industrial Microfluidic Rotary Valve is already homed.")
 
-            # Always move to position 1 after homing (default start position)
-            self.instrument.valveShortestPath(1)
-            time.sleep(self.rotation_delay) #give time for rotation
-            self.currentposition = 1
-            print("RVM Industrial Microfluidic Rotary Valve moved to position 1/ON State.")
+        #     # Always move to position 1 after homing (default start position)
+        #     self.instrument.valveShortestPath(1)
+        #     time.sleep(self.rotation_delay) #give time for rotation
+        #     self.currentposition = 1
+        #     print("RVM Industrial Microfluidic Rotary Valve moved to position 1/ON State.")
 
-        except Exception as err:
-            messagebox.showerror("Error",
-                 f"An error occurred while initializing the RVM Industrial Microfluidic Rotary Valve : {err}")
+        # except Exception as err:
+        #     messagebox.showerror("Error",
+        #          f"An error occurred while initializing the RVM Industrial Microfluidic Rotary Valve : {err}")
+        
+        ##For simulation
+        self.currentposition = 1
             
     
     def set_valve(self, position: int):  
@@ -363,9 +364,9 @@ class RVM:
             if position == 2:
                 # Move to position 2
                 try:
-                    ##VOOR SIMULATION UITZETTEN
-                    self.instrument.valveShortestPath(2)
-                    time.sleep(self.rotation_delay)
+                    # ##VOOR SIMULATION UITZETTEN
+                    # self.instrument.valveShortestPath(2)
+                    # time.sleep(self.rotation_delay)
                     ###
                     
                     self.currentposition = 2
@@ -386,8 +387,8 @@ class RVM:
                 # Move to position 1
                 try:
                     ## VOOR SIMULATION UITZETTEN
-                    self.instrument.valveShortestPath(1)
-                    time.sleep(self.rotation_delay)
+                    # self.instrument.valveShortestPath(1)
+                    # time.sleep(self.rotation_delay)
                     ###
                     
                     self.currentposition = 1
@@ -400,6 +401,7 @@ class RVM:
                 print(f"RVM Industrial Microfluidic Rotary Valve is already at position {self.currentposition}/ON state")
             else:
                 print(f"Invalid position: {position}")
+
 
 class MFCProfileManager:
     def __init__(self, profiles_dir="profiles_onetab"):
@@ -420,8 +422,9 @@ class MFCProfileManager:
         }
         
         self.mfcs = [BronkhorstMFC(port = 'COM1'),  BronkhorstMFC(port = 'COM2'), BronkhorstMFC(port = 'COM3')]
-        self.valve = RVM()
         
+        self.stoprequest = False
+        self.maxflow = 4
         # Create profiles directory if it doesn't exist
         if not os.path.exists(self.profiles_dir):
             os.makedirs(self.profiles_dir)
@@ -475,7 +478,7 @@ class MFCProfileManager:
 
     def run_profile(self, update_callback = None):
         """Run the current profile with the given device controllers"""
-
+        
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
             messagebox.showerror("Connection Error", "MFCs not connected")
             return False
@@ -488,13 +491,13 @@ class MFCProfileManager:
             return False
         # Sort steps by time
         steps = sorted(steps, key=lambda x: x["time"])
-        
+        self.stoprequest = False
         start_time = time.time()
         current_step_index = 0
         profile_complete = False
         # print("starttime profiles", start_time)
         # print("hoi")
-        while not profile_complete:
+        while not profile_complete and not self.stoprequest:
             elapsed_time = time.time() - start_time
 
             # Check if we need to move to next step
@@ -531,9 +534,15 @@ class MFCProfileManager:
             time.sleep(0.1)
             if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
                 profile_complete = True
-                
-
         return True
+    
+    def stop_profile(self):
+        self.stoprequest = True
+        
+        #Vanuitgaand dat mfcs[2] de een is die dillute
+        self.mfcs[0].set_massflow(0)
+        self.mfcs[1].set_massflow(0)
+        self.mfcs[2].set_massflow(self.maxflow)
 
 class CoolingProfileManager:
     def __init__(self, profiles_dir="profiles_onetab"):
@@ -554,6 +563,7 @@ class CoolingProfileManager:
         }
         self.cooling = Koelingsblok()
         
+        self.stoprequest = False
         # Create profiles directory if it doesn't exist
         if not os.path.exists(self.profiles_dir):
             os.makedirs(self.profiles_dir)
@@ -625,11 +635,12 @@ class CoolingProfileManager:
         # Sort steps by time
         steps = sorted(steps, key=lambda x: x["time"])
         
+        self.stoprequest = False
         start_time = time.time()
         current_step_index = 0
         profile_complete = False
 
-        while not profile_complete:
+        while not profile_complete and not self.stoprequest:
             elapsed_time = time.time() - start_time
 
             # Check if we need to move to next step
@@ -658,9 +669,12 @@ class CoolingProfileManager:
             if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
                 profile_complete = True
         return True
-
-
-class MFCProfileManager:
+    
+    def stop_profile(self):
+        self.stoprequest = True
+        ###WAT MOETEN WE HIERNA DOEN?
+        
+class RVMProfileManager:
     def __init__(self, profiles_dir="profiles_onetab"):
         #profiles_dir is the path where the profile will be saved
         self.profiles_dir = os.path.join(profiles_dir, "profiles_valve")
@@ -679,7 +693,7 @@ class MFCProfileManager:
         }
 
         self.valve = RVM()
-        
+        self.stoprequest = False
         # Create profiles directory if it doesn't exist
         if not os.path.exists(self.profiles_dir):
             os.makedirs(self.profiles_dir)
@@ -703,7 +717,6 @@ class MFCProfileManager:
                 profiles.append(filename[:-5])  # Remove .json extension
         return sorted(profiles) #Returning in alphabetical order
     
-
     def load_profile(self, name):
         """Load a profile by name and set it as current profile"""
         file_path = os.path.join(self.profiles_dir, f"{name}.json")
@@ -714,7 +727,6 @@ class MFCProfileManager:
                 return self.current_profile
         return None
     
-
     def save_profile(self, name, profile_data):
         """Save a profile to disk"""
         file_path = os.path.join(self.profiles_dir, f"{name}.json")
@@ -746,13 +758,13 @@ class MFCProfileManager:
             return False
         # Sort steps by time
         steps = sorted(steps, key=lambda x: x["time"])
-        
+        self.stoprequest = False
         start_time = time.time()
         current_step_index = 0
         profile_complete = False
         # print("starttime profiles", start_time)
         # print("hoi")
-        while not profile_complete:
+        while not profile_complete and not self.stoprequest:
             elapsed_time = time.time() - start_time
 
             # Check if we need to move to next step
@@ -783,129 +795,12 @@ class MFCProfileManager:
                 
 
         return True
-
-    def __init__(self, profiles_dir="profiles_onetab"):
-        #profiles_dir is the path where the profile will be saved
-        self.profiles_dir = os.path.join(profiles_dir, "profiles_valve")
-        self.current_profile = None
-        self.standard_profiles = {
-            "Flow_Test VALVE": {
-                "description": "Test flow rate changes",
-                "steps": [
-                    {"time": 0, "valve": 1},
-                    {"time": 10, "valve": 1},
-                    {"time": 20, "valve": 1},
-                    {"time": 30, "valve": 1},
-                    {"time": 40, "valve": 1}
-                ]
-            }
-        }
-        self.valve = RVM()
-        
-        # Create profiles directory if it doesn't exist
-        if not os.path.exists(self.profiles_dir):
-            os.makedirs(self.profiles_dir)
-            
-        # Save standard profiles if they don't exist
-        #https://www.geeksforgeeks.org/python-dictionary-values/
-        for name, value in self.standard_profiles.items():
-            #Obtaining the name of the profile and the value of the profile
-            file_path = os.path.join(self.profiles_dir, f"{name}.json")
-            
-            #We want to overwrite an already existing profile
-            if not os.path.exists(file_path):
-                self.save_profile(name, value)
-                    
-    def get_profiles(self):
-        """Return a list of available profile names"""
-        profiles = []
-        #List all the files in directory
-        for filename in os.listdir(self.profiles_dir):
-            if filename.endswith('.json'):
-                profiles.append(filename[:-5])  # Remove .json extension
-        return sorted(profiles) #Returning in alphabetical order
     
-
-    def load_profile(self, name):
-        """Load a profile by name and set it as current profile"""
-        file_path = os.path.join(self.profiles_dir, f"{name}.json")
-        if os.path.exists(file_path):
-            ## https://www.geeksforgeeks.org/reading-and-writing-json-to-a-file-in-python/
-            with open(file_path, 'r') as openfile:
-                self.current_profile = json.load(openfile)
-                return self.current_profile
-        return None
-    
-
-    def save_profile(self, name, profile_data):
-        """Save a profile to disk"""
-        file_path = os.path.join(self.profiles_dir, f"{name}.json")
-        ## https://www.geeksforgeeks.org/reading-and-writing-json-to-a-file-in-python/
-        with open(file_path, 'w') as outfile:
-            json.dump(profile_data, outfile, indent=4)
-        return True
-    
-    def delete_profile(self, name):
-        """Delete a profile from disk"""
-        file_path = os.path.join(self.profiles_dir, f"{name}.json")
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            return True
-        return False
-
-    def run_profile(self, temp_ambient, update_callback = None):
-        """Run the current profile with the given device controllers"""
-        if not self.cooling.connected:
-            messagebox.showerror("Connection Error", "Cooling is not connected")
-            return False
+    def stop_profile(self):
+        self.stoprequest = True
+        ##home position
+        self.valve.set_valve(1)
         
-        if not self.current_profile:
-            messagebox.showerror("Error", "No profile loaded")
-            return False
-        steps = self.current_profile.get("steps", [])
-        if not steps:
-            messagebox.showerror("Error", "Profile has no steps")
-            return False
-        
-        if temp_ambient is None:
-            messagebox.showwarning("Warning", "Please set the ambient temperature first")
-            
-        # Sort steps by time
-        steps = sorted(steps, key=lambda x: x["time"])
-        
-        start_time = time.time()
-        current_step_index = 0
-        profile_complete = False
-
-        while not profile_complete:
-            elapsed_time = time.time() - start_time
-
-            # Check if we need to move to next step
-            if current_step_index < len(steps) - 1:
-                next_step_time = steps[current_step_index + 1]["time"]
-                if elapsed_time >= next_step_time:
-                    current_step_index += 1
-            
-            # Get current step parameters
-            current_step = steps[current_step_index]
-            
-            # Set devices to current step values
-            self.cooling.set_temperature(current_step["temperature"], temp_ambient)
-
-            #if update_callback is called then we need to update the status with the corresponding data
-            if update_callback:
-                    update_callback({
-                    "elapsed_time": elapsed_time,
-                    "current_step": current_step_index + 1,
-                    "total_steps": len(steps),
-                    "temperature": current_step["temperature"],
-                })
-
-            time.sleep(0.1)
-            # Check if profile is complete
-            if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
-                profile_complete = True
-        return True
 
 class AutomatedSystemUI:
     def __init__(self, root):
@@ -915,13 +810,13 @@ class AutomatedSystemUI:
         
         self.mfcprofilemanager = MFCProfileManager()
         self.coolingprofilemanager = CoolingProfileManager()
-        #self.valveprofilemanager
+        self.valveprofilemanager = RVMProfileManager()
         
         ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
         ##Daarnaast zijn de porten dan ook niet aligned aahh
         self.mfcs = self.mfcprofilemanager.mfcs
         self.cooling = self.coolingprofilemanager.cooling
-        self.valve = self.mfcprofilemanager.valve
+        self.valve = self.valveprofilemanager.valve
         
         # Header frame for connection and status
         header_frame = ttk.Frame(self.root)
@@ -931,7 +826,7 @@ class AutomatedSystemUI:
         connection_frame = ttk.Frame(header_frame)
         connection_frame.pack(side='right', padx=10)
         
-        ttk.Label(connection_frame, text="Device Connections", font=("Arial", 11, "bold")).pack(fill = 'both', expand = True)
+        ttk.Label(connection_frame, text="Device Connections", font=("Arial", 10, "bold")).pack(fill = 'both', expand = True)
         # Connection status labels
         self.connection_mfc1_port_label = ttk.Label(connection_frame, 
                                                  text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
@@ -961,7 +856,7 @@ class AutomatedSystemUI:
         othervar_frame.pack(side='right', padx=10)
         
         # Ambient temperature section
-        ttk.Label(othervar_frame, text="Set Ambient Temperature", font=("Arial", 11, "bold")).pack(fill='both', expand=True)
+        ttk.Label(othervar_frame, text="Set Ambient Temperature", font=("Arial", 9, "bold")).pack(fill='both', expand=True)
         # Label and Entry for ambient temperature
         self.ambient_temp_label = tk.Label(othervar_frame, text=f"Ambient Temperature (°C): not set")
         self.ambient_temp_label.pack(fill='both', expand=True)
@@ -977,19 +872,49 @@ class AutomatedSystemUI:
         self.status_var.set("Status:")
         status_bar = ttk.Label(header_frame, text='Status', textvariable=self.status_var)
         status_bar.pack(fill='both', padx=5, pady=5)
+
+        self.running_var_bar = tk.Label(header_frame, text="", anchor="w", relief="sunken")
+        self.running_var_bar.pack(side='top', fill='x')
         
-        self.running_var_bar = tk.Label(header_frame, text="")
-        self.running_var_bar.pack(side= 'bottom', fill='x')
-        
-        self.running_mfcprofile_bar = tk.Label(header_frame, text="")
-        self.running_mfcprofile_bar.pack(side= 'bottom', fill='x')
-        
-        self.running_coolingprofile_bar = tk.Label(header_frame, text="")
-        self.running_coolingprofile_bar.pack(side= 'bottom', fill='x')
-        
-        self.running_valveprofile_bar = tk.Label(header_frame, text="")
-        self.running_valveprofile_bar.pack(side= 'bottom', fill='x')
-        
+        ######PROFILE STATUS
+        # Create a frame to contain the grid-like status table
+        self.profile_status_frame = ttk.LabelFrame(self.root, text="Profile Overview")
+        self.profile_status_frame.pack(fill="x", padx=10, pady=5)
+
+        # Column headers
+        ttk.Label(self.profile_status_frame, text="Profile", font=("Arial", 8, "bold")).grid(row=0, column=0, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Elapsed Time", font=("Arial", 8, "bold")).grid(row=0, column=1, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Step", font=("Arial", 8, "bold")).grid(row=0, column=2, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Value", font=("Arial", 8, "bold")).grid(row=0, column=3, padx=5, sticky="w")
+
+        # Row for MFC profile
+        ttk.Label(self.profile_status_frame, text="MFC Running Profile").grid(row=1, column=0, padx=5, sticky="w")
+        self.mfc_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.mfc_elapsed_label.grid(row=1, column=1, padx=5, sticky="w")
+        self.mfc_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.mfc_step_label.grid(row=1, column=2, padx=5, sticky="w")
+        self.mfc_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.mfc_value_label.grid(row=1, column=3, padx=5, sticky="w")
+
+        # Cooling profile
+        ttk.Label(self.profile_status_frame, text="Cooling Running Profile").grid(row=2, column=0, padx=5, sticky="w")
+        self.cooling_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.cooling_elapsed_label.grid(row=2, column=1, padx=5, sticky="w")
+        self.cooling_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.cooling_step_label.grid(row=2, column=2, padx=5, sticky="w")
+        self.cooling_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.cooling_value_label.grid(row=2, column=3, padx=5, sticky="w")
+
+        # Valve profile
+        ttk.Label(self.profile_status_frame, text="Valve Running Profile").grid(row=3, column=0, padx=5, sticky="w")
+        self.valve_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.valve_elapsed_label.grid(row=3, column=1, padx=5, sticky="w")
+        self.valve_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.valve_step_label.grid(row=3, column=2, padx=5, sticky="w")
+        self.valve_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.valve_value_label.grid(row=3, column=3, padx=5, sticky="w")
+
+        #####
         
         # Notebook for tabs
         self.notebook = ttk.Notebook(self.root)
@@ -999,7 +924,7 @@ class AutomatedSystemUI:
         self.create_device_tab()
         self.create_mfcprofile_tab()
         self.create_coolingprofile_tab()
-        #self.create_valveprofile_tab()
+        self.create_valveprofile_tab()
         
     def set_ambient_temp(self):
         """
@@ -1027,7 +952,7 @@ class AutomatedSystemUI:
         temperature = f"{self.cooling.get_temperature():.2f} °C" if self.cooling.connected else "N/A"
 
         # Get valve position from valve
-        valve_position = self.valve.current_valve_position() if self.valve.connected else "N/A"
+        valve_position = self.valve.currentposition if self.valve.connected else "N/A"
         self.running_var_bar.config(text=f"Reading Values   : MFC 1 Mass Flow Rate: {mass_flow_1} | MFC 2 Mass Flow Rate: {mass_flow_2} | MFC 3 Mass Flow Rate: {mass_flow_3} | Temperature: {temperature} | Valve Position: {valve_position}")
 
         # Schedule the next update, per 1s
@@ -1099,9 +1024,12 @@ class AutomatedSystemUI:
             MFC_disconnect_button = tk.Button(mfc_frame, text="Disconnect", command= lambda i = index : self.disconnect_MFC(i))
             MFC_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
+        coolingandvalve_frame = ttk.LabelFrame(device_tab)
+        coolingandvalve_frame.pack(fill='x', padx=10, pady=5)
+        
         ############	COOLING		###########################
-        cooling_frame = ttk.LabelFrame(device_tab, text='Cooling')
-        cooling_frame.pack(fill='x', padx=10, pady=5)
+        cooling_frame = ttk.LabelFrame(coolingandvalve_frame, text='Cooling')
+        cooling_frame.grid(row=0, column=0, padx=10, pady=5, sticky='n')
         
         # label for the temp
         temperature_label = tk.Label(cooling_frame, text="Temperature (°C):")
@@ -1137,9 +1065,9 @@ class AutomatedSystemUI:
         cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
         ############	VALVE		###########################
-        valve_frame = ttk.LabelFrame(device_tab, text='Valve')
-        valve_frame.pack(fill='x', padx=10, pady=5)
-        
+        valve_frame = ttk.LabelFrame(coolingandvalve_frame, text='Valve')
+        valve_frame.grid(row=0, column=1, padx=10, pady=5, sticky='n')
+                
         # Valve position control
         ttk.Label(valve_frame, text="Valve Position:").grid(row=0, column=0, padx=10, pady=10)
         self.valve_pos_var = tk.IntVar(value=1)
@@ -1147,7 +1075,7 @@ class AutomatedSystemUI:
         
         # button to set the position of the valve
         set_valve_button = tk.Button(valve_frame, text="Set valve", command=self.set_valve)
-        set_valve_button.grid(row=1, column=0, columnspan=2, pady=10)
+        set_valve_button.grid(row=1, column=0, padx=10, pady=10)
         
         # Label to display the current position of the valve
         self.current_valve_label = tk.Label(valve_frame, text="Current position of the valve: Not available")
@@ -1155,11 +1083,11 @@ class AutomatedSystemUI:
         
         # Connect button
         valve_connect_button = tk.Button(valve_frame, text="Connect", command=self.connect_valve)
-        valve_connect_button.grid(row=3, column=0, padx=10, pady=10)
+        valve_connect_button.grid(row=3, column=0, padx=5, pady=5)
         
         # Disconnect button
         valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
-        valve_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        valve_disconnect_button.grid(row=3, column=1, padx=5, pady=5)
         
     def create_mfcprofile_tab(self):
         profile_tab = ttk.Frame(self.notebook)
@@ -1268,21 +1196,6 @@ class AutomatedSystemUI:
         step_flow3_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_flow3_var, width=8)
         step_flow3_entry.pack(side='left', padx=5)
         
-        # self.mfcprofile_mfc4_label = ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
-        # self.mfcstep_temp_var = tk.DoubleVar()
-        # step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_temp_var, width=8)
-        # step_temp_entry.pack(side='left', padx=2)
-        
-        # self.mfcprofile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
-        # self.mfcstep_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        # step_valve_combo = ttk.Combobox(
-        #     step_controls_frame, 
-        #     textvariable=self.mfcstep_valve_var, 
-        #     values=[1, 2], 
-        #     width=5
-        # )
-        # step_valve_combo.pack(side='left', padx=2)
-        
         # Step buttons
         step_buttons_frame = ttk.Frame(edit_frame)
         step_buttons_frame.pack(fill='both')
@@ -1310,14 +1223,6 @@ class AutomatedSystemUI:
         self.mfcstop_button.pack(side='left', padx=2)
         self.mfcstop_button.config(state=tk.DISABLED)
         
-        # # Status bar, to show what has been adjusted
-        # self.status_var = tk.StringVar() 
-        # self.status_bar = ttk.Label(edit_frame, textvariable=self.status_var)
-        # self.status_bar.pack(fill='both', padx=5, pady=5)
-        
-        # Initialize variables
-        # self.mfccurrent_loaded_profile = None
-
     def create_coolingprofile_tab(self):
         profile_tab = ttk.Frame(self.notebook)
         profile_tab.pack(fill = 'both', expand = True)
@@ -1444,7 +1349,139 @@ class AutomatedSystemUI:
         
         # Initialize variables
         # self.coolingcurrent_loaded_profile = None
-     
+    
+    def create_valveprofile_tab(self):
+        profile_tab = ttk.Frame(self.notebook)
+        profile_tab.pack(fill = 'both', expand = True)
+        self.notebook.add(profile_tab, text = 'Valve Profile Management')
+        
+        # ## Split into two frames
+        list_frame = ttk.Frame(profile_tab, width = 400)
+        list_frame.pack(side= 'left', fill = 'both', expand=True, padx=10, pady=10)
+        list_frame.pack_propagate(False)
+
+        edit_frame = ttk.Frame(profile_tab)
+        edit_frame.pack(side= 'right', fill= 'both', expand=True, padx=10, pady=10)
+        
+        ### Left frame / list frame
+        ## Profile listbox with scrollbar
+        # https://www.pythontutorial.net/tkinter/tkinter-listbox/#adding-a-scrollbar-to-the-listbox
+        # Making an empty profile listbox
+        self.valveprofile_listbox = tk.Listbox(list_frame, selectmode = tk.SINGLE)
+        self.valveprofile_listbox.pack(fill= 'both', expand=True, padx=5, pady=5)
+    
+        # Putting all the profiles in the profile listbox
+        self.update_valveprofile_list()
+        
+        #Adding a scrollbar to the profile listbox
+        v_scrollbar = ttk.Scrollbar(self.valveprofile_listbox, orient = tk.VERTICAL, command = self.valveprofile_listbox.yview)
+        
+        self.valveprofile_listbox['yscrollcommand'] = v_scrollbar.set
+        v_scrollbar.pack(side='right', fill='y')
+        
+        ##Adding the buttons to the left frame (list frame)
+        # Profile list buttons
+        button_frame = ttk.Frame(list_frame)
+        button_frame.pack(fill='x', padx=5, pady=5)
+        
+        load_button = ttk.Button(button_frame, text="Load", command=self.load_valveprofile)
+        load_button.pack(side='left', padx=3, expand=True)
+        
+        delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_valveprofile)
+        delete_button.pack(side='left', padx=3, expand=True)
+        
+        ##Right frame / edit frame
+        # Profile info
+        info_frame = ttk.Frame(edit_frame)
+        info_frame.pack(fill='both', padx=5, pady=5)
+        
+        self.new_valveprofile_label = ttk.Label(info_frame, text="")
+        self.new_valveprofile_label.pack(side = 'left', padx=5, expand=True, fill='x')
+        
+        ttk.Label(info_frame, text="Name:").pack(side='left')
+        self.valvename_var = tk.StringVar()
+        name_entry = ttk.Entry(info_frame, textvariable=self.valvename_var)
+        name_entry.pack(side='left', padx=5, expand=True, fill='x')
+        
+        ttk.Label(info_frame, text="Description:").pack(side='left')
+        self.valvedesc_var = tk.StringVar()
+        desc_entry = ttk.Entry(info_frame, textvariable=self.valvedesc_var)
+        desc_entry.pack(side='left', padx=5, expand=True, fill='x')
+        
+        new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_valveprofile)
+        new_profile_btn.pack(side='right', padx=3, expand=True)
+        
+        # Steps in the right/frame
+        steps_frame = ttk.Frame(edit_frame)
+        steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
+        
+        #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
+        self.valvesteps_tree = ttk.Treeview(
+            steps_frame, 
+            columns=("time", "valve"), 
+            show="headings"
+        )
+        self.valvesteps_tree.heading("time", text="Time (s)")
+        self.valvesteps_tree.heading("valve", text="Valve Position (1/2)")
+        
+        self.valvesteps_tree.column("time", width=250, anchor=tk.CENTER)
+        self.valvesteps_tree.column("valve", width=250, anchor=tk.CENTER)
+        
+        self.valvesteps_tree.pack(fill = 'both' , expand=True)
+        
+        step_controls_frame = ttk.Frame(edit_frame)
+        step_controls_frame.pack(fill='x', padx=5, pady=5)
+        
+        self.valveprofile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
+        self.valvestep_time_var = tk.DoubleVar()
+        step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.valvestep_time_var, width=8)
+        step_time_entry.pack(side='left', padx=5)
+        
+        self.valveprofile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
+        self.valvestep_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
+        step_valve_combo = ttk.Combobox(
+            step_controls_frame, 
+            textvariable=self.valvestep_valve_var, 
+            values=[1, 2], 
+            width=5
+        )
+        step_valve_combo.pack(side='left', padx=2)
+        
+        # Step buttons
+        step_buttons_frame = ttk.Frame(edit_frame)
+        step_buttons_frame.pack(fill='both')
+        
+        add_step_button = ttk.Button(step_buttons_frame, text="Add Step", command=self.add_valvestep)
+        add_step_button.pack(side='left', padx=2)
+        
+        remove_step_button = ttk.Button(step_buttons_frame, text="Remove Step", command=self.remove_valvestep)
+        remove_step_button.pack(side='left', padx=2)
+        
+        clear_steps_button = ttk.Button(step_buttons_frame, text="Clear All Steps", command=self.clear_valvesteps)
+        clear_steps_button.pack(side='left', padx=2)
+        
+        # Save and run buttons
+        action_buttons_frame = ttk.Frame(edit_frame)
+        action_buttons_frame.pack(fill='both')
+        
+        save_button = ttk.Button(action_buttons_frame, text="Save Profile", command=self.save_valveprofile)
+        save_button.pack(side='left', padx=2)
+        
+        run_button = ttk.Button(action_buttons_frame, text="Run Profile", command=self.run_valveprofile)
+        run_button.pack(side='left', padx=2)
+        
+        self.valvestop_button = ttk.Button(action_buttons_frame, text="Stop", command=self.stop_valveprofile)
+        self.valvestop_button.pack(side='left', padx=2)
+        self.valvestop_button.config(state=tk.DISABLED)
+        
+        # # Status bar, to show what has been adjusted
+        # self.status_var = tk.StringVar() 
+        # self.status_bar = ttk.Label(edit_frame, textvariable=self.status_var)
+        # self.status_bar.pack(fill='both', padx=5, pady=5)
+        
+        # Initialize variables
+        # self.valvecurrent_loaded_profile = None
+
     def connect_MFC(self, index):
         if self.mfcs[index].connect():
             #messagebox.showinfo("Connection", "MFC successfully connected.")
@@ -1625,7 +1662,7 @@ class AutomatedSystemUI:
             self.update_valve()
 
     def update_valve(self):
-        current_position = self.valve.current_valve_position()
+        current_position = self.valve.currentposition
         self.update_run_var()
         if current_position is not None:
             self.current_valve_label.config(text=f"Current position of the valve: {current_position}")
@@ -1732,7 +1769,7 @@ class AutomatedSystemUI:
             
             # Check if the time already exists
             for child in self.mfcsteps_tree.get_children():
-                if int(self.mfcsteps_tree.item(child, "values")[0]) == time_val:
+                if float(self.mfcsteps_tree.item(child, "values")[0]) == time_val:
                     if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
                         return #if True, thus no then return
                     self.mfcsteps_tree.delete(child)
@@ -1772,7 +1809,7 @@ class AutomatedSystemUI:
             #To obtain all the values of the steps
             values = self.mfcsteps_tree.item(child, "values")
             steps.append({
-                "time": int(values[0]),
+                "time": float(values[0]),
                 "flow mfc1": float(values[1]),
                 "flow mfc2": float(values[2]),
                 "flow mfc3": float(values[3])
@@ -1854,22 +1891,15 @@ class AutomatedSystemUI:
     
     def stop_mfcprofile(self):
         """Stop the currently running profile"""
+        self.mfcprofilemanager.stop_profile()
         self.mfcstop_button.config(state=tk.DISABLED)
         self.status_var.set("Profile run stopped by user")
 
     def update_mfcprofile_var(self, status):
-        elapsed = status["elapsed_time"]
-        step = status["current_step"]
-        total = status["total_steps"]
-        flow1 = status["flow mfc1"]
-        flow2 = status["flow mfc2"]
-        flow3 = status["flow mfc3"]
-
-        self.running_mfcprofile_bar.config(
-            text=(
-                f"MFC Profile: Running: {elapsed:.1f}s | Step {step}/{total} | Values Set: MFC1: {flow1:.2f} mL/min | MFC2: {flow2:.2f} mL/min | MFC3: {flow3:.2f} mL/min"
-            )
-        )
+        self.mfc_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
+        self.mfc_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
+        self.mfc_value_label.config(text=f"{status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['flow mfc3']:.2f} mL/min")
+            
         # Schedule the next update, per 1s
         self.notebook.after(1000, lambda: self.update_mfcprofile_var)
         
@@ -1963,7 +1993,7 @@ class AutomatedSystemUI:
 
             # Check if the time already exists
             for child in self.coolingsteps_tree.get_children():
-                if int(self.coolingsteps_tree.item(child, "values")[0]) == time_val:
+                if float(self.coolingsteps_tree.item(child, "values")[0]) == time_val:
                     if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
                         return #if True, thus no then return
                     self.coolingsteps_tree.delete(child)
@@ -2003,7 +2033,7 @@ class AutomatedSystemUI:
             #To obtain all the values of the steps
             values = self.coolingsteps_tree.item(child, "values")
             steps.append({
-                "time": int(values[0]),
+                "time": float(values[0]),
                 "temperature": float(values[1])
             })
         
@@ -2081,23 +2111,241 @@ class AutomatedSystemUI:
     
     def stop_coolingprofile(self):
         """Stop the currently running profile"""
+        self.coolingprofilemanager.stop_profile()
         self.coolingstop_button.config(state=tk.DISABLED)
         self.status_var.set("Profile run stopped by user")
 
     def update_coolingprofile_var(self, status):
-        elapsed = status["elapsed_time"]
-        step = status["current_step"]
-        total = status["total_steps"]
-        temp = status["temperature"]
-
-        self.running_coolingprofile_bar.config(
-            text=(
-                f"Cooling Profile: Running: {elapsed:.1f}s | Step {step}/{total} | Values Set: Cooling: {temp:.2f} °C"
-            )
-        )
+        self.cooling_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
+        self.cooling_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
+        self.cooling_value_label.config(text=f"{status['temperature']:.2f} °C")
         # Schedule the next update, per 1s
         self.notebook.after(1000, lambda: self.update_coolingprofile_var)
+
+
+
+    ####VALVE PROFILE
+    def update_valveprofile_list(self):
+        """Refresh the list of available profiles"""
+        #https://youtu.be/Vm0ivVxNaA8
         
+        #Delete all the items from the listbox
+        self.valveprofile_listbox.delete(0, tk.END)
+        
+        #Add all the profiles to the listbox
+        for profile in self.valveprofilemanager.get_profiles():
+            self.valveprofile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
+
+    def load_valveprofile(self):
+        """Load the selected profile into the editor"""
+        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
+        selection = self.valveprofile_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a profile to load")
+            return
+        
+        #To ensure that you only select the first selected
+        profile_name = self.valveprofile_listbox.get(selection[0])
+        profile = self.valveprofilemanager.load_profile(profile_name)
+        
+        self.new_valveprofile_label.config(text = "")
+        
+        if profile:
+            # self.valvecurrent_loaded_profile = profile_name
+            #Update the name of the profile
+            self.valvename_var.set(profile_name)
+            #Update the description in the field
+            self.valvedesc_var.set(profile.get("description", ""))
+            
+            # Clear the existing steps
+            for item in self.valvesteps_tree.get_children():
+                self.valvesteps_tree.delete(item)
+            
+            # Add new steps
+            for step in profile.get("steps", []):
+                self.valvesteps_tree.insert("", tk.END, values=(
+                    step["time"],
+                    step["valve"]
+                ))
+            
+            self.status_var.set(f"Loaded profile: {profile_name}")
+        
+    def delete_valveprofile(self):
+        """Delete the selected profile"""
+        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
+        selection = self.valveprofile_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a profile to delete")
+            return
+            
+        profile_name = self.valveprofile_listbox.get(selection[0]) #To ensure that you only select the first selected
+        
+        if messagebox.askyesno("Confirm", f"Delete profile '{profile_name}'?"):
+            if self.valveprofilemanager.delete_profile(profile_name):
+                #Updating the new profile list
+                self.update_valveprofile_list() 
+                #Changing the status
+                self.status_var.set(f"Deleted profile: {profile_name}")
+            else:
+                messagebox.showerror("Error", f"Failed to delete the profile: '{profile_name}'")
+                
+    def create_new_valveprofile(self):
+        #Clearing all input fields and steps
+        self.valvename_var.set("")
+        self.valvedesc_var.set("")
+        self.valvestep_time_var.set("0")
+        self.valvestep_valve_var.set("0")
+        
+        for item in self.valvesteps_tree.get_children():
+            self.valvesteps_tree.delete(item)
+        
+        self.new_valveprofile_label.config(text = "New profile", foreground = "green")
+        
+    def add_valvestep(self):
+        """Add a new step to the current profile"""
+        try:
+            time_val = float(self.valvestep_time_var.get())
+            valve_val = int(self.valvestep_valve_var.get())
+            
+            if time_val < 0:
+                raise ValueError("Time cannot be negative")
+            
+            
+            ###ALS WE OOK POSITIE 3 ERIN GAAN DOEN MOET DIT GEWIJZIGD WORDEN
+            if valve_val not in [1, 2]:
+                raise ValueError("Position of the valve must be 1 or 2")
+            
+            # Check if the time already exists
+            for child in self.valvesteps_tree.get_children():
+                if float(self.valvesteps_tree.item(child, "values")[0]) == time_val:
+                    if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
+                        return #if True, thus no then return
+                    self.valvesteps_tree.delete(child)
+                    break
+            
+            self.valvesteps_tree.insert("", tk.END, values=(time_val, valve_val))
+            
+        except ValueError as error:
+            messagebox.showerror("Error", f"Invalid input: {error}")
+    
+    def remove_valvestep(self):
+        """Remove the selected step"""
+        selection = self.valvesteps_tree.selection()
+        if selection:
+            self.valvesteps_tree.delete(selection)
+    
+    def clear_valvesteps(self):
+        """Clear all steps"""
+        if messagebox.askyesno("Confirm", "Clear all the steps?"):
+            #Obtain all the steps and delete all the steps
+            for item in self.valvesteps_tree.get_children():
+                self.valvesteps_tree.delete(item)
+    
+    def save_valveprofile(self):
+        """Save the current profile"""
+        #Getting the name
+        name = self.valvename_var.get().strip()
+        
+        #Ensuring that the name isn't empty
+        if not name:
+            messagebox.showwarning("Warning", "Profile name cannot be empty")
+            return
+        
+        # Collect steps from the profile
+        steps = []
+        for child in self.valvesteps_tree.get_children():
+            #To obtain all the values of the steps
+            values = self.valvesteps_tree.item(child, "values")
+            steps.append({
+                "time": float(values[0]),
+                "valve": int(values[1])
+            })
+        
+        # Sort steps by time
+        #https://docs.python.org/3/howto/sorting.html
+        steps = sorted(steps, key=lambda steps: steps["time"])
+        
+        # Create the profile data
+        profile_data = {
+            "description": self.valvedesc_var.get(),
+            "steps": steps
+        }
+        
+        if self.valveprofilemanager.save_profile(name, profile_data):
+            self.update_valveprofile_list()
+            self.status_var.set(f"Saved profile: {name}")
+        else:
+            messagebox.showerror("Error", f"Failed to save profile '{name}'")
+    
+    def run_valveprofile(self):
+        """Run the current profile"""    
+            
+        if not self.valve.connected:
+            messagebox.showwarning("Error", "One or more devices are not connected")
+            return False
+          
+        #Get the name of the profile without spaces, such that the .json file can be loaded later
+        name = self.valvename_var.get().strip()
+        
+        #Checking whether the name is empty
+        if not name:
+            messagebox.showwarning("Warning", "Please load or create a profile first")
+            return
+
+        # Load the profile that needs to be runned
+        profile = self.valveprofilemanager.load_profile(name)
+        if not profile:
+            messagebox.showerror("Error", f"Failed to load profile: '{name}'")
+            return
+        
+        self.update_run_var()
+        #Enabling the stop button, since you can now stop a running profile
+        self.valvestop_button.config(state=tk.NORMAL) 
+        
+        # Start profile in a separate thread, such that the UI doesn't freeze until it finishes
+        # And you'll still be able to see what happens, e.g. popup of not connection
+        self.valveprofile_thread = threading.Thread(
+            target=self.run_valveprofile_thread,  
+            daemon=True         # Stops threading by pressing an event, e.g. pressing on stop button
+        )
+        self.valveprofile_thread.start()
+    
+    def run_valveprofile_thread(self):
+        """Thread function to run the profile"""
+        try:
+            # Displaying which profile is running
+            self.status_var.set(f"Running profile: {self.valvename_var.get()}")
+            self.valveprofilemanager.run_profile(update_callback=self.update_valveprofile_var)
+            # self.notebook.after(0, lambda: self.update_run_status)
+            self.notebook.after(0, lambda: self.valveprofile_complete)
+
+        except Exception as e:
+            self.notebook.after(0, lambda: self.valveprofile_error(e))
+    
+    def valveprofile_complete(self):
+        """Called when profile completes successfully"""
+        self.valvestop_button.config(state=tk.DISABLED)
+        self.status_var.set("Profile run completed")
+    
+    def valveprofile_error(self, error):
+        """Called when profile run encounters an error"""
+        self.valvestop_button.config(state=tk.DISABLED)
+        messagebox.showerror("Error", f"Profile run failed: {error}")
+        self.status_var.set("Profile run failed")
+    
+    def stop_valveprofile(self):
+        """Stop the currently running profile"""
+        self.valveprofilemanager.stop_profile()
+        self.valvestop_button.config(state=tk.DISABLED)
+        self.status_var.set("Profile run stopped by user")
+
+    def update_valveprofile_var(self, status):
+        self.valve_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
+        self.valve_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
+        self.valve_value_label.config(text=f"Position {status['valve']}")
+        # Schedule the next update, per 1s
+        self.notebook.after(1000, lambda: self.update_valveprofile_var)
+             
 def main():
     root = tk.Tk()
     app = AutomatedSystemUI(root)
