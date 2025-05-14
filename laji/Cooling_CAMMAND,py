@@ -151,7 +151,7 @@ class Koelingsblok:
     SET_STORE_NEW_SET_POINT_TEMPERATURE = 'n'
     SET_IDLE_MODE = 'i'
     CLEAR_IDLE_MODE = 'I'
-    CURRENT_PLATE_TEMPRATURE = 'p'
+    CURRENT_PLATE_TEMPERATURE = 'p'
     CURRENT_LOG_FILE = 'l'
     CLEAR_LOG_FILE = 'lc'
     START_LOGGING = 'ls'
@@ -202,7 +202,7 @@ class Koelingsblok:
         return response
     
     def get_temperature(self):
-        response = self.send_command(self.CURRENT_PLATE_TEMPRATURE)
+        response = self.send_command(self.CURRENT_PLATE_TEMPERATURE)
         print(f"Current plate temperature is {response}")
         return response
 
