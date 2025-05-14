@@ -660,6 +660,253 @@ class CoolingProfileManager:
         return True
 
 
+class MFCProfileManager:
+    def __init__(self, profiles_dir="profiles_onetab"):
+        #profiles_dir is the path where the profile will be saved
+        self.profiles_dir = os.path.join(profiles_dir, "profiles_valve")
+        self.current_profile = None
+        self.standard_profiles = {
+            "Flow_Test VALVE": {
+                "description": "Test flow rate changes",
+                "steps": [
+                    {"time": 0, "valve": 1},
+                    {"time": 10, "valve": 1},
+                    {"time": 20, "valve": 1},
+                    {"time": 30, "valve": 1},
+                    {"time": 40, "valve": 1}
+                ]
+            }
+        }
+
+        self.valve = RVM()
+        
+        # Create profiles directory if it doesn't exist
+        if not os.path.exists(self.profiles_dir):
+            os.makedirs(self.profiles_dir)
+            
+        # Save standard profiles if they don't exist
+        #https://www.geeksforgeeks.org/python-dictionary-values/
+        for name, value in self.standard_profiles.items():
+            #Obtaining the name of the profile and the value of the profile
+            file_path = os.path.join(self.profiles_dir, f"{name}.json")
+            
+            #We want to overwrite an already existing profile
+            if not os.path.exists(file_path):
+                self.save_profile(name, value)
+                    
+    def get_profiles(self):
+        """Return a list of available profile names"""
+        profiles = []
+        #List all the files in directory
+        for filename in os.listdir(self.profiles_dir):
+            if filename.endswith('.json'):
+                profiles.append(filename[:-5])  # Remove .json extension
+        return sorted(profiles) #Returning in alphabetical order
+    
+
+    def load_profile(self, name):
+        """Load a profile by name and set it as current profile"""
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        if os.path.exists(file_path):
+            ## https://www.geeksforgeeks.org/reading-and-writing-json-to-a-file-in-python/
+            with open(file_path, 'r') as openfile:
+                self.current_profile = json.load(openfile)
+                return self.current_profile
+        return None
+    
+
+    def save_profile(self, name, profile_data):
+        """Save a profile to disk"""
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        ## https://www.geeksforgeeks.org/reading-and-writing-json-to-a-file-in-python/
+        with open(file_path, 'w') as outfile:
+            json.dump(profile_data, outfile, indent=4)
+        return True
+    
+    def delete_profile(self, name):
+        """Delete a profile from disk"""
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        return False
+
+    def run_profile(self, update_callback = None):
+        """Run the current profile with the given device controllers"""
+
+        if not self.valve.connected:
+            messagebox.showerror("Connection Error", "Valve is not connected")
+            return False
+        if not self.current_profile:
+            messagebox.showerror("Error", "No profile loaded")
+            return False
+        steps = self.current_profile.get("steps", [])
+        if not steps:
+            messagebox.showerror("Error", "Profile has no steps")
+            return False
+        # Sort steps by time
+        steps = sorted(steps, key=lambda x: x["time"])
+        
+        start_time = time.time()
+        current_step_index = 0
+        profile_complete = False
+        # print("starttime profiles", start_time)
+        # print("hoi")
+        while not profile_complete:
+            elapsed_time = time.time() - start_time
+
+            # Check if we need to move to next step
+            if current_step_index < len(steps) - 1:
+                next_step_time = steps[current_step_index + 1]["time"]
+                # print("current step index", current_step_index, "total steps", steps, "next step time", next_step_time)
+                if elapsed_time >= next_step_time:
+                    current_step_index += 1
+            
+            # Get current step parameters
+            current_step = steps[current_step_index]
+            
+            self.valve.set_valve(current_step["valve"])
+        
+            #if update_callback is called then we need to update the status with the corresponding data
+            if update_callback:
+                    update_callback({
+                    "elapsed_time": elapsed_time,
+                    "current_step": current_step_index + 1,
+                    "total_steps": len(steps),
+                    "valve": current_step["valve"],
+                })
+            # Check if profile is complete
+            #such that the cpu doesn't overload
+            time.sleep(0.1)
+            if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
+                profile_complete = True
+                
+
+        return True
+
+    def __init__(self, profiles_dir="profiles_onetab"):
+        #profiles_dir is the path where the profile will be saved
+        self.profiles_dir = os.path.join(profiles_dir, "profiles_valve")
+        self.current_profile = None
+        self.standard_profiles = {
+            "Flow_Test VALVE": {
+                "description": "Test flow rate changes",
+                "steps": [
+                    {"time": 0, "valve": 1},
+                    {"time": 10, "valve": 1},
+                    {"time": 20, "valve": 1},
+                    {"time": 30, "valve": 1},
+                    {"time": 40, "valve": 1}
+                ]
+            }
+        }
+        self.valve = RVM()
+        
+        # Create profiles directory if it doesn't exist
+        if not os.path.exists(self.profiles_dir):
+            os.makedirs(self.profiles_dir)
+            
+        # Save standard profiles if they don't exist
+        #https://www.geeksforgeeks.org/python-dictionary-values/
+        for name, value in self.standard_profiles.items():
+            #Obtaining the name of the profile and the value of the profile
+            file_path = os.path.join(self.profiles_dir, f"{name}.json")
+            
+            #We want to overwrite an already existing profile
+            if not os.path.exists(file_path):
+                self.save_profile(name, value)
+                    
+    def get_profiles(self):
+        """Return a list of available profile names"""
+        profiles = []
+        #List all the files in directory
+        for filename in os.listdir(self.profiles_dir):
+            if filename.endswith('.json'):
+                profiles.append(filename[:-5])  # Remove .json extension
+        return sorted(profiles) #Returning in alphabetical order
+    
+
+    def load_profile(self, name):
+        """Load a profile by name and set it as current profile"""
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        if os.path.exists(file_path):
+            ## https://www.geeksforgeeks.org/reading-and-writing-json-to-a-file-in-python/
+            with open(file_path, 'r') as openfile:
+                self.current_profile = json.load(openfile)
+                return self.current_profile
+        return None
+    
+
+    def save_profile(self, name, profile_data):
+        """Save a profile to disk"""
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        ## https://www.geeksforgeeks.org/reading-and-writing-json-to-a-file-in-python/
+        with open(file_path, 'w') as outfile:
+            json.dump(profile_data, outfile, indent=4)
+        return True
+    
+    def delete_profile(self, name):
+        """Delete a profile from disk"""
+        file_path = os.path.join(self.profiles_dir, f"{name}.json")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        return False
+
+    def run_profile(self, temp_ambient, update_callback = None):
+        """Run the current profile with the given device controllers"""
+        if not self.cooling.connected:
+            messagebox.showerror("Connection Error", "Cooling is not connected")
+            return False
+        
+        if not self.current_profile:
+            messagebox.showerror("Error", "No profile loaded")
+            return False
+        steps = self.current_profile.get("steps", [])
+        if not steps:
+            messagebox.showerror("Error", "Profile has no steps")
+            return False
+        
+        if temp_ambient is None:
+            messagebox.showwarning("Warning", "Please set the ambient temperature first")
+            
+        # Sort steps by time
+        steps = sorted(steps, key=lambda x: x["time"])
+        
+        start_time = time.time()
+        current_step_index = 0
+        profile_complete = False
+
+        while not profile_complete:
+            elapsed_time = time.time() - start_time
+
+            # Check if we need to move to next step
+            if current_step_index < len(steps) - 1:
+                next_step_time = steps[current_step_index + 1]["time"]
+                if elapsed_time >= next_step_time:
+                    current_step_index += 1
+            
+            # Get current step parameters
+            current_step = steps[current_step_index]
+            
+            # Set devices to current step values
+            self.cooling.set_temperature(current_step["temperature"], temp_ambient)
+
+            #if update_callback is called then we need to update the status with the corresponding data
+            if update_callback:
+                    update_callback({
+                    "elapsed_time": elapsed_time,
+                    "current_step": current_step_index + 1,
+                    "total_steps": len(steps),
+                    "temperature": current_step["temperature"],
+                })
+
+            time.sleep(0.1)
+            # Check if profile is complete
+            if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
+                profile_complete = True
+        return True
+
 class AutomatedSystemUI:
     def __init__(self, root):
         self.root = root

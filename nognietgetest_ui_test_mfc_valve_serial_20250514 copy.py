@@ -144,7 +144,7 @@ class BronkhorstMFC:
         ##
 
 class Koelingsblok:
-    def __init__(self, port = 'COM4'):
+    def __init__(self, port = 'COM7'):
         self.port = port
         self.connected = False
         self.instrument = None
@@ -158,7 +158,7 @@ class Koelingsblok:
         # # p24: 9600 baud, 1 stop bit, no parity, no hardware handshake, 100ms delay after each command sent (after \r)
         # # 100 ms delay, so a timeout of 1s should be enough
         try:
-            self.instrument = serial.Serial(self.port, 9600, timeout = 1)
+            self.instrument = serial.Serial(self.port, 9600, timeout=1)
             print("I am in the cooling connecting function. My port is ", self.port)
             self.connected = True
             return self.connected
@@ -173,14 +173,6 @@ class Koelingsblok:
         # self.connected = True
         # return self.connected
         # ##
-    
-    # reset the MFC value, flow rate to 0
-    def disconnect(self):
-        param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
-        self.instrument.write_parameters(param) #Fsetpoint
-
-        #self.connected = False
-        #self.instrument = None
         
     def get_temperature(self):
     
@@ -411,7 +403,7 @@ class RVM:
 
     def connect(self):
         try:
-            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=)
+            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
             self.connected = True
             print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
 
