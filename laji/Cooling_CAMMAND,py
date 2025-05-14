@@ -195,6 +195,7 @@ class Koelingsblok:
     def send_command(self, command):
         if not self.connected:
             print("Cooling system is not connected")
+            return None
         self.instrument.write(f"{command}{self.CF}".encode('ascii'))  #-> self.CF = \r'
          # 100ms delay after each command sent (after \r)
         time.sleep(0.1)
@@ -203,11 +204,25 @@ class Koelingsblok:
     
     def get_temperature(self):
         response = self.send_command(self.CURRENT_PLATE_TEMPERATURE)
-        print(f"Current plate temperature is {response}")
-        return response
+        
+        print(self.send_command(self.CLEAR_IDLE_MODE))
+        raw = self.instrument.readline()
+        print(f"Raw response bytes: {raw}")
+        
+        if response:
+            print(f"Current plate temperature is {response}")
+            return response
+        else:
+            print("No respond received to get the temperature")
+            return None
+
 
     def set_temperature(self, temperature):
         response = self.send_command(f"{self.SET_STORE_NEW_SET_POINT_TEMPERATURE}{temperature}")
+
+        raw = self.instrument.readline()
+        print(f"Raw response bytes: {raw}")
+
         if response.lower() == "ok":
             print(f"Temperature successfully set to {temperature}°C")
         else:
