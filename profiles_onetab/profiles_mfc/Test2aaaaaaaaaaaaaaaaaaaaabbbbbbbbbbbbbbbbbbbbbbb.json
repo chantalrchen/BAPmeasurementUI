@@ -1,0 +1,41 @@
+{
+    "description": "aa",
+    "steps": [
+        {
+            "time": 0,
+            "flow mfc1": 0.0,
+            "flow mfc2": 0.0,
+            "flow mfc3": 0.0
+        },
+        {
+            "time": 10,
+            "flow mfc1": 2.0,
+            "flow mfc2": 2.0,
+            "flow mfc3": 2.0
+        },
+        {
+            "time": 20,
+            "flow mfc1": 1.0,
+            "flow mfc2": 1.0,
+            "flow mfc3": 4.0
+        },
+        {
+            "time": 30,
+            "flow mfc1": 2.0,
+            "flow mfc2": 1.0,
+            "flow mfc3": 3.0
+        },
+        {
+            "time": 40,
+            "flow mfc1": 0.0,
+            "flow mfc2": 3.0,
+            "flow mfc3": 3.0
+        },
+        {
+            "time": 50,
+            "flow mfc1": 3.0,
+            "flow mfc2": 0.0,
+            "flow mfc3": 3.0
+        }
+    ]
+}

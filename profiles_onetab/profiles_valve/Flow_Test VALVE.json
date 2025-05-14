@@ -1,0 +1,25 @@
+{
+    "description": "Test flow rate changes",
+    "steps": [
+        {
+            "time": 0,
+            "valve": 1
+        },
+        {
+            "time": 10,
+            "valve": 1
+        },
+        {
+            "time": 20,
+            "valve": 1
+        },
+        {
+            "time": 30,
+            "valve": 1
+        },
+        {
+            "time": 40,
+            "valve": 1
+        }
+    ]
+}

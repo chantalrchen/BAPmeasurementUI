@@ -5,41 +5,31 @@
             "time": 0,
             "flow mfc1": 0.5,
             "flow mfc2": 0.5,
-            "flow mfc3": 0.5,
-            "temperature": 25,
-            "valve": 1
+            "flow mfc3": 0.5
         },
         {
             "time": 10,
             "flow mfc1": 1.0,
             "flow mfc2": 0.5,
-            "flow mfc3": 0.5,
-            "temperature": 25,
-            "valve": 1
+            "flow mfc3": 0.5
         },
         {
             "time": 20,
             "flow mfc1": 1.5,
             "flow mfc2": 0.5,
-            "flow mfc3": 0.5,
-            "temperature": 25,
-            "valve": 1
+            "flow mfc3": 0.5
         },
         {
             "time": 30,
-            "flow mfc1 ": 1.0,
+            "flow mfc1": 1.0,
             "flow mfc2": 0.5,
-            "flow mfc3": 0.5,
-            "temperature": 25,
-            "valve": 1
+            "flow mfc3": 0.5
         },
         {
             "time": 40,
-            "flow": 0.5,
+            "flow mfc1": 0.5,
             "flow mfc2": 0.5,
-            "flow mfc3": 0.5,
-            "temperature": 25,
-            "valve": 1
+            "flow mfc3": 0.5
         }
     ]
 }
