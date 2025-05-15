@@ -399,7 +399,7 @@ class RVM:
     GET_STATUS_DETAILS = '?9200'
     #####
 
-    def __init__(self, port='COM4', valve_ports=4, mode=0, address=1):
+    def __init__(self, port='COM8', valve_ports=4, mode=0, address=1):
         self.port = port
         self.valve_port = valve_ports
         self.mode = mode #the answer mode for mode = 0 the valve will response immediately 
@@ -410,7 +410,7 @@ class RVM:
 
     def connect(self):
         try:
-            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=)
+            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
             self.connected = True
             print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
 
@@ -422,11 +422,13 @@ class RVM:
             # Valve initialiseren
             self.home()
             self.switch_position(1)
+            return True
 
         except serial.SerialException as err:
             messagebox.showerror("Error",
                     f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}") 
             self.connected = False
+            return False
 
     def disconnect(self):
         if self.connected:

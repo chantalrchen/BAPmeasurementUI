@@ -893,29 +893,29 @@ class AutomatedSystemUI:
 
         # Row for MFC profile
         ttk.Label(self.profile_status_frame, text="MFC Running Profile").grid(row=1, column=0, padx=5, sticky="w")
-        self.mfc_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.mfc_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.mfc_elapsed_label.grid(row=1, column=1, padx=5, sticky="w")
-        self.mfc_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.mfc_step_label = ttk.Label(self.profile_status_frame, text="-")
         self.mfc_step_label.grid(row=1, column=2, padx=5, sticky="w")
-        self.mfc_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.mfc_value_label = ttk.Label(self.profile_status_frame, text="-")
         self.mfc_value_label.grid(row=1, column=3, padx=5, sticky="w")
 
         # Cooling profile
         ttk.Label(self.profile_status_frame, text="Cooling Running Profile").grid(row=2, column=0, padx=5, sticky="w")
-        self.cooling_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.cooling_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.cooling_elapsed_label.grid(row=2, column=1, padx=5, sticky="w")
-        self.cooling_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.cooling_step_label = ttk.Label(self.profile_status_frame, text="-")
         self.cooling_step_label.grid(row=2, column=2, padx=5, sticky="w")
-        self.cooling_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.cooling_value_label = ttk.Label(self.profile_status_frame, text="-")
         self.cooling_value_label.grid(row=2, column=3, padx=5, sticky="w")
 
         # Valve profile
         ttk.Label(self.profile_status_frame, text="Valve Running Profile").grid(row=3, column=0, padx=5, sticky="w")
-        self.valve_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.valve_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.valve_elapsed_label.grid(row=3, column=1, padx=5, sticky="w")
-        self.valve_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.valve_step_label = ttk.Label(self.profile_status_frame, text="-")
         self.valve_step_label.grid(row=3, column=2, padx=5, sticky="w")
-        self.valve_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.valve_value_label = ttk.Label(self.profile_status_frame, text="-")
         self.valve_value_label.grid(row=3, column=3, padx=5, sticky="w")
 
         #####
@@ -1021,7 +1021,7 @@ class AutomatedSystemUI:
                 flow_str = f"{flow:.2f} mL/min"
             else:
                 flow = None
-                flow_str = "N/A"
+                flow_str = "-"
             massflows.append(flow_str)
             self.current_massflow_labels[i].config(text=f"Current mass flow rate: {flow_str}")
 
@@ -1030,13 +1030,13 @@ class AutomatedSystemUI:
             temp_str = f"{temp:.2f} °C"
         else:
             temp = None
-            temp_str = "N/A"
+            temp_str = "-"
         self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
 
         if self.valve.connected:
             pos = self.valve.currentposition
         else:
-            pos = "N/A"
+            pos = "-"
         self.current_valve_label.config(text=f"Current position of the valve: {pos}")
 
         # Summary bar uses same values
