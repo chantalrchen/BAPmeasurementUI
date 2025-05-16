@@ -1266,20 +1266,6 @@ class AutomatedSystemUI:
         except Exception as e:
             self.notebook.after(0, lambda: self.profile_error(str(e)))
     
-    # def update_run_status(self, status):
-    #     """Update UI with current run status"""
-    #     elapsed = status["elapsed_time"]
-    #     step = status["current_step"]
-    #     total = status["total_steps"]
-    #     self.status_var.set(
-    #         f"Running: {elapsed:.1f}s | Step {step}/{total} | "
-    #         f"Flow mfc1: {status['flow mfc1']} mL/min | "
-    #         f"Flow mfc2: {status['flow mfc2']} mL/min | "
-    #         f"Flow mfc3: {status['flow mfc3']} mL/min | "
-    #         f"Temp: {status['temperature']}°C | "
-    #         f"Valve: {status['valve']}"
-    #     )
-    
     def profile_complete(self):
         """Called when profile completes successfully"""
         self.stop_button.config(state=tk.DISABLED)
