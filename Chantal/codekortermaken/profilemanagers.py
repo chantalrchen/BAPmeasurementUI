@@ -82,8 +82,8 @@ class MFCProfileManager(BaseProfileManager):
         #inherit all the methods and properties from its parent, baseprofilemanager
         super().__init__(profiles_dir, "profiles_mfc", standard_profiles)
 
-        self.mfcs = [BronkhorstMFC("COM1"), BronkhorstMFC("COM2"), BronkhorstMFC("COM3")]
-        self.maxflow = 4
+        self.mfcs = [BronkhorstMFC(port = 'COM6'), BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM3')] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
+        # self.maxflow = 4
 
     def run_profile(self, update_callback=None):
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
@@ -145,10 +145,10 @@ class MFCProfileManager(BaseProfileManager):
     def stop_profile(self):
         self.stoprequest = True
         
-        #Vanuitgaand dat mfcs[2] de een is die dillute
-        self.mfcs[0].set_massflow(0)
-        self.mfcs[1].set_massflow(0)
-        self.mfcs[2].set_massflow(self.maxflow)
+        # #Vanuitgaand dat mfcs[2] de een is die dillute
+        # self.mfcs[0].set_massflow(0)
+        # self.mfcs[1].set_massflow(0)
+        # self.mfcs[2].set_massflow(self.maxflow)
 
 class CoolingProfileManager(BaseProfileManager):
     def __init__(self, profiles_dir="profiles_onetab"):

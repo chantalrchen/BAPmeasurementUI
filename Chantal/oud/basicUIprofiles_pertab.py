@@ -1216,13 +1216,8 @@ class AutomatedSystemUI:
 
         self.root.after(1000, self.update_run_var)
 
-
-
-
-
-
-        # Schedule the next update, per 1s
-        self.notebook.after(1000, self.update_run_var)
+        # # Schedule the next update, per 1s
+        # self.notebook.after(1000, self.update_run_var)
 
     def create_menu(self):
         menu = tk.Menu(self.root)

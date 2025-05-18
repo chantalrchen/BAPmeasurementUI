@@ -213,10 +213,10 @@ class AutomatedSystemUI:
  
         # ###update status bar
         # # Get mass flow rates from MFCs
-        # mass_flow_1 = f"{self.mfcs[0].get_massflow():.2f} mL/min" if self.mfcs[0].connected else "N/A"
-        # mass_flow_2 = f"{self.mfcs[1].get_massflow():.2f} mL/min" if self.mfcs[1].connected else "N/A"
-        # mass_flow_3 = f"{self.mfcs[2].get_massflow():.2f} mL/min" if self.mfcs[2].connected else "N/A"
-
+        # Get mass flow rates from MFCs
+        # mass_flow_1 = f"{self.mfcs[0].get_massflow()[0]['data']:} mL/min" if self.mfcs[0].connected else "N/A"
+        # mass_flow_2 = f"{self.mfcs[1].get_massflow()[0]['data']:.2f} mL/min" if self.mfcs[1].connected else "N/A"
+        # mass_flow_3 = f"{self.mfcs[2].get_massflow()[0]['data']:.2f} mL/min" if self.mfcs[2].connected else "N/A"
         # # Get temperature from cooling system
         # temperature = f"{self.cooling.get_temperature():.2f} °C" if self.cooling.connected else "N/A"
 
@@ -230,6 +230,10 @@ class AutomatedSystemUI:
         
         for i in range(3):
             if self.mfcs[i].connected:
+                
+                # flow = self.mfcs[i].get_massflow()[0]['data']
+                
+                #TO SIMULATE
                 flow = self.mfcs[i].get_massflow()
                 flow_str = f"{flow:.2f} mL/min"
             else:
@@ -331,8 +335,8 @@ class AutomatedSystemUI:
         cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
         
         # Disconnect button
-        cooling_disconnect_button = tk.Button(cooling_frame, text="Disconnect", command=self.disconnect_cooling)
-        cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        # cooling_disconnect_button = tk.Button(cooling_frame, text="Disconnect", command=self.disconnect_cooling)
+        # cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
         ############	VALVE		###########################
         valve_frame = ttk.LabelFrame(coolingandvalve_frame, text='Valve')
@@ -355,9 +359,9 @@ class AutomatedSystemUI:
         valve_connect_button = tk.Button(valve_frame, text="Connect", command=self.connect_valve)
         valve_connect_button.grid(row=3, column=0, padx=5, pady=5)
         
-        # Disconnect button
-        valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
-        valve_disconnect_button.grid(row=3, column=1, padx=5, pady=5)
+        # # Disconnect button
+        # valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
+        # valve_disconnect_button.grid(row=3, column=1, padx=5, pady=5)
     
     def create_mfc_frame(self, parent, index):
         mfc = self.mfcs[index]
@@ -382,12 +386,12 @@ class AutomatedSystemUI:
         self.target_massflow_labels.append(target_label)
 
         tk.Button(frame, text="Connect", command=lambda i=index: self.connect_MFC(i)).grid(row=3, column=0, padx=10, pady=10)
-        tk.Button(frame, text="Disconnect", command=lambda i=index: self.disconnect_MFC(i)).grid(row=3, column=1, padx=10, pady=10)
+        # tk.Button(frame, text="Disconnect", command=lambda i=index: self.disconnect_MFC(i)).grid(row=3, column=1, padx=10, pady=10)
         
     def create_onoffprofile_tab(self):
         profile_tab = ttk.Frame(self.notebook)
         profile_tab.pack(fill = 'both', expand = True)
-        self.notebook.add(profile_tab, text = 'On/Off Profile')
+        self.notebook.add(profile_tab, text = 'On/Off Profile Management')
         
         ## Split into two frames
         list_frame = ttk.Frame(profile_tab)
@@ -940,12 +944,12 @@ class AutomatedSystemUI:
         else:
             messagebox.showinfo("Connection Failed", f"MFC {index + 1} is not connected")
 
-    def disconnect_MFC(self, index):
-        self.mfcs[index].disconnect()
-        #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
-        #updating the connection info
-        self.update_connection_devices()
-        self.status_var.set(f"MFC {index + 1} disconnected")
+    # def disconnect_MFC(self, index):
+    #     self.mfcs[index].disconnect()
+    #     #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
+    #     #updating the connection info
+    #     self.update_connection_devices()
+    #     self.status_var.set(f"MFC {index + 1} disconnected")
     
     def connect_cooling(self):  
         if self.cooling.connect():
@@ -956,28 +960,32 @@ class AutomatedSystemUI:
         else:
             messagebox.showinfo("Connection Failed", "Cooling is not connected")
          
-    def disconnect_cooling(self):
-        self.cooling.disconnect()
-        #messagebox.showinfo("Disconnected", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected successfully.")
-        #updating the connection info
-        self.update_connection_devices()
-        self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected")
+    # def disconnect_cooling(self):
+    #     self.cooling.disconnect()
+    #     #messagebox.showinfo("Disconnected", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected successfully.")
+    #     #updating the connection info
+    #     self.update_connection_devices()
+    #     self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected")
 
     def connect_valve(self):  
         if self.valve.connect():
             #messagebox.showinfo("Connection", "RVM Industrial Microfluidic Rotary valve is successfully connected.")
             #updating the connection info
             self.update_connection_devices()
-            self.status_var.set(f"RVM Industrial Microfluidic Rotary valve connected")
+            
+            #initializing the home position of the valve
+            self.currentposition = 1
+            
+            self.status_var.set(f"RVM Industrial Microfluidic Rotary valve connected and set to home position 1")
         else:
             messagebox.showinfo("Connection Failed", "RVM is not connected")
          
-    def disconnect_valve(self):
-        self.valve.disconnect()
-        #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
-        #updating the connection info
-        self.update_connection_devices()
-        self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
+    # def disconnect_valve(self):
+    #     self.valve.disconnect()
+    #     #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
+    #     #updating the connection info
+    #     self.update_connection_devices()
+    #     self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
 
     def connect_all_devices(self):
         self.connect_MFC(index = 0)
@@ -1063,7 +1071,13 @@ class AutomatedSystemUI:
             self.status_var.set("MFC: Failed to set mass flow rate.")
             
     def update_massflow(self, index):
+        
+        # current_flow = self.mfcs[index].get_massflow()[0]['data']
+        
+        #### TO SIMULATE
         current_flow = self.mfcs[index].get_massflow()
+        
+        
         self.update_run_var()
         if current_flow is not None:
             self.current_massflow_labels[index].config(text=f"Current mass flow rate: {current_flow:.2f} mL/min")
@@ -1107,14 +1121,18 @@ class AutomatedSystemUI:
         
     def set_valve(self):
         position = self.valve_pos_var.get()
-        if self.valve.set_valve(position):
+        if self.valve.switch_position(position):
             self.update_valve()
 
     def update_valve(self):
-        current_position = self.valve.currentposition
+        target_position = self.valve.get_position()
         self.update_run_var()
-        if current_position is not None:
-            self.current_valve_label.config(text=f"Current position of the valve: {current_position}")
+        if target_position is not None:
+            if self.currentposition != target_position:                
+                self.current_valve_label.config(text=f"Current position of the valve: {target_position}")
+                self.status_var.set(f"The position is set to {target_position}.")
+            else:
+                self.status_var.set(f"The target position is the current position, position {target_position}.")
         else:
             self.status_var.set("Failed to read the position of the valve.")
     
