@@ -251,7 +251,7 @@ class AutomatedSystemUI:
         self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
 
         if self.valve.connected:
-            pos = self.valve.currentposition
+            pos = self.valve.current_position
         else:
             pos = "-"
         self.current_valve_label.config(text=f"Current position of the valve: {pos}")
@@ -1785,6 +1785,7 @@ class AutomatedSystemUI:
         """Thread function to run the profile"""
         try:
             # Displaying which profile is running
+            print(self.valvename_var.get())
             self.status_var.set(f"Running profile: {self.valvename_var.get()}")
             self.valveprofilemanager.run_profile(update_callback=self.update_valveprofile_var)
             # self.root.after(0, lambda: self.update_run_status)

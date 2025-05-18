@@ -408,57 +408,77 @@ class RVM:
         self.current_position = None
 
     def connect(self):
-        try:
-            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
-            self.connected = True
-            print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
+        # try:
+        #     self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
+        #     self.connected = True
+        #     print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
 
-            # Basisconfiguratie
-            self.send_command(self.SET_ADDRESS, self.address)
-            self.send_command(self.SET_ANSWER_MODE, self.mode)
-            self.send_command(self.SET_VALVE_CONFIGURATION, self.valve_port)
+        #     # Basisconfiguratie
+        #     self.send_command(self.SET_ADDRESS, self.address)
+        #     self.send_command(self.SET_ANSWER_MODE, self.mode)
+        #     self.send_command(self.SET_VALVE_CONFIGURATION, self.valve_port)
 
-            # Valve initialiseren
-            self.home()
-            self.switch_position(1)
-            return True
+        #     # Valve initialiseren
+        #     self.home()
+        #     self.switch_position(1)
+        #     return True
 
-        except serial.SerialException as err:
-            messagebox.showerror("Error",
-                    f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}") 
-            self.connected = False
-            return False
+        # except serial.SerialException as err:
+        #     messagebox.showerror("Error",
+        #             f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}") 
+        #     self.connected = False
+        #     return False
+        
+        ##TO simulate
+        self.connected = True
+        return True
 
     def disconnect(self):
-        if self.connected:
-            self.instrument.close()
-            self.connected = False
-            print("RVM Industrial Microfluidic Rotary Valve is disconnected")
+        # if self.connected:
+        #     self.instrument.close()
+        #     self.connected = False
+        #     print("RVM Industrial Microfluidic Rotary Valve is disconnected")
+        
+        ##To simulate
+        self.connected = False
+        return False
 
     def home(self):
-        print("Homing RVM Industrial Microfluidic Rotary Valve...")
-        self.send_command(self.HOME)
-        time.sleep(self.ROTATION_DELAY)
-        self.check_status()
-        print("RVM Industrial Microfluidic Rotary Valve homed")
+        # print("Homing RVM Industrial Microfluidic Rotary Valve...")
+        # self.send_command(self.HOME)
+        # time.sleep(self.ROTATION_DELAY)
+        # self.check_status()
+        # print("RVM Industrial Microfluidic Rotary Valve homed")
+        
+                
+        ##For simulation
+        self.currentposition = 1
 
     def switch_position(self, position: int):
-        if position not in [1, 2]:
-            raise ValueError("The position of the valve can only be 1 or 2")
+        # if position not in [1, 2]:
+        #     raise ValueError("The position of the valve can only be 1 or 2")
 
-        print(f"Switching RVM Industrial Microfluidic Rotary Valve to position {position}")
-        self.send_command(self.SWITCH_SHORTEST, position)
-        time.sleep(self.ROTATION_DELAY)
-        self.check_status()
+        # print(f"Switching RVM Industrial Microfluidic Rotary Valve to position {position}")
+        # self.send_command(self.SWITCH_SHORTEST, position)
+        # time.sleep(self.ROTATION_DELAY)
+        # self.check_status()
+        # self.current_position = position
+        # print(f"RVM Industrial Microfluidic Rotary Valve is in positie {position}.")
+        
+        ##For simulation
         self.current_position = position
-        print(f"RVM Industrial Microfluidic Rotary Valve is in positie {position}.")
+        return True
 
     def get_position(self):
-        pos = self.send_command(self.GET_VALVE_POSITION)
-        self.current_position = int(pos)
-        print(f"The current position of RVM Industrial Microfluidic Rotary Valve is {self.current_position}")
+        # pos = self.send_command(self.GET_VALVE_POSITION)
+        # self.current_position = int(pos)
+        # print(f"The current position of RVM Industrial Microfluidic Rotary Valve is {self.current_position}")
+        # return self.current_position
+        
+        ##For simulation
         return self.current_position
-
+    
+    
     def check_status(self):
         while True:
             status = self.send_command(self.GET_STATUS_DETAILS)

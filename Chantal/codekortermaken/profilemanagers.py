@@ -286,7 +286,7 @@ class RVMProfileManager(BaseProfileManager):
             # Get current step parameters
             current_step = steps[current_step_index]
             
-            self.valve.set_valve(current_step["valve"])
+            self.valve.switch_position(current_step["valve"])
         
             #if update_callback is called then we need to update the status with the corresponding data
             if update_callback:
@@ -308,7 +308,7 @@ class RVMProfileManager(BaseProfileManager):
     def stop_profile(self):
         self.stoprequest = True
         ##home position
-        # self.valve.set_valve(1)
+        # self.valve.switch_position(1)
 
 class OnoffProfileManager(BaseProfileManager):
     def __init__(self, UImfcs, UIcooling, UIvalve, profiles_dir="profiles_onetab"):
@@ -382,7 +382,7 @@ class OnoffProfileManager(BaseProfileManager):
             self.mfcs[1].set_massflow(current_step["flow mfc2"])
             self.mfcs[2].set_massflow(current_step["flow mfc3"])
             self.cooling.set_temperature(current_step["temperature"], temp_ambient)
-            self.valve.set_valve(current_step["valve"])
+            self.valve.switch_position(current_step["valve"])
             
             # #if update_callback is called then we need to update the status with the corresponding data
             if update_callback:
