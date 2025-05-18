@@ -4,7 +4,7 @@ import propar   # Bronkhorst MFC
 import serial   # Cooling and Valve
 import time 
 
-#MFC
+
 class BronkhorstMFC:
     def __init__(self, port = "COM3"):
         self.port = port

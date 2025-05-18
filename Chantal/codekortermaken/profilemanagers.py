@@ -5,6 +5,7 @@ import json
 import os
 from devices import BronkhorstMFC, Koelingsblok, RVM
 
+
 class BaseProfileManager:
     def __init__(self, base_dir, profiles_dir, standard_profiles):
         self.profiles_dir = os.path.join(base_dir, profiles_dir)
@@ -137,7 +138,7 @@ class MFCProfileManager(BaseProfileManager):
                 profile_complete = True
                 break
 
-            time.sleep(0.5)
+            time.sleep(0.1)
 
         return True
 
@@ -224,7 +225,7 @@ class CoolingProfileManager(BaseProfileManager):
                 profile_complete = True
                 break
                 
-            time.sleep(0.5)
+            time.sleep(0.1)
         return True
     
     def stop_profile(self):
@@ -301,7 +302,7 @@ class RVMProfileManager(BaseProfileManager):
             if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
                 profile_complete = True
                 break
-            time.sleep(0.5)
+            time.sleep(0.1)
         return True
     
     def stop_profile(self):
@@ -400,7 +401,7 @@ class OnoffProfileManager(BaseProfileManager):
                 profile_complete = True
                 break
             
-            time.sleep(0.5)
+            time.sleep(0.1)
         
         return True
     
