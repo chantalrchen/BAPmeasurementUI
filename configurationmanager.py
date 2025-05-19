@@ -2,7 +2,7 @@ import json
 import os
 
 class ConfigManager:
-    def __init__(self, base_dir=".", filename="config.json"):
+    def __init__(self, base_dir="profiles_onetab", filename="config.json"):
         self.config_path = os.path.join(base_dir, filename)
         self.config = {}
         
