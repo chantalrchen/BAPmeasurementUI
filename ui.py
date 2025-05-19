@@ -335,8 +335,8 @@ class AutomatedSystemUI:
         cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
         
         # Disconnect button
-        # cooling_disconnect_button = tk.Button(cooling_frame, text="Disconnect", command=self.disconnect_cooling)
-        # cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        cooling_disconnect_button = tk.Button(cooling_frame, text="Disconnect", command=self.disconnect_cooling)
+        cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
         ############	VALVE		###########################
         valve_frame = ttk.LabelFrame(coolingandvalve_frame, text='Valve')
@@ -359,9 +359,9 @@ class AutomatedSystemUI:
         valve_connect_button = tk.Button(valve_frame, text="Connect", command=self.connect_valve)
         valve_connect_button.grid(row=3, column=0, padx=5, pady=5)
         
-        # # Disconnect button
-        # valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
-        # valve_disconnect_button.grid(row=3, column=1, padx=5, pady=5)
+        # Disconnect button
+        valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
+        valve_disconnect_button.grid(row=3, column=1, padx=5, pady=5)
     
     def create_mfc_frame(self, parent, index):
         mfc = self.mfcs[index]
@@ -386,7 +386,7 @@ class AutomatedSystemUI:
         self.target_massflow_labels.append(target_label)
 
         tk.Button(frame, text="Connect", command=lambda i=index: self.connect_MFC(i)).grid(row=3, column=0, padx=10, pady=10)
-        # tk.Button(frame, text="Disconnect", command=lambda i=index: self.disconnect_MFC(i)).grid(row=3, column=1, padx=10, pady=10)
+        tk.Button(frame, text="Disconnect", command=lambda i=index: self.disconnect_MFC(i)).grid(row=3, column=1, padx=10, pady=10)
         
     def create_onoffprofile_tab(self):
         profile_tab = ttk.Frame(self.notebook)
@@ -941,34 +941,39 @@ class AutomatedSystemUI:
             #updating the connection info
             self.update_connection_devices()
             self.status_var.set(f"MFC {index + 1} connected")
+            self.keep_updating_mfc = True
         else:
             messagebox.showinfo("Connection Failed", f"MFC {index + 1} is not connected")
 
-    # def disconnect_MFC(self, index):
-    #     self.mfcs[index].disconnect()
-    #     #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
-    #     #updating the connection info
-    #     self.update_connection_devices()
-    #     self.status_var.set(f"MFC {index + 1} disconnected")
+    def disconnect_MFC(self, index):
+        self.mfcs[index].disconnect()
+        self.keep_updating_mfc = False
+        #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
+        #updating the connection info
+        self.update_connection_devices()
+        self.status_var.set(f"MFC {index + 1} disconnected")
     
     def connect_cooling(self):  
         if self.cooling.connect():
             #messagebox.showinfo("Connection", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths successfully connected.")
             #updating the connection info
+            self.keep_updating_cooling = False
             self.update_connection_devices()
             self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths connected")
         else:
             messagebox.showinfo("Connection Failed", "Cooling is not connected")
          
-    # def disconnect_cooling(self):
-    #     self.cooling.disconnect()
-    #     #messagebox.showinfo("Disconnected", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected successfully.")
-    #     #updating the connection info
-    #     self.update_connection_devices()
-    #     self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected")
+    def disconnect_cooling(self):
+        self.cooling.disconnect()
+        self.keep_updating_cooling = False
+        #messagebox.showinfo("Disconnected", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected successfully.")
+        #updating the connection info
+        self.update_connection_devices()
+        self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected")
 
     def connect_valve(self):  
         if self.valve.connect():
+            self.keep_updating_valve = True
             #messagebox.showinfo("Connection", "RVM Industrial Microfluidic Rotary valve is successfully connected.")
             #updating the connection info
             self.update_connection_devices()
@@ -980,12 +985,13 @@ class AutomatedSystemUI:
         else:
             messagebox.showinfo("Connection Failed", "RVM is not connected")
          
-    # def disconnect_valve(self):
-    #     self.valve.disconnect()
-    #     #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
-    #     #updating the connection info
-    #     self.update_connection_devices()
-    #     self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
+    def disconnect_valve(self):
+        self.valve.disconnect()
+        self.keep_updating_valve = False
+        #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
+        #updating the connection info
+        self.update_connection_devices()
+        self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
 
     def connect_all_devices(self):
         self.connect_MFC(index = 0)
@@ -1071,6 +1077,8 @@ class AutomatedSystemUI:
             self.status_var.set("MFC: Failed to set mass flow rate.")
             
     def update_massflow(self, index):
+        if not self.keep_updating_mfc:
+            return
         
         # current_flow = self.mfcs[index].get_massflow()[0]['data']
         
@@ -1107,7 +1115,10 @@ class AutomatedSystemUI:
             except tk.TclError as e:
                 messagebox.showerror("Invalid Input", f"Please enter a floating number for target temperature. {e}")
                 
-    def update_temperature(self):
+    def update_temperature(self):        
+        if not self.keep_updating_cooling:
+            return
+
         current_temp = self.cooling.get_temperature()
         self.update_run_var()
         if current_temp is not None:
@@ -1125,6 +1136,8 @@ class AutomatedSystemUI:
             self.update_valve()
 
     def update_valve(self):
+        if not self.keep_updating_valve:
+            return
         target_position = self.valve.get_position()
         self.update_run_var()
         if target_position is not None:
@@ -2105,6 +2118,7 @@ class AutomatedSystemUI:
     
     def stop_onoffprofile(self):
         """Stop the currently running profile"""
+        self.onoffprofilemanager.stop_profile()
         self.onoffstop_button.config(state=tk.DISABLED)
         self.status_var.set("Profile run stopped by user")
     
