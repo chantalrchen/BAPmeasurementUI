@@ -1,0 +1,9 @@
+{
+      "com_ports": {
+            "mfc1": "COM6",
+            "mfc2": "COM5",
+            "mfc3": "COM3",
+            "cooling": "COM7",
+            "valve": "COM4"
+      }
+}

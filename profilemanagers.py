@@ -50,7 +50,7 @@ class BaseProfileManager:
         file_path = os.path.join(self.profiles_dir, f"{name}.json")
         ## https://www.geeksforgeeks.org/reading-and-writing-json-to-a-file-in-python/
         with open(file_path, 'w') as outfile:
-            json.dump(profile_data, outfile, indent=4)
+            json.dump(profile_data, outfile, indent=6)
         return True
     
     def delete_profile(self, name):
@@ -64,7 +64,7 @@ class BaseProfileManager:
 class MFCProfileManager(BaseProfileManager):
 # MFCProfileManager is a Child Class of BaseProfileManager
 # https://www.w3schools.com/python/python_inheritance.asp
-    def __init__(self, profiles_dir="profiles_onetab"):
+    def __init__(self, mfc1port, mfc2port, mfc3port, profiles_dir="profiles_onetab"):
         standard_profiles = {
             "Flow_Test MFC": {
                 "description": "Test flow rate changes",
@@ -82,8 +82,9 @@ class MFCProfileManager(BaseProfileManager):
         #inherit all the methods and properties from its parent, baseprofilemanager
         super().__init__(profiles_dir, "profiles_mfc", standard_profiles)
 
-        self.mfcs = [BronkhorstMFC(port = 'COM6'), BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM3')] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
+        self.mfcs = [BronkhorstMFC(port = mfc1port), BronkhorstMFC(port = mfc2port), BronkhorstMFC(port = mfc3port)] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
         # self.maxflow = 4
+        print("MFC1 PORT IS", mfc1port, "MFC2 PORT IS", mfc2port, "MFC3 PORT IS", mfc3port)
 
     def run_profile(self, update_callback=None):
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
@@ -153,7 +154,7 @@ class MFCProfileManager(BaseProfileManager):
         self.stoprequest = True
 
 class CoolingProfileManager(BaseProfileManager):
-    def __init__(self, profiles_dir="profiles_onetab"):
+    def __init__(self, coolingport, profiles_dir="profiles_onetab"):
         standard_profiles = {
             "Flow_Test COOLING": {
                 "description": "Test flow rate changes",
@@ -171,7 +172,8 @@ class CoolingProfileManager(BaseProfileManager):
         #inherit all the methods and properties from its parent, baseprofilemanager
         super().__init__(profiles_dir, "profiles_cooling", standard_profiles)
         
-        self.cooling = Koelingsblok()
+        self.cooling = Koelingsblok(coolingport)
+        print("Cooling port is", coolingport)
 
     def run_profile(self, temp_ambient, update_callback = None):
         """Run the current profile with the given device controllers"""
@@ -246,7 +248,7 @@ class CoolingProfileManager(BaseProfileManager):
         ###WAT MOETEN WE HIERNA DOEN?
 
 class RVMProfileManager(BaseProfileManager):
-    def __init__(self, profiles_dir="profiles_onetab"):
+    def __init__(self, valveport, profiles_dir="profiles_onetab"):
         standard_profiles = {
             "Flow_Test VALVE": {
                 "description": "Test valve switching",
@@ -263,7 +265,9 @@ class RVMProfileManager(BaseProfileManager):
         # https://www.w3schools.com/python/python_inheritance.asp
         #inherit all the methods and properties from its parent, baseprofilemanager
         super().__init__(profiles_dir, "profiles_valve", standard_profiles)
-        self.valve = RVM()
+        self.valve = RVM(valveport)
+        
+        print("VALVE PORT is", valveport)
     
     def run_profile(self, update_callback = None):
         """Run the current profile with the given device controllers"""

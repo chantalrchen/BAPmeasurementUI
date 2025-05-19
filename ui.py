@@ -2,24 +2,60 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 import threading
 from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager
+from configurationmanager import ConfigManager
 
 class AutomatedSystemUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Automated System")
         self.root.geometry("1400x800")
+
+        self.config_manager = ConfigManager()
+        saved_ports = self.config_manager.get_com_ports()
+        print(saved_ports)
         
-        self.mfcprofilemanager = MFCProfileManager()
-        self.coolingprofilemanager = CoolingProfileManager()
-        self.valveprofilemanager = RVMProfileManager()
-        
-        ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
-        ##Daarnaast zijn de porten dan ook niet aligned aahh
+        # # 2. Fallback default ports
+        # default_ports = {
+        #     "mfc1": "COM6", "mfc2": "COM5", "mfc3": "COM3",
+        #     "cooling": "COM7", "valve": "COM4"
+        # }
+        # for key, default in default_ports.items():
+        #     if key not in saved_ports:
+        #         saved_ports[key] = default
+
+        # 4. Profile managers maken met bestaande apparaten
+        self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"])
+        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"])
+        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"])
+
         self.mfcs = self.mfcprofilemanager.mfcs
         self.cooling = self.coolingprofilemanager.cooling
         self.valve = self.valveprofilemanager.valve
 
-        self.onoffprofilemanager = OnoffProfileManager(UImfcs= self.mfcs, UIcooling= self.cooling, UIvalve= self.valve)
+        # 5. On/Off profile manager (ook met devices)
+        self.onoffprofilemanager = OnoffProfileManager(
+            UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve
+        )
+        # self.config_manager = ConfigManager()
+
+        # saved_ports = self.config_manager.get_com_ports()
+        # self.mfcs[0].port = saved_ports.get("mfc1", self.mfcs[0].port)
+        # self.mfcs[1].port = saved_ports.get("mfc2", self.mfcs[1].port)
+        # self.mfcs[2].port = saved_ports.get("mfc3", self.mfcs[2].port)
+        # self.cooling.port = saved_ports.get("cooling", self.cooling.port)
+        # self.valve.port = saved_ports.get("valve", self.valve.port)
+        
+        # self.mfcprofilemanager = MFCProfileManager(self.mfcs[0].port, self.mfcs[1].port, self.mfcs[2].port)
+        # self.coolingprofilemanager = CoolingProfileManager(self.cooling.port)
+        # self.valveprofilemanager = RVMProfileManager(self.valve.port)
+
+        # ##Het volgende is niet zo logisch, alleen als je het niet zo doet, krijg je dus dat profilemanager en UI een andere bronkhorst te pakken gaan krijgen
+        # ##Daarnaast zijn de porten dan ook niet aligned aahh
+        # self.mfcs = self.mfcprofilemanager.mfcs
+        # self.cooling = self.coolingprofilemanager.cooling
+        # self.valve = self.valveprofilemanager.valve
+
+        # self.onoffprofilemanager = OnoffProfileManager(UImfcs= self.mfcs, UIcooling= self.cooling, UIvalve= self.valve)
         
         # Header frame for connection and status
         header_frame = ttk.Frame(self.root)
@@ -1064,14 +1100,25 @@ class AutomatedSystemUI:
         save_button.pack(pady=10)
         
     def save_settings(self):
-        self.mfcs[0].port = self.MFC1_port_var.get()
-        self.mfcs[1].port = self.MFC2_port_var.get()
-        self.mfcs[2].port = self.MFC3_port_var.get()
-        self.cooling.port = self.cooling_port_var.get()
-        self.valve.port = self.valve_port_var.get()
+        com_ports = {
+            "mfc1": self.MFC1_port_var.get(),
+            "mfc2": self.MFC2_port_var.get(),
+            "mfc3": self.MFC3_port_var.get(),
+            "cooling": self.cooling_port_var.get(),
+            "valve": self.valve_port_var.get()
+        }
+        self.config_manager.set_com_ports(com_ports)
         
-        self.update_connection_devices()
-        self.status_var.set("Port connections are updated.")
+        print("THE COM-PORTS OF THE SETTING", com_ports)
+        
+        # self.mfcs[0].port = self.MFC1_port_var.get()
+        # self.mfcs[1].port = self.MFC2_port_var.get()
+        # self.mfcs[2].port = self.MFC3_port_var.get()
+        # self.cooling.port = self.cooling_port_var.get()
+        # self.valve.port = self.valve_port_var.get()
+        
+        # self.update_connection_devices()
+        # self.status_var.set("Port connections are updated.")
 
     def set_MFCmassflow(self, index):
         massflowrate = self.massflow_vars[index].get()

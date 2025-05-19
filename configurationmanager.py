@@ -5,6 +5,14 @@ class ConfigManager:
     def __init__(self, base_dir=".", filename="config.json"):
         self.config_path = os.path.join(base_dir, filename)
         self.config = {}
+        
+        self.default_ports = {
+            "mfc1": "COM6",
+            "mfc2": "COM5",
+            "mfc3": "COM3",
+            "cooling": "COM7",
+            "valve": "COM4"
+        }
 
         # Ensure that folder exists
         config_folder = os.path.dirname(self.config_path)
@@ -18,11 +26,13 @@ class ConfigManager:
         if os.path.exists(self.config_path):
             with open(self.config_path, 'r') as openfile:
                 self.config = json.load(openfile)
-                return self.config
         else:
-            self.config = {}
-            return self.config
-
+            self.config = {
+                "com_ports": self.default_ports.copy()
+            }
+            self.save_config()  
+        return self.config
+    
     def save_config(self):
         with open(self.config_path, 'w') as outfile:
             json.dump(self.config, outfile, indent=6)
