@@ -85,47 +85,104 @@ class MFCProfileManager(BaseProfileManager):
         self.mfcs = [BronkhorstMFC(port = 'COM6'), BronkhorstMFC(port = 'COM5'), BronkhorstMFC(port = 'COM3')] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
         # self.maxflow = 4
 
+    # def run_profile(self, update_callback=None):
+    #     if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
+    #         messagebox.showerror("Connection Error", "MFCs not connected")
+    #         return False
+        
+    #     if not self.current_profile:
+    #         messagebox.showerror("Error", "No profile loaded")
+    #         return False
+
+    #     steps = self.current_profile.get("steps", [])
+    #     if not steps:
+    #         messagebox.showerror("Error", "Profile has no steps")
+    #         return False
+
+    #     # Sort steps by time
+    #     steps = sorted(steps, key=lambda x: x["time"])
+    #     self.stoprequest = False
+    #     start_time = time.time()
+    #     current_step_index = 0
+    #     profile_complete = False
+
+    #     while not profile_complete and not self.stoprequest:
+    #         elapsed_time = time.time() - start_time
+            
+    #         # Check if we need to move to next step
+    #         if current_step_index < len(steps) - 1:
+    #             next_time = steps[current_step_index + 1]["time"]
+    #             if elapsed_time >= next_time:
+    #                 current_step_index += 1
+
+    #         # Get current step parameters
+    #         current_step = steps[current_step_index]
+            
+    #         # Set devices to current step values
+    #         self.mfcs[0].set_massflow(current_step["flow mfc1"])
+    #         self.mfcs[1].set_massflow(current_step["flow mfc2"])
+    #         self.mfcs[2].set_massflow(current_step["flow mfc3"])
+            
+    #         #if update_callback is called then we need to update the status with the corresponding data
+    #         if update_callback:
+    #                 update_callback({
+    #                 "elapsed_time": elapsed_time,
+    #                 "current_step": current_step_index + 1,
+    #                 "total_steps": len(steps),
+    #                 "flow mfc1": current_step["flow mfc1"],
+    #                 "flow mfc2": current_step["flow mfc2"],
+    #                 "flow mfc3": current_step["flow mfc3"],
+    #             })
+
+    #         if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
+    #             profile_complete = True
+    #             break
+
+    #         time.sleep(0.1)
+
+    #     return True
+
     def run_profile(self, update_callback=None):
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
             messagebox.showerror("Connection Error", "MFCs not connected")
             return False
-        
+
         if not self.current_profile:
             messagebox.showerror("Error", "No profile loaded")
             return False
 
-        steps = self.current_profile.get("steps", [])
+        steps = sorted(self.current_profile.get("steps", []), key=lambda x: x["time"])
         if not steps:
             messagebox.showerror("Error", "Profile has no steps")
             return False
 
-        # Sort steps by time
-        steps = sorted(steps, key=lambda x: x["time"])
         self.stoprequest = False
         start_time = time.time()
         current_step_index = 0
         profile_complete = False
 
         while not profile_complete and not self.stoprequest:
-            elapsed_time = time.time() - start_time
-            
-            # Check if we need to move to next step
+            now = time.time()
+            print(start_time, now)
+            elapsed_time = now - start_time
+
+            # Obtaining the next step
             if current_step_index < len(steps) - 1:
                 next_time = steps[current_step_index + 1]["time"]
+                # Update the current step index when time obtained
                 if elapsed_time >= next_time:
                     current_step_index += 1
 
-            # Get current step parameters
             current_step = steps[current_step_index]
-            
-            # Set devices to current step values
+
+            # Apply device settings
             self.mfcs[0].set_massflow(current_step["flow mfc1"])
             self.mfcs[1].set_massflow(current_step["flow mfc2"])
             self.mfcs[2].set_massflow(current_step["flow mfc3"])
-            
-            #if update_callback is called then we need to update the status with the corresponding data
+
+            # Update callback for UI
             if update_callback:
-                    update_callback({
+                update_callback({
                     "elapsed_time": elapsed_time,
                     "current_step": current_step_index + 1,
                     "total_steps": len(steps),
@@ -134,13 +191,22 @@ class MFCProfileManager(BaseProfileManager):
                     "flow mfc3": current_step["flow mfc3"],
                 })
 
-            if current_step_index == len(steps) - 1 and elapsed_time >= current_step["time"]:
-                profile_complete = True
-                break
-
-            time.sleep(0.1)
-
-        return True
+            # Check whether we have reached last step, if last step we need to consider wait_time
+            if current_step_index < len(steps) - 1:
+                next_time = steps[current_step_index + 1]["time"]
+ # Calculate how much time we need to wait before the next step should start
+                wait_time = max(0, next_time - (time.time() - start_time))
+                print(wait_time)
+                # sleep in small steps until finally wait_time has reached, thus until the next time has reached, kinda stukje bij stukje wachten
+                # Minimum 0.1 s to ensure that UI still is reponsive
+                time.sleep(min(wait_time, 0.1))  
+            else:
+                # Last step
+                final_duration = current_step["time"]
+                if elapsed_time >= final_duration:
+                    profile_complete = True
+                else:
+                    time.sleep(0.1)
 
     def stop_profile(self):
         self.stoprequest = True
