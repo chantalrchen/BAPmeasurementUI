@@ -182,7 +182,12 @@ class AutomatedSystemUI:
         # Run Button
         ttk.Button(selectprofiles_frame, text="Run Selected Profiles", command=self.run_selected_profiles).grid(row=1, column=3, padx=10)
 
-        
+        # Stop Button directly under Run
+        self.stop_all_button = ttk.Button(selectprofiles_frame, text="Stop Selected Profiles", command=self.stop_all_profiles)
+        self.stop_all_button.grid(row=2, column=3, padx=10, pady= 5)  # Placed under run button
+        self.stop_all_button.config(state=tk.DISABLED)
+
+
         # Notebook for tabs
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill='both', expand=True)
@@ -1798,7 +1803,6 @@ class AutomatedSystemUI:
         """Thread function to run the profile"""
         try:
             # Displaying which profile is running
-            print(self.valvename_var.get())
             self.status_var.set(f"Running profile: {self.valvename_var.get()}")
             self.valveprofilemanager.run_profile(update_callback=self.update_valveprofile_var)
             # self.root.after(0, lambda: self.update_run_status)
@@ -1870,6 +1874,7 @@ class AutomatedSystemUI:
             return
         
         self.update_run_var()
+        self.stop_all_button.config(state=tk.NORMAL)
         
         # Start all three profiles in threads
         threading.Thread(target=self.run_mfcprofile_thread, daemon=True).start()
@@ -2127,4 +2132,10 @@ class AutomatedSystemUI:
         self.onoff_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
         self.onoff_value_label.config(text=f"{status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['flow mfc3']:.2f}, {status['temperature']:.1f}°C, V{status['valve']}")
         # self.root.after(1000, lambda: self.update_onoffprofile_var(status))  # loop or trigger update
-    
+
+    def stop_all_profiles(self):
+        """Stop all profiles running from run_selected_profiles"""
+        self.mfcprofilemanager.stop_profile()
+        self.coolingprofilemanager.stop_profile()
+        self.valveprofilemanager.stop_profile()
+        self.status_var.set("All profiles stopped by user")
