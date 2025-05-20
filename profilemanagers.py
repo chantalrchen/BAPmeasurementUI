@@ -83,8 +83,8 @@ class MFCProfileManager(BaseProfileManager):
         super().__init__(profiles_dir, "profiles_mfc", standard_profiles)
 
         self.mfcs = [BronkhorstMFC(port = mfc1port), BronkhorstMFC(port = mfc2port), BronkhorstMFC(port = mfc3port)] #,  BronkhorstMFC(port = 'COM3', channel = 2), BronkhorstMFC(port = 'COM3', channel = 3)]
-        # self.maxflow = 4
-        print("MFC1 PORT IS", mfc1port, "MFC2 PORT IS", mfc2port, "MFC3 PORT IS", mfc3port)
+        # # self.maxflow = 4
+        # print("MFC1 PORT IS", mfc1port, "MFC2 PORT IS", mfc2port, "MFC3 PORT IS", mfc3port)
 
     def run_profile(self, update_callback=None):
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
@@ -173,7 +173,7 @@ class CoolingProfileManager(BaseProfileManager):
         super().__init__(profiles_dir, "profiles_cooling", standard_profiles)
         
         self.cooling = Koelingsblok(coolingport)
-        print("Cooling port is", coolingport)
+        # print("Cooling port is", coolingport)
 
     def run_profile(self, temp_ambient, update_callback = None):
         """Run the current profile with the given device controllers"""
@@ -267,7 +267,7 @@ class RVMProfileManager(BaseProfileManager):
         super().__init__(profiles_dir, "profiles_valve", standard_profiles)
         self.valve = RVM(valveport)
         
-        print("VALVE PORT is", valveport)
+        # print("VALVE PORT is", valveport)
     
     def run_profile(self, update_callback = None):
         """Run the current profile with the given device controllers"""

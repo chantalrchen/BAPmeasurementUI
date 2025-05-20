@@ -3,16 +3,19 @@ from tkinter import messagebox, ttk
 import threading
 from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager
 from configurationmanager import ConfigManager
+import pandas as pd
 
 class AutomatedSystemUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Automated System")
         self.root.geometry("1400x800")
-
+        
+        self.path_pureflowrate = "C:/Users/chant/Downloads/Pure and Mixed flow rates.xlsx"
+                
         self.config_manager = ConfigManager()
         saved_ports = self.config_manager.get_com_ports()
-        print(saved_ports)
+        # print(saved_ports)
         
         # # 2. Fallback default ports
         # default_ports = {
@@ -234,6 +237,7 @@ class AutomatedSystemUI:
         self.create_mfcprofile_tab()
         self.create_coolingprofile_tab()
         self.create_valveprofile_tab()
+        self.create_pureflowrate_tab()
         
     def set_ambient_temp(self):
         """
@@ -1111,7 +1115,7 @@ class AutomatedSystemUI:
         
         self.reload_all_devices()
         self.status_var.set("COM ports updated and devices reconnected.")
-        print("THE COM-PORTS OF THE SETTING", com_ports)
+        # print("THE COM-PORTS OF THE SETTING", com_ports)
         
         # self.mfcs[0].port = self.MFC1_port_var.get()
         # self.mfcs[1].port = self.MFC2_port_var.get()
@@ -2131,18 +2135,6 @@ class AutomatedSystemUI:
         )
         self.onoffprofile_thread.start()
     
-    # def run_onoffprofile_thread(self, profile):
-    #     """Thread function to run the profile"""
-    #     try:
-    #         # Displaying which profile is running
-    #         self.status_var.set(f"Running profile: {self.onoffname_var.get()}")
-    #         self.onoffprofilemanager.run_profile(temp_ambient= self.ambient_temp,update_callback=self.update_onoffprofile_var)
-    #         # self.root.after(0, lambda: self.update_run_status)
-    #         self.root.after(0, self.onoffprofile_complete)
-
-    #     except Exception as e:
-    #         self.root.after(0, lambda: self.onoffprofile_error(str(e)))
-    
     def run_onoffprofile_thread(self, profile):
         def safe_update(status):
             self.root.after(0, lambda: self.update_onoffprofile_var(status))
@@ -2229,3 +2221,130 @@ class AutomatedSystemUI:
         self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
 
+### Constant Flow Rate Profile
+    def create_pureflowrate_tab(self):
+        self.pureflowrate_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.pureflowrate_tab, text="Constant Flow Rate Profile")
+
+        # Read Excel sheet, sheet 1
+        # skiprows = 4, because the first 4 rows contains the information that we don't want
+        self.pureflowrate_data = pd.read_excel(self.path_pureflowrate, sheet_name=0, skiprows=4)
+
+        ##Renaming the columns such that it can be read easilier later 
+        #https://www.geeksforgeeks.org/how-to-rename-columns-in-pandas-dataframe/
+        self.pureflowrate_data = self.pureflowrate_data.rename(columns={
+            self.pureflowrate_data.columns[0]: 'VOC',
+            self.pureflowrate_data.columns[1]: 'Concentration',
+            self.pureflowrate_data.columns[2]: 'Temperature',
+            self.pureflowrate_data.columns[4]: 'Flowrate_Vloeistof',
+            self.pureflowrate_data.columns[5]: 'Flowrate_Stikstof'
+        })
+        
+        #Dropping values that have both VOC and Concentration values
+        #https://www.programiz.com/python-programming/pandas/methods/dropna
+        self.pureflowrate_data = self.pureflowrate_data.dropna(subset=['VOC', 'Concentration'])
+
+        ttk.Label(self.pureflowrate_tab, text="Select VOC (Stof):").grid(row=0, column=0)
+        self.pureflowrate_voc_var = tk.StringVar()
+        
+        # Combobox for the type of VOC
+        # https://www.pythontutorial.net/tkinter/tkinter-combobox/
+        self.pureflowrate_voc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_voc_var, state="readonly")
+        self.pureflowrate_voc_dropdown.grid(row=0, column=1)
+        # obtain all unique values in the list
+        voc_list = self.pureflowrate_data['VOC'].unique()
+        self.pureflowrate_voc_dropdown['values'] = sorted(voc_list)
+        
+        # the update_concentration_dropdown function will execute when the selected value of the combobox changes.
+        self.pureflowrate_voc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_update_concentration_dropdown)
+
+        ttk.Label(self.pureflowrate_tab, text="Select Concentratie (ppm):").grid(row=1, column=0)
+        self.pureflowrate_conc_var = tk.StringVar()
+        self.pureflowrate_conc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_conc_var, state="readonly")
+        self.pureflowrate_conc_dropdown.grid(row=1, column=1)
+        # display excel target function will execute when the selected value of the combobox changes.
+        self.pureflowrate_conc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_sel_targets)
+
+
+        self.pureflowrate_lbl_selconc_temp = ttk.Label(self.pureflowrate_tab, text="Target Temp: -")
+        self.pureflowrate_lbl_selconc_temp.grid(row=2, column=0, columnspan=2, sticky='w')
+        self.pureflowrate_lbl_selconc_flow1 = ttk.Label(self.pureflowrate_tab, text="Target MFC1 (Fluid): -")
+        self.pureflowrate_lbl_selconc_flow1.grid(row=3, column=0, columnspan=2, sticky='w')
+        self.pureflowrate_lbl_selconc_flowN = ttk.Label(self.pureflowrate_tab, text="Target MFC2 (Nitrogen): -")
+        self.pureflowrate_lbl_selconc_flowN.grid(row=4, column=0, columnspan=2, sticky='w')
+        
+        self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run", command=self.pureflowrate_run_profile)
+        self.pureflowrate_run_button.grid(row=8, column=0, columnspan=2, pady=10)
+        
+
+    def pureflowrate_update_concentration_dropdown(self, event):
+        selected_voc = self.pureflowrate_voc_var.get()
+        
+        # Obtain the filtered data according to the selected_voc
+        # https://www.youtube.com/watch?v=xzslFdjO0Ts  
+        # https://www.geeksforgeeks.org/ways-to-filter-pandas-dataframe-by-column-values/
+        
+        # rows are kept where voc = selected_voc
+        filtered = self.pureflowrate_data[self.pureflowrate_data['VOC'] == selected_voc]
+        #gives the sorted unique concentration values of the rows that are kept
+        sorted_unique_voc = sorted(filtered['Concentration'].unique())
+        self.pureflowrate_conc_dropdown['values'] = sorted_unique_voc
+        self.pureflowrate_conc_var.set('')  
+
+    def pureflowrate_sel_targets(self, event):
+        voc = self.pureflowrate_voc_var.get()
+        conc = float(self.pureflowrate_conc_var.get())
+        
+        # #https://www.geeksforgeeks.org/difference-between-loc-and-iloc-in-pandas-dataframe/
+        # using iloc[0] such that only the first one should be selected
+        selectedrow = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)].iloc[0]
+        self.pureflowrate_sel_temp = float(selectedrow['Temperature'])
+        self.pureflowrate_sel_flow1 = float(selectedrow['Flowrate_Vloeistof'])
+        self.pureflowrate_sel_flow2 = float(selectedrow['Flowrate_Stikstof'])
+        
+        # row = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)]
+
+        self.pureflowrate_lbl_selconc_temp.config(text=f"Target Temp: {self.pureflowrate_sel_temp} °C")
+        self.pureflowrate_lbl_selconc_flow1.config(text=f"Target MFC1: {self.pureflowrate_sel_flow1} mL/min")
+        self.pureflowrate_lbl_selconc_flowN.config(text=f"Target MFC2: {self.pureflowrate_sel_flow2} mL/min")
+
+    def pureflowrate_run_profile(self):
+        
+        # check whether ambient temp is set
+        if not isinstance(self.ambient_temp, (int, float)):
+            messagebox.showerror("Error", "Ambient temperature must be set.")
+            return False
+    
+        if not self.mfcs[0].connected:
+            messagebox.showerror("Connection Error", "MFC 1 is not connected.")
+            return False
+        if not self.mfcs[1].connected:
+            messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
+            return False
+        if not self.cooling.connected:
+            messagebox.showerror("Connection Error", "Cooling is not connected.")
+            return False
+        if not self.valve.connected:
+            messagebox.showerror("Connection Error", "Valve is not connected.")            
+            return False
+
+        threading.Thread(
+            target=lambda: self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp),
+            daemon=True
+        ).start()
+
+        threading.Thread(
+            target=lambda: self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1),
+            daemon=True
+        ).start()
+
+        threading.Thread(
+            target=lambda: self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2),
+            daemon=True
+        ).start()
+        
+        self.status_var.set(f"Running Constant Flow Rate Profile for Concentration {self.pureflowrate_conc_var.get()} ppm | Temp: {self.pureflowrate_sel_temp} °C, "
+                            f"| MFC1: {self.pureflowrate_sel_flow1} mL/min, "
+                        f"| MFC2 (Nitrogen): {self.pureflowrate_sel_flow2} mL/min")
+        
+        self.update_run_var()
