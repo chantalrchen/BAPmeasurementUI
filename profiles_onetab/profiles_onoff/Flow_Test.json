@@ -1,0 +1,45 @@
+{
+      "description": "Test all devices together",
+      "steps": [
+            {
+                  "time": 0.0,
+                  "flow mfc1": 0.5,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "temperature": 25.0,
+                  "valve": 1
+            },
+            {
+                  "time": 10.0,
+                  "flow mfc1": 1.0,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "temperature": 25.0,
+                  "valve": 1
+            },
+            {
+                  "time": 20.0,
+                  "flow mfc1": 1.5,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "temperature": 25.0,
+                  "valve": 1
+            },
+            {
+                  "time": 30.0,
+                  "flow mfc1": 1.0,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "temperature": 25.0,
+                  "valve": 1
+            },
+            {
+                  "time": 40.0,
+                  "flow mfc1": 0.5,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "temperature": 25.0,
+                  "valve": 1
+            }
+      ]
+}

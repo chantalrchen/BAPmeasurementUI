@@ -348,7 +348,7 @@ class OnoffProfileManager(BaseProfileManager):
                 ]
             }
         }
-        super().__init__(profiles_dir, "", standard_profiles)
+        super().__init__(profiles_dir, "profiles_onoff", standard_profiles)
         self.mfcs = UImfcs
         self.cooling = UIcooling
         self.valve = UIvalve

@@ -1109,6 +1109,8 @@ class AutomatedSystemUI:
         }
         self.config_manager.set_com_ports(com_ports)
         
+        self.reload_all_devices()
+        self.status_var.set("COM ports updated and devices reconnected.")
         print("THE COM-PORTS OF THE SETTING", com_ports)
         
         # self.mfcs[0].port = self.MFC1_port_var.get()
@@ -2186,3 +2188,44 @@ class AutomatedSystemUI:
         self.coolingprofilemanager.stop_profile()
         self.valveprofilemanager.stop_profile()
         self.status_var.set("All profiles stopped by user")
+        
+    def reload_all_devices(self):
+        # Disconnect all devices if they're connected
+        if self.mfcs[0].connected:
+            self.disconnect_MFC(0)
+        if self.mfcs[1].connected:
+            self.disconnect_MFC(1)
+        if self.mfcs[2].connected:
+            self.disconnect_MFC(2)
+        if self.cooling.connected:
+            self.disconnect_cooling()
+        if self.valve.connected:
+            self.disconnect_valve()
+
+        #Obtain the new assigned comports
+        saved_ports = self.config_manager.get_com_ports()
+
+        # Update the devices to the new COM-ports
+        self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"])
+        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"])
+        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"])
+
+        # Update the devices
+        self.mfcs = self.mfcprofilemanager.mfcs
+        self.cooling = self.coolingprofilemanager.cooling
+        self.valve = self.valveprofilemanager.valve
+
+        # Update the OnOffProfileManager
+        self.onoffprofilemanager = OnoffProfileManager(
+            UImfcs=self.mfcs,
+            UIcooling=self.cooling,
+            UIvalve=self.valve
+        )
+
+        # Update the UI labels
+        self.connection_mfc1_port_label.config(text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
+        self.connection_mfc2_port_label.config(text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
+        self.connection_mfc3_port_label.config(text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
+        self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
+        self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
+
