@@ -1,8 +1,8 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 import threading
 from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager
-from configurationmanager import ConfigManager
+from settingsmanagers import SettingsManager
 import pandas as pd
 import time
 import matplotlib.pyplot as plt
@@ -16,19 +16,20 @@ class AutomatedSystemUI:
         
         self.path_pureflowrate = "C:/Users/chant/Downloads/Pure and Mixed flow rates.xlsx"
                 
-        self.config_manager = ConfigManager()
-        saved_ports = self.config_manager.get_com_ports()
+        self.settings_manager = SettingsManager(base_dir = "profilestab")
+        settings_path = self.settings_manager.get_profiles_path()
+        saved_ports = self.settings_manager.get_com_ports()
 
-        self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"])
-        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"])
-        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"])
+        self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"], profiles_dir=settings_path)
+        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], profiles_dir=settings_path)
+        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"], profiles_dir=settings_path)
 
         self.mfcs = self.mfcprofilemanager.mfcs
         self.cooling = self.coolingprofilemanager.cooling
         self.valve = self.valveprofilemanager.valve
 
         self.onoffprofilemanager = OnoffProfileManager(
-            UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve
+            UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve, profiles_dir=settings_path
         )
 
         
@@ -1062,7 +1063,24 @@ class AutomatedSystemUI:
         self.valve_port_var = tk.StringVar(value=self.valve.port)
         valve_port_entry = ttk.Entry(valve_frame, textvariable=self.valve_port_var)
         valve_port_entry.grid(row=4, column=1, padx=5, pady=5)
-            
+        
+        # Profile path setting
+        profile_frame = ttk.LabelFrame(settings_window, text="Settings Path")
+        profile_frame.pack(fill="both", padx=10, pady=10)
+
+        path_label = ttk.Label(profile_frame, text="Path:")
+        path_label.grid(row=0, column=0, padx=5, pady=5, sticky='e')
+        self.settings_path_var = tk.StringVar(value=self.settings_manager.get_profiles_path())
+        ttk.Entry(profile_frame, textvariable=self.settings_path_var, width=35).grid(row=0, column=1, padx=5, pady=5)
+
+        def browse_profile_path():
+            path = filedialog.askdirectory()
+            if path:
+                self.settings_path_var.set(path)
+
+        browse_button = ttk.Button(profile_frame, text="Bladeren...", command=browse_profile_path)
+        browse_button.grid(row=0, column=2, padx=5, pady=5)
+
         save_button = ttk.Button(settings_window, text="Save", command=self.save_settings)
         save_button.pack(pady=10)
         
@@ -1074,20 +1092,57 @@ class AutomatedSystemUI:
             "cooling": self.cooling_port_var.get(),
             "valve": self.valve_port_var.get()
         }
-        self.config_manager.set_com_ports(com_ports)
+        self.settings_manager.set_com_ports(com_ports)     
         
-        self.reload_all_devices()
-        self.status_var.set("COM ports updated and devices reconnected.")
-        # print("THE COM-PORTS OF THE SETTING", com_ports)
+        new_path = self.settings_path_var.get()
+        self.settings_manager.set_profiles_path(new_path)
         
-        # self.mfcs[0].port = self.MFC1_port_var.get()
-        # self.mfcs[1].port = self.MFC2_port_var.get()
-        # self.mfcs[2].port = self.MFC3_port_var.get()
-        # self.cooling.port = self.cooling_port_var.get()
-        # self.valve.port = self.valve_port_var.get()
-        
-        # self.update_connection_devices()
-        # self.status_var.set("Port connections are updated.")
+        self.reload_all_devices()   
+        self.status_var.set("The settings are updated.")
+
+    def reload_all_devices(self):
+        # Disconnect all devices if they're connected
+        if self.mfcs[0].connected:
+            self.disconnect_MFC(0)
+        if self.mfcs[1].connected:
+            self.disconnect_MFC(1)
+        if self.mfcs[2].connected:
+            self.disconnect_MFC(2)
+        if self.cooling.connected:
+            self.disconnect_cooling()
+        if self.valve.connected:
+            self.disconnect_valve()
+
+        #Obtain the new assigned comports
+        saved_ports = self.settings_manager.get_com_ports()
+        new_path = self.settings_path_var.get()
+        print(saved_ports, new_path)
+
+        # Update the devices to the new COM-ports
+        self.settings_manager = SettingsManager(base_dir = new_path)
+        self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"], new_path)
+        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], new_path)
+        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"], new_path)
+
+        # Update the devices
+        self.mfcs = self.mfcprofilemanager.mfcs
+        self.cooling = self.coolingprofilemanager.cooling
+        self.valve = self.valveprofilemanager.valve
+
+        # Update the OnOffProfileManager
+        self.onoffprofilemanager = OnoffProfileManager(
+            UImfcs=self.mfcs,
+            UIcooling=self.cooling,
+            UIvalve=self.valve,
+            profiles_dir= new_path
+        )
+
+        # Update the UI labels
+        self.connection_mfc1_port_label.config(text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
+        self.connection_mfc2_port_label.config(text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
+        self.connection_mfc3_port_label.config(text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
+        self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
+        self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
 
     def set_MFCmassflow(self, index):
         massflowrate = self.massflow_vars[index].get()
@@ -2170,46 +2225,6 @@ class AutomatedSystemUI:
         self.valveprofilemanager.stop_profile()
         self.status_var.set("All profiles stopped by user")
         
-    def reload_all_devices(self):
-        # Disconnect all devices if they're connected
-        if self.mfcs[0].connected:
-            self.disconnect_MFC(0)
-        if self.mfcs[1].connected:
-            self.disconnect_MFC(1)
-        if self.mfcs[2].connected:
-            self.disconnect_MFC(2)
-        if self.cooling.connected:
-            self.disconnect_cooling()
-        if self.valve.connected:
-            self.disconnect_valve()
-
-        #Obtain the new assigned comports
-        saved_ports = self.config_manager.get_com_ports()
-
-        # Update the devices to the new COM-ports
-        self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"])
-        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"])
-        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"])
-
-        # Update the devices
-        self.mfcs = self.mfcprofilemanager.mfcs
-        self.cooling = self.coolingprofilemanager.cooling
-        self.valve = self.valveprofilemanager.valve
-
-        # Update the OnOffProfileManager
-        self.onoffprofilemanager = OnoffProfileManager(
-            UImfcs=self.mfcs,
-            UIcooling=self.cooling,
-            UIvalve=self.valve
-        )
-
-        # Update the UI labels
-        self.connection_mfc1_port_label.config(text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
-        self.connection_mfc2_port_label.config(text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
-        self.connection_mfc3_port_label.config(text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
-        self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
-        self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
-
 ### Constant Flow Rate Profile
     def create_pureflowrate_tab(self):
         self.pureflowrate_tab = ttk.Frame(self.notebook)

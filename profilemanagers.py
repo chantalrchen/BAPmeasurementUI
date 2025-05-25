@@ -64,7 +64,7 @@ class BaseProfileManager:
 class MFCProfileManager(BaseProfileManager):
 # MFCProfileManager is a Child Class of BaseProfileManager
 # https://www.w3schools.com/python/python_inheritance.asp
-    def __init__(self, mfc1port, mfc2port, mfc3port, profiles_dir="profiles_onetab"):
+    def __init__(self, mfc1port, mfc2port, mfc3port, profiles_dir):
         standard_profiles = {
             "Flow_Test MFC": {
                 "description": "Test flow rate changes",
@@ -154,7 +154,7 @@ class MFCProfileManager(BaseProfileManager):
         self.stoprequest = True
 
 class CoolingProfileManager(BaseProfileManager):
-    def __init__(self, coolingport, profiles_dir="profiles_onetab"):
+    def __init__(self, coolingport, profiles_dir):
         standard_profiles = {
             "Flow_Test COOLING": {
                 "description": "Test flow rate changes",
@@ -248,7 +248,7 @@ class CoolingProfileManager(BaseProfileManager):
         ###WAT MOETEN WE HIERNA DOEN?
 
 class RVMProfileManager(BaseProfileManager):
-    def __init__(self, valveport, profiles_dir="profiles_onetab"):
+    def __init__(self, valveport, profiles_dir):
         standard_profiles = {
             "Flow_Test VALVE": {
                 "description": "Test valve switching",
@@ -335,7 +335,7 @@ class RVMProfileManager(BaseProfileManager):
 
 
 class OnoffProfileManager(BaseProfileManager):
-    def __init__(self, UImfcs, UIcooling, UIvalve, profiles_dir="profiles_onetab"):
+    def __init__(self, UImfcs, UIcooling, UIvalve, profiles_dir):
         standard_profiles = {
             "Flow_Test": {
                 "description": "Test all devices together",
