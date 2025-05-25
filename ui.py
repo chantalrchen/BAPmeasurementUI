@@ -1378,6 +1378,7 @@ class AutomatedSystemUI:
     
     def run_mfcprofile_thread(self):
         """Thread function to run the profile"""
+        
         try:
             # Displaying which profile is running
             self.status_var.set(f"Running profile: {self.mfcname_var.get()}")
@@ -1406,6 +1407,10 @@ class AutomatedSystemUI:
         self.status_var.set("Profile run stopped by user")
 
     def update_mfcprofile_var(self, status):
+        #when the UI is closed then this won't be "updating" (to debug)
+        if not self.root.winfo_exists():
+            return
+        
         self.mfc_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
         self.mfc_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
         self.mfc_value_label.config(text=f"{status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['flow mfc3']:.2f} mL/min")
@@ -1630,6 +1635,10 @@ class AutomatedSystemUI:
         self.status_var.set("Profile run stopped by user")
 
     def update_coolingprofile_var(self, status):
+        #when the UI is closed then this won't be "updating" (to debug)
+        if not self.root.winfo_exists():
+            return
+        
         self.cooling_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
         self.cooling_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
         self.cooling_value_label.config(text=f"{status['temperature']:.2f} °C")
@@ -1826,6 +1835,7 @@ class AutomatedSystemUI:
     
     def run_valveprofile_thread(self):
         """Thread function to run the profile"""
+        
         try:
             # Displaying which profile is running
             self.status_var.set(f"Running profile: {self.valvename_var.get()}")
@@ -2110,11 +2120,11 @@ class AutomatedSystemUI:
         )
         self.onoffprofile_thread.start()
     
-    def run_onoffprofile_thread(self, profile):
-        def safe_update(status):
-            self.root.after(0, lambda: self.update_onoffprofile_var(status))
-
+    def run_onoffprofile_thread(self, profile):      
         try:
+            def safe_update(status):
+                self.root.after(0, lambda: self.update_onoffprofile_var(status))
+
             self.status_var.set(f"Running profile: {self.onoffname_var.get()}")
             self.onoffprofilemanager.run_profile(
                 temp_ambient=self.ambient_temp,
@@ -2144,6 +2154,10 @@ class AutomatedSystemUI:
         self.status_var.set("Profile run stopped by user")
     
     def update_onoffprofile_var(self, status):
+        #when the UI is closed then this won't be "updating" (to debug)
+        if not self.root.winfo_exists():
+            return
+        
         self.onoff_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
         self.onoff_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
         self.onoff_value_label.config(text=f"{status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['flow mfc3']:.2f}, {status['temperature']:.1f}°C, V{status['valve']}")
@@ -2621,7 +2635,256 @@ class AutomatedSystemUI:
 
 
 ###MATLABCODE 
-    def calculate_required_flow(self, voc_name, concentration_ppm, total_flow_rate=1.0):
+    def create_voccalculator_tab(self):
+        self.voccalc_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.voccalc_tab, text="VOC Flow Calculator")
+
+        # VOC selection
+        ttk.Label(self.voccalc_tab, text="Select VOC:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        self.voccalc_voc_var = tk.StringVar()
+        vocs = [
+            '2-Nonanol', 'Nonanal', 'Tetradecane', '1-dodecanethiol', 'Ethanol', '1 propanol', '2 propanol',
+            'methanol', 'Aceton', 'acetic acid', 'α-Pinene', 'water', 'α-Terpinene', '1-Butanol', 'Toluene',
+            '2-Butanone (MEK)', 'DMSO'
+        ]
+        voc_dropdown = ttk.Combobox(self.voccalc_tab, textvariable=self.voccalc_voc_var, values=vocs, state="readonly")
+        voc_dropdown.grid(row=0, column=1, padx=10, pady=10)
+        voc_dropdown.current(0)
+
+        # Concentration input
+        ttk.Label(self.voccalc_tab, text="Concentration (ppm):").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        self.voccalc_concentration_var = tk.DoubleVar()
+        concentration_entry = ttk.Entry(self.voccalc_tab, textvariable=self.voccalc_concentration_var)
+        concentration_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        # Total Flow Rate input
+        ttk.Label(self.voccalc_tab, text="Total Flow Rate (mL/min):").grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        self.voccalc_totalflowrate_var = tk.DoubleVar()
+        totalflow_entry = ttk.Entry(self.voccalc_tab, textvariable=self.voccalc_totalflowrate_var)
+        totalflow_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        # Calculate Button
+        calc_button = ttk.Button(self.voccalc_tab, text="Calculate Flow", command=self.calculate_voc_flow)
+        calc_button.grid(row=3, column=0, columnspan=2, pady=10)
+
+        # Result labels
+        self.voccalc_flow_label = ttk.Label(self.voccalc_tab, text="Required Flow: -")
+        self.voccalc_flow_label.grid(row=4, column=0, columnspan=2, pady=5)
+        
+        self.voccalc_N_label = ttk.Label(self.voccalc_tab, text="Required Mass Flow of Nitrogen: -")
+        self.voccalc_N_label.grid(row=5, column=0, columnspan=2, pady=5)
+
+
+        self.voccalc_temp_label = ttk.Label(self.voccalc_tab, text="Required Temperature: -")
+        self.voccalc_temp_label.grid(row=6, column=0, columnspan=2, pady=5)
+
+        self.voccalc_ps_label = ttk.Label(self.voccalc_tab, text="Saturated Vapor Pressure (Ps): -")
+        self.voccalc_ps_label.grid(row=7, column=0, columnspan=2, pady=5)
+
+        # self.voccalc_run_button = ttk.Button(self.voccalc_tab, text="Run Continuously", command=self.voccalc_run_cnt)
+        # self.voccalc_run_button.grid(row=7, column=0, padx=5, pady=10, sticky="ew")
+
+        # self.voccalc_stop_button = ttk.Button(self.voccalc_tab, text="Stop", command=self.voccalc_stop_cnt)
+        # self.voccalc_stop_button.grid(row=7, column=1, padx=5, pady=10, sticky="ew")
+
+        ttk.Label(self.voccalc_tab, text="On Time (s):").grid(row=8, column=0)
+        self.voccalc_on_time_entry = ttk.Entry(self.voccalc_tab)
+        self.voccalc_on_time_entry.grid(row=8, column=1)
+
+        ttk.Label(self.voccalc_tab, text="Off Time (s):").grid(row=9, column=0)
+        self.voccalc_off_time_entry = ttk.Entry(self.voccalc_tab)
+        self.voccalc_off_time_entry.grid(row=9, column=1)
+
+        ttk.Label(self.voccalc_tab, text="Run Time (s):").grid(row=10, column=0)
+        self.voccalc_run_time_entry = ttk.Entry(self.voccalc_tab)
+        self.voccalc_run_time_entry.grid(row=10, column=1)
+        
+        self.voccalc_run_button = ttk.Button(self.voccalc_tab, state="disabled", text="Run On/Off Graph", command=self.voccalculator_run_onoffprofile)
+        self.voccalc_run_button.grid(row=11, column=0, padx=5, pady=10, sticky="ew")
+        
+        self.voccalc_plotgraph_button = ttk.Button(self.voccalc_tab,state="disabled", text="Plot Expected On/Off Graph", command=self.plot_expected_vocprofile)
+        self.voccalc_plotgraph_button.grid(row=11, column=1, padx=5, pady=10, sticky="ew")
+
+        self.voccalc_elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
+        self.voccalc_elapsed_time_label = ttk.Label(self.voccalc_tab, textvariable=self.voccalc_elapsed_time_var)
+        self.voccalc_elapsed_time_label.grid(row=12, column=0, columnspan=2, sticky='w')
+
+        # For the graph
+        self.voccalc_graph_frame = ttk.LabelFrame(self.voccalc_tab, text="Expected Response")
+        self.voccalc_graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")        
+        
+    def update_voc_elapsed_time_display(self, start_timestamp, run_time):
+        #when the UI is closed then this won't be "updating" (to debug)
+        if not self.root.winfo_exists():
+            return
+                
+        #elapsed time
+        elapsed = time.time() - start_timestamp  
+        self.voccalc_elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
+
+        if elapsed < run_time:
+            self.root.after(100, lambda: self.update_voc_elapsed_time_display(start_timestamp, run_time))
+        else:
+            self.voccalc_elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s / {run_time:.1f} s")
+
+
+    def voccalculator_run_onoffprofile(self):
+        self.plot_expected_vocprofile()
+        try:
+            on_time = float(self.voccalc_on_time_entry.get())
+            off_time = float(self.voccalc_off_time_entry.get())
+            run_time = float(self.voccalc_run_time_entry.get())
+        except ValueError:
+            messagebox.showerror("Input Error", "All timing fields must be numbers.")
+            return
+
+        if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.cooling.connected or not self.valve.connected:
+            messagebox.showerror("Connection Error", "Ensure all devices are connected.")
+            return
+
+        if not isinstance(self.ambient_temp, (int, float)):
+            messagebox.showerror("Error", "Ambient temperature must be set.")
+            return
+
+        def run_pulse_cycle():
+            self.update_run_var()
+            self.cooling.set_temperature(self.voc_temp, self.ambient_temp)
+            pulse_starttime = time.time()
+            self.root.after(0, lambda: self.update_voc_elapsed_time_display(pulse_starttime, run_time))
+
+            while True:
+                if time.time() - pulse_starttime >= run_time:
+                    break
+
+                # ON state
+                self.mfcs[0].set_massflow(self.voc_flow)
+                self.mfcs[1].set_massflow(self.voc_N)
+                self.valve.switch_position(2)
+                self.status_var.set(f"VOC ON-state | MFC1: {self.voc_flow}, MFC2 (Nitrogen): {self.voc_N}")
+                time.sleep(on_time)
+
+                if time.time() - pulse_starttime >= run_time:
+                    break
+
+                # OFF state
+                self.mfcs[0].set_massflow(0)
+                self.mfcs[1].set_massflow(0)
+                self.valve.switch_position(1)
+                self.status_var.set("VOC OFF-state")
+                time.sleep(off_time)
+
+            # Final reset
+            self.mfcs[0].set_massflow(0)
+            self.mfcs[1].set_massflow(0)
+            self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+            self.valve.switch_position(1)
+            self.status_var.set("VOC Run complete")
+
+        threading.Thread(target=run_pulse_cycle, daemon=True).start()
+
+    def plot_expected_vocprofile(self):
+        #Expected Graph
+        try:
+            # Obtaining time fields
+            # start_time = float(self.start_delay_entry.get())
+            on_time = float(self.voccalc_on_time_entry.get())
+            off_time = float(self.voccalc_off_time_entry.get())
+            run_time = float(self.voccalc_run_time_entry.get())
+            conc = float(self.voccalc_concentration_var.get())
+        except ValueError:
+            messagebox.showerror("Input Error", "Start Delay Time, On time, Off Time, Run Time and Concentrations must be numbers.")
+            return
+
+        time_data = []
+        signal_data = []
+        total_time = 0
+
+        # # Generating the start delay time 
+        # # Keep adding concentration 0 until the start time has reached
+        # for time in range(int(start_time)):
+        #     time_data.append(total_time)
+        #     signal_data.append(0)
+        #     total_time += 1
+        
+        step_time = 1e-2
+        on_time_steps = on_time / step_time
+        off_time_steps = off_time / step_time
+        
+        # Generating the on and off pattern
+        while total_time < run_time:
+            for time in range(int(on_time_steps)):
+                # on pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "ON" moet staan
+                if total_time >= run_time:
+                    break
+                time_data.append(total_time)
+                signal_data.append(conc)
+                total_time += step_time
+                # off pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "OFF" moet staan
+            for time in range(int(off_time_steps)):
+                if total_time >= run_time:
+                    break
+                time_data.append(total_time)
+                signal_data.append(0)
+                total_time += step_time
+
+        # Clear previous canvas if exists
+        # https://stackoverflow.com/questions/65544881/clearing-and-plotting-mathplot-figure-on-tkinter
+        for child in self.voccalc_graph_frame.winfo_children():
+            child.destroy()
+
+        # Create plot
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(time_data, signal_data, color='red', linewidth=2)
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Concentration (ppm)")
+        ax.set_title("Expected Response")
+        ax.set_xlim(0, time_data[-1] * 1.2 )
+        ax.set_ylim(0, conc * 1.2)
+        ax.grid(True)
+        fig.tight_layout()  
+
+       # Embed in Tkinter
+        canvas = FigureCanvasTkAgg(fig, master=self.voccalc_graph_frame)
+        canvas.draw()
+
+        canvas_widget = canvas.get_tk_widget()
+        # Graph size 400 x 300
+        canvas_widget.config(width=500, height=300) 
+        # Prevent Frame Shrinking
+        # https://youtu.be/onIEw70Uw-4
+        canvas_widget.pack_propagate(False)  # prevent auto-resizing
+        canvas_widget.pack(fill='none', expand=False)
+       
+    def calculate_voc_flow(self):
+        voc = self.voccalc_voc_var.get()
+        try:
+            concentration = float(self.voccalc_concentration_var.get())
+            total_flow = float(self.voccalc_totalflowrate_var.get())
+        except ValueError:
+            messagebox.showerror("Invalid input", "Please enter valid numbers for concentration and total flow rate.")
+            return
+
+        ### Standard temperature of 1 degree
+        # self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow_T1(voc, concentration, total_flow)
+        
+        ## 
+        self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow(voc, concentration, total_flow)
+        
+        if self.voc_flow is not None:
+            self.voccalc_flow_label.config(text=f"Required Flow: {self.voc_flow} mL/min")
+            self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: {self.voc_N} mL/min")
+            self.voccalc_temp_label.config(text=f"Required Temperature: {self.voc_temp} °C")
+            self.voccalc_ps_label.config(text=f"Saturated Vapor Pressure (Ps): {self.voc_Ps} mmHg")
+            self.voccalc_plotgraph_button.config(state="normal")
+            self.voccalc_run_button.config(state="normal")
+        else:
+            self.voccalc_flow_label.config(text="Required Flow: N/A")
+            self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: N/A")
+            self.voccalc_temp_label.config(text="Required Temperature: N/A")
+            self.voccalc_ps_label.config(text="Saturated Vapor Pressure (Ps): N/A")
+
+    def calculate_required_flow(self, voc_name, concentration_ppm, total_flow_rate):
+        
         VOC_data = {
             '2-Nonanol': (7.87942, 1966.54, 194.918),
             'Nonanal': (7.42543, 1825.65, 206.718),
@@ -2632,7 +2895,7 @@ class AutomatedSystemUI:
             '2 propanol': (8.87829, 2010.33, 252.636),
             'methanol': (8.09126, 1582.91, 239.096),
             'Aceton': (7.31414, 1315.67, 240.479),
-            'acetic acid': (7.8152, 1800.03, 246.894),
+            'acetic acid': (7.8152, 1800.03, 246.894), 
             'α-Pinene': (7.06153, 1621.22, 231.645),
             'water': (8.07131, 1730.63, 233.426),
             'α-Terpinene': (7.13456, 1673.54, 216.227),
@@ -2641,81 +2904,71 @@ class AutomatedSystemUI:
             '2-Butanone (MEK)': (7.29427, 1400.37, 237.655),
             'DMSO': (7.25197, 1733.52, 207.58)
         }
-
-        if voc_name not in VOC_data:
-            return None, None, None
-
-        A, B, C_val = VOC_data[voc_name]
-        P = 760  # mmHg
-        min_f = 0.1
-        C_frac = concentration_ppm * 1e-6
-
-        for T in range(1, 201):
-            Ps = 10 ** (A - B / (C_val + T))
-            f = C_frac * total_flow_rate * P / Ps
-            if min_f <= f <= total_flow_rate:
-                return round(f, 4), T, round(Ps, 2)
-
-        return None, None, None
-
-
-    def create_voccalculator_tab(self):
-        tab = ttk.Frame(self.notebook)
-        self.notebook.add(tab, text="VOC Flow Calculator")
-
-        # VOC selection
-        ttk.Label(tab, text="Select VOC:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        self.voc_var = tk.StringVar()
-        vocs = [
-            '2-Nonanol', 'Nonanal', 'Tetradecane', '1-dodecanethiol', 'Ethanol', '1 propanol', '2 propanol',
-            'methanol', 'Aceton', 'acetic acid', 'α-Pinene', 'water', 'α-Terpinene', '1-Butanol', 'Toluene',
-            '2-Butanone (MEK)', 'DMSO'
-        ]
-        voc_dropdown = ttk.Combobox(tab, textvariable=self.voc_var, values=vocs, state="readonly")
-        voc_dropdown.grid(row=0, column=1, padx=10, pady=10)
-        voc_dropdown.current(0)
-
-        # Concentration input
-        ttk.Label(tab, text="Concentration (ppm):").grid(row=1, column=0, padx=10, pady=10, sticky='e')
-        self.concentration_var = tk.DoubleVar()
-        concentration_entry = ttk.Entry(tab, textvariable=self.concentration_var)
-        concentration_entry.grid(row=1, column=1, padx=10, pady=10)
-
-        # Total Flow Rate input
-        ttk.Label(tab, text="Total Flow Rate (mL/min):").grid(row=2, column=0, padx=10, pady=10, sticky='e')
-        self.totalflowrate_var = tk.DoubleVar(value=1.0)
-        totalflow_entry = ttk.Entry(tab, textvariable=self.totalflowrate_var)
-        totalflow_entry.grid(row=2, column=1, padx=10, pady=10)
-
-        # Calculate Button
-        calc_button = ttk.Button(tab, text="Calculate Flow", command=self.calculate_voc_flow)
-        calc_button.grid(row=3, column=0, columnspan=2, pady=10)
-
-        # Result labels
-        self.flow_result_label = ttk.Label(tab, text="Required Flow: -")
-        self.flow_result_label.grid(row=4, column=0, columnspan=2, pady=5)
-
-        self.temp_result_label = ttk.Label(tab, text="Required Temperature: -")
-        self.temp_result_label.grid(row=5, column=0, columnspan=2, pady=5)
-
-        self.ps_result_label = ttk.Label(tab, text="Saturated Vapor Pressure (Ps): -")
-        self.ps_result_label.grid(row=6, column=0, columnspan=2, pady=5)
         
-    def calculate_voc_flow(self):
-        voc = self.voc_var.get()
-        try:
-            concentration = float(self.concentration_var.get())
-            total_flow = float(self.totalflowrate_var.get())
-        except ValueError:
-            messagebox.showerror("Invalid input", "Please enter valid numbers for concentration and total flow rate.")
-            return
+        if voc_name not in VOC_data:
+            return None, None, None, None
 
-        flow, temp, Ps = self.calculate_required_flow(voc, concentration, total_flow)
-        if flow is not None:
-            self.flow_result_label.config(text=f"Required Flow: {flow} mL/min")
-            self.temp_result_label.config(text=f"Required Temperature: {temp} °C")
-            self.ps_result_label.config(text=f"Saturated Vapor Pressure (Ps): {Ps} mmHg")
-        else:
-            self.flow_result_label.config(text="Required Flow: Not feasible")
-            self.temp_result_label.config(text="Required Temperature: -")
-            self.ps_result_label.config(text="Saturated Vapor Pressure (Ps): -")
+        A, B, C = VOC_data[voc_name]
+        P = 760  # mmHg; normale atmosferische luchtdruk
+        min_f = 0.1 #minimum flow rate
+
+        if not isinstance(self.ambient_temp, (int, float)):
+            messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
+            return None, None, None, None
+        
+        min_T = self.ambient_temp - 30
+        
+        #Range of Torrey Pines XR: -10 to 110 degrees, however also depending on ambient temp
+        for T in range(-10, 110):
+            Ps = 10 ** (A - B / (C + T))
+            f = concentration_ppm * (total_flow_rate * P / Ps) * 1e-6
+            F = total_flow_rate - f
+            if min_f <= f <= total_flow_rate: # f should be smaller than the total flow rate but bigger than the minimum flow rate
+                print("ambient temp", min_T, f, F, T, Ps)
+                if T > min_T:
+                    return f, F, T, Ps
+
+        return None, None, None, None
+    
+    # def calculate_required_flow_T1(self, voc_name, concentration_ppm, total_flow_rate):
+    #     VOC_data = {
+    #         '2-Nonanol': (7.87942, 1966.54, 194.918),
+    #         'Nonanal': (7.42543, 1825.65, 206.718),
+    #         'Tetradecane': (7.2715, 1926.44, 187.657),
+    #         '1-dodecanethiol': (7.62037, 2309.1, 212.597),
+    #         'Ethanol': (8.13484, 1662.48, 238.131),
+    #         '1 propanol': (8.37895, 1788.02, 227.438),
+    #         '2 propanol': (8.87829, 2010.33, 252.636),
+    #         'methanol': (8.09126, 1582.91, 239.096),
+    #         'Aceton': (7.31414, 1315.67, 240.479),
+    #         'acetic acid': (7.8152, 1800.03, 246.894), 
+    #         'α-Pinene': (7.06153, 1621.22, 231.645),
+    #         'water': (8.07131, 1730.63, 233.426),
+    #         'α-Terpinene': (7.13456, 1673.54, 216.227),
+    #         '1-Butanol': (7.62121, 1543.89, 208.029),
+    #         'Toluene': (7.1362, 1457.29, 231.827),
+    #         '2-Butanone (MEK)': (7.29427, 1400.37, 237.655),
+    #         'DMSO': (7.25197, 1733.52, 207.58)
+    #     }
+        
+    #     if voc_name not in VOC_data:
+    #         return None, None, None, None
+
+    #     A, B, C = VOC_data[voc_name]
+    #     P = 760  # mmHg; normale atmosferische luchtdruk
+    #     min_f = 0.1 #minimum flow rate
+
+    #     # if not isinstance(self.ambient_temp, (int, float)):
+    #     #     messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
+    #     #     return None, None, None
+        
+    #     # min_T = self.ambient_temp - 30
+        
+    #     T = 1
+    #     Ps = 10 ** (A - B / (C + T))
+    #     f = concentration_ppm * (total_flow_rate * P / Ps) * 1e-6
+    #     F = total_flow_rate - f
+    #     if min_f <= f <= total_flow_rate: # f should be smaller than the total flow rate but bigger than the minimum flow rate
+    #         return f, F, T, Ps
+
+    #     return None, None, None, None
