@@ -231,7 +231,7 @@ class Koelingsblok:
         
         ##To simulate:
         if self.connected:
-            self.currentplatetemperature += (self.targettemperature - self.currentplatetemperature) * 0.1
+            self.currentplatetemperature += (float(self.targettemperature) - float(self.currentplatetemperature)) * 0.1
             return self.currentplatetemperature
 
     def set_temperature(self, temperature, ambient_temp):

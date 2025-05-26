@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
 import threading
-from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
+from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, VocProfileManager
 from settingsmanagers import SettingsManager
 import pandas as pd
 import time
@@ -31,11 +31,10 @@ class AutomatedSystemUI:
         self.onoffprofilemanager = OnoffProfileManager(
             UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve, profiles_dir=settings_path
         )
-        
-        self.diffconcprofilemanager = DiffConcProfileManager(
+
+        self.vocprofilemanager = VocProfileManager(
             UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve, profiles_dir=settings_path
         )
-
         
         # Header frame for connection and status
         header_frame = ttk.Frame(self.root)
@@ -146,16 +145,7 @@ class AutomatedSystemUI:
         self.onoff_value_label.grid(row=4, column=3, padx=5, sticky="w")
         
 
-        # Different Concentration profile
-        ttk.Label(self.profile_status_frame, text="Different Concentration Profile").grid(row=4, column=0, padx=5, sticky="w")
-        self.diffconc_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
-        self.diffconc_elapsed_label.grid(row=4, column=1, padx=5, sticky="w")
-        self.diffconc_step_label = ttk.Label(self.profile_status_frame, text="-")
-        self.diffconc_step_label.grid(row=4, column=2, padx=5, sticky="w")
-        self.diffconc_value_label = ttk.Label(self.profile_status_frame, text="-")
-        self.diffconc_value_label.grid(row=4, column=3, padx=5, sticky="w")
-        
-
+        #####
         selectprofiles_frame = ttk.LabelFrame(overview_profile, text="Multiple Profile Runner")
         selectprofiles_frame.pack(side="right")
 
@@ -225,7 +215,7 @@ class AutomatedSystemUI:
         self.create_valveprofile_tab()
         self.create_pureflowrate_tab()
         self.create_voccalculator_tab()
-        self.create_diffconc_profile_tab()
+        self.create_voccalc_diffconc_PM_tab()
         
     def set_ambient_temp(self):
         """
@@ -258,7 +248,7 @@ class AutomatedSystemUI:
                 
                 #TO SIMULATE
                 flow = self.mfcs[i].get_massflow()
-                flow_str = f"{flow:.3f} mL/min"
+                flow_str = f"{flow:.2f} mL/min"
             else:
                 flow = None
                 flow_str = "-"
@@ -267,7 +257,7 @@ class AutomatedSystemUI:
 
         if self.cooling.connected:
             temp = self.cooling.get_temperature()
-            temp_str = f"{temp:.3f} °C"
+            temp_str = f"{temp:.2f} °C"
         else:
             temp = None
             temp_str = "-"
@@ -527,13 +517,13 @@ class AutomatedSystemUI:
         
         self.onoffprofile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
         self.onoffstep_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        step_onoff_combo = ttk.Combobox(
+        step_valve_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.onoffstep_valve_var, 
             values=[1, 2], 
             width=5
         )
-        step_onoff_combo.pack(side='left', padx=2)
+        step_valve_combo.pack(side='left', padx=2)
         
         # Step buttons
         step_buttons_frame = ttk.Frame(edit_frame)
@@ -2254,8 +2244,8 @@ class AutomatedSystemUI:
             self.pureflowrate_data.columns[0]: 'VOC',
             self.pureflowrate_data.columns[1]: 'Concentration',
             self.pureflowrate_data.columns[2]: 'Temperature',
-            self.pureflowrate_data.columns[4]: 'Flowrate_liquid',
-            self.pureflowrate_data.columns[5]: 'Flowrate_N'
+            self.pureflowrate_data.columns[4]: 'Flowrate_Vloeistof',
+            self.pureflowrate_data.columns[5]: 'Flowrate_Stikstof'
         })
         
         #Dropping values that have both VOC and Concentration values
@@ -2351,8 +2341,8 @@ class AutomatedSystemUI:
         # using iloc[0] such that only the first one should be selected
         selectedrow = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)].iloc[0]
         self.pureflowrate_sel_temp = float(selectedrow['Temperature'])
-        self.pureflowrate_sel_flow1 = float(selectedrow['Flowrate_liquid'])
-        self.pureflowrate_sel_flow2 = float(selectedrow['Flowrate_N'])
+        self.pureflowrate_sel_flow1 = float(selectedrow['Flowrate_Vloeistof'])
+        self.pureflowrate_sel_flow2 = float(selectedrow['Flowrate_Stikstof'])
         
         # row = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)]
 
@@ -2662,6 +2652,7 @@ class AutomatedSystemUI:
         canvas_widget.pack_propagate(False)  # prevent auto-resizing
         canvas_widget.pack(fill='none', expand=False)
 
+
 ###MATLABCODE 
     def create_voccalculator_tab(self):
         self.voccalc_tab = ttk.Frame(self.notebook)
@@ -2754,6 +2745,7 @@ class AutomatedSystemUI:
             self.root.after(100, lambda: self.update_voc_elapsed_time_display(start_timestamp, run_time))
         else:
             self.voccalc_elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s / {run_time:.1f} s")
+
 
     def voccalculator_run_onoffprofile(self):
         self.plot_expected_vocprofile()
@@ -2957,118 +2949,114 @@ class AutomatedSystemUI:
 
         return None, None, None, None
     
-####Tab different concentration
-    def create_diffconc_profile_tab(self):
+    def create_voccalc_diffconc_PM_tab(self):
         profile_tab = ttk.Frame(self.notebook)
         profile_tab.pack(fill = 'both', expand = True)
         self.notebook.add(profile_tab, text = 'Different Concentration Profile Management')
         
-        ## Split into two frames
-        list_frame = ttk.Frame(profile_tab)
-        list_frame.pack(side= 'left', fill = 'both', expand=True, padx=5, pady=5)
-        
-        edit_frame = ttk.Frame(profile_tab)
-        edit_frame.pack(side= 'right', fill= 'both', expand=True, padx=5, pady=5)
-        
         ### Left frame / list frame
+        list_frame = ttk.Frame(profile_tab, width = 200)
+        list_frame.pack(side= 'left', fill = 'both', expand=True, padx=10, pady=10)
+        list_frame.pack_propagate(False)
+        
+        ###Listbox frame
+        listbox_frame = ttk.Frame(list_frame)
+        listbox_frame.pack(fill = 'both', expand=True)
+        
         ## Profile listbox with scrollbar
         # https://www.pythontutorial.net/tkinter/tkinter-listbox/#adding-a-scrollbar-to-the-listbox
         # Making an empty profile listbox
-        self.diffconcprofile_listbox = tk.Listbox(list_frame, selectmode = tk.SINGLE)
-        self.diffconcprofile_listbox.pack(fill= 'both', expand=True, padx=5, pady=5)
-    
-        # Putting all the profiles in the profile listbox
-        self.update_diffconcprofile_list()
+        self.diffconc_profile_listbox = tk.Listbox(listbox_frame, selectmode = tk.SINGLE)
+        self.diffconc_profile_listbox.pack(fill= 'both', expand=True, padx=5, pady=5)
+
+        # Pytting all the profiles in profile listbox
+        self.update_diffconc_profile_list()
         
         #Adding a scrollbar to the profile listbox
-        v_scrollbar = ttk.Scrollbar(list_frame, orient = tk.VERTICAL, command = self.diffconcprofile_listbox.yview)
+        v_scrollbar = ttk.Scrollbar(self.diffconc_profile_listbox, orient = tk.VERTICAL, command = self.diffconc_profile_listbox.yview)
+        
+        self.diffconc_profile_listbox['yscrollcommand'] = v_scrollbar.set
         v_scrollbar.pack(side='right', fill='y')
         
-        self.diffconcprofile_listbox['yscrollcommand'] = v_scrollbar.set
-        
-        ##Adding the buttons to the left frame (list frame)
-        # Profile list buttons
-        button_frame = ttk.Frame(list_frame)
+        button_frame = ttk.Frame(listbox_frame)
         button_frame.pack(fill='x', padx=5, pady=5)
         
-        load_button = ttk.Button(button_frame, text="Load", command=self.load_diffconcprofile)
+        load_button = ttk.Button(button_frame, text="Load", command=self.load_diffconc_profile)
         load_button.pack(side='left', padx=3, expand=True)
         
-        delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_diffconcprofile)
+        delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_diffconc_profile)
         delete_button.pack(side='left', padx=3, expand=True)
+                
+        # Graph frame
+        graph_frame = ttk.Frame(list_frame)
+        graph_frame.pack(fill = 'both', expand = False)
         
-        ##Right frame / edit frame
+        # For the graph
+        diffconc_profile_graph_frame = ttk.LabelFrame(graph_frame, text="Expected Response")
+        diffconc_profile_graph_frame.pack(fill='both', expand=True, padx=10, pady=10)
+
+        fig, ax = plt.subplots(figsize=(8, 3))
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Concentration (ppm)")
+        ax.set_title("Expected Response")
+        fig.tight_layout()
+        diffconc_profile_graph = FigureCanvasTkAgg(fig, master=diffconc_profile_graph_frame)
+        graph_widget = diffconc_profile_graph.get_tk_widget()
+        # Prevent Frame Shrinking
+        # https://youtu.be/onIEw70Uw-4
+        graph_widget.config(height=250) 
+        graph_widget.pack_propagate(False)  # prevent auto-resizing
+        graph_widget.pack(fill='none', expand=False)
+
+        ##### Right frame / edit frame
+        edit_frame = ttk.Frame(profile_tab)
+        edit_frame.pack(side= 'right', fill= 'both', expand=True, padx=10, pady=10)
+        
         # Profile info
         info_frame = ttk.Frame(edit_frame)
         info_frame.pack(fill='both', padx=5, pady=5)
         
-        firstrow_frame = ttk.Frame(info_frame)
-        firstrow_frame.pack(fill='x', pady=2)
-        
-        ##Showing green text with new profile if new profile made  
-        self.new_diffconcprofile_label = ttk.Label(firstrow_frame, text="")
-        self.new_diffconcprofile_label.pack(side = 'left', padx=5)
-        
-        name_frame = ttk.Frame(firstrow_frame)
-        name_frame.pack(side='left', fill='x', padx=5)
+        self.new_diffconc_profile_label = ttk.Label(info_frame, text="")
+        self.new_diffconc_profile_label.pack(side = 'left', padx=5, expand=True, fill='x')
 
-        ttk.Label(name_frame, text="Name:").pack(side='left')
-        self.diffconc_namevar = tk.StringVar()
-        name_entry = ttk.Entry(name_frame, textvariable=self.diffconc_namevar)
-        name_entry.pack(side='left', padx=10)
-        name_entry.config(width=30)
-        
-        desc_frame = ttk.Frame(firstrow_frame)
-        desc_frame.pack(side='left', fill='x', expand=True)
-
-        ttk.Label(desc_frame, text="Description:").pack(side='left')
-        self.diffconc_desc_var = tk.StringVar()
-        desc_entry = ttk.Entry(desc_frame, textvariable=self.diffconc_desc_var)
-        desc_entry.pack(side='left', fill='x', expand=True)
-        
-        secondrow_frame = ttk.Frame(info_frame)
-        secondrow_frame.pack(fill='x', pady=2)
-        
         # VOC selection
-        ttk.Label(secondrow_frame, text="Select VOC:").pack(side='left', padx=5)
-        self.diffconc_voc_var = tk.StringVar()
+        ttk.Label(profile_tab, text="Select VOC:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        self.voccalc_voc_var = tk.StringVar()
         vocs = [
             '2-Nonanol', 'Nonanal', 'Tetradecane', '1-dodecanethiol', 'Ethanol', '1 propanol', '2 propanol',
             'methanol', 'Aceton', 'acetic acid', 'α-Pinene', 'water', 'α-Terpinene', '1-Butanol', 'Toluene',
             '2-Butanone (MEK)', 'DMSO'
         ]
-        self.voc_dropdown = ttk.Combobox(secondrow_frame, textvariable=self.diffconc_voc_var, values=vocs, state="readonly")
-        self.voc_dropdown.pack(side='left', padx=5)
-        self.voc_dropdown.current(0)
-        self.voc_dropdown.config(state = 'enabled')
-        
-        # Total flow rate
-        ttk.Label(secondrow_frame, text="Total Flow Rate (mL/min):").pack(side='left', padx=5)
-        self.diffconc_totalflowrate_var = tk.DoubleVar()
-        self.totalflow_entry = ttk.Entry(secondrow_frame, textvariable=self.diffconc_totalflowrate_var)
-        self.totalflow_entry.pack(side='left', padx=5)
-        self.totalflow_entry.config(state = 'enabled')
-        
-        ttk.Label(secondrow_frame, text="Temperature (°C)").pack(side='left')
-        self.diffconc_temp_var = tk.DoubleVar()
-        self.temp_entry = ttk.Entry(secondrow_frame, textvariable=self.diffconc_temp_var)
-        self.temp_entry.pack(side='left', padx=5, expand=True, fill='x')
-        self.temp_entry.config(state = 'enabled')
-        
-        # Select Button, zodat de temperature, voc button enz niet meer kan worden gewijzigd maar nu wel stappen kan toevoegen
-        ttk.Button(secondrow_frame, text="Select", command=self.enabling_select_diffconcprofile).pack(side='left', padx=5)
+        voc_dropdown = ttk.Combobox(profile_tab, textvariable=self.voccalc_voc_var, values=vocs, state="readonly")
+        voc_dropdown.grid(row=0, column=1, padx=10, pady=10)
+        voc_dropdown.current(0)
 
-        new_profile_btn = ttk.Button(secondrow_frame, text = 'New Profile', command = self.create_new_diffconcprofile)
+        ttk.Label(info_frame, text="Name:").pack(side='left')
+        self.diffconc_name_var = tk.StringVar()
+        name_entry = ttk.Entry(info_frame, textvariable=self.diffconc_name_var)
+        name_entry.pack(side='left', padx=5, expand=True, fill='x')
+        
+        ttk.Label(info_frame, text="Description:").pack(side='left')
+        self.diffconc_desc_var = tk.StringVar()
+        desc_entry = ttk.Entry(info_frame, textvariable=self.diffconc_desc_var)
+        desc_entry.pack(side='left', padx=5, expand=True, fill='x')
+        
+        ttk.label(info_frame, text ="Total flow:").pack(side = 'left')
+        self.diffconc_totalflow_var = tk.StringVar()
+        desc_entry = ttk.Entry(info_frame, textvariable=self.diffconc_totalflow_var)
+        desc_entry.pack(side='left', padx=5, expand=True, fill='x')
+
+        new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_diffconc_profile)
         new_profile_btn.pack(side='right', padx=3, expand=True)
         
         # Steps in the right/frame
         steps_frame = ttk.Frame(edit_frame)
         steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
-        
+
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.diffconc_steps_tree = ttk.Treeview(
             steps_frame, 
-            columns=("time", "concentration", "flow mfc1", "flow mfc2", "valve"), 
+            columns=("time", "concentration", "mfc1", "mfc2", "valve"), 
             show="headings"
         )
         self.diffconc_steps_tree.heading("time", text="Time (s)")
@@ -3076,13 +3064,13 @@ class AutomatedSystemUI:
         self.diffconc_steps_tree.heading("flow mfc1", text="Flow MFC 1 (mL/min)")
         self.diffconc_steps_tree.heading("flow mfc2", text="Flow MFC 2 (mL/min)")
         self.diffconc_steps_tree.heading("valve", text="Valve Position (1 or 2)")
-        
-        self.diffconc_steps_tree.column("time", width=80, anchor=tk.CENTER)
+                
+        self.diffconc_steps_tree.column("time", width=100, anchor=tk.CENTER)
         self.diffconc_steps_tree.column("concentration", width=100, anchor=tk.CENTER)
-        self.diffconc_steps_tree.column("flow mfc1", width=100, anchor=tk.CENTER)
-        self.diffconc_steps_tree.column("flow mfc2", width=100, anchor=tk.CENTER)
-        self.diffconc_steps_tree.column("valve", width=80, anchor=tk.CENTER)
-        
+        self.onoffsteps_tree.column("flow mfc1", width=100, anchor=tk.CENTER)
+        self.onoffsteps_tree.column("flow mfc2", width=100, anchor=tk.CENTER)
+        self.onoffsteps_tree.column("valve", width=80, anchor=tk.CENTER)
+
         self.diffconc_steps_tree.pack(fill = 'both' , expand=True)
         
         step_controls_frame = ttk.Frame(edit_frame)
@@ -3090,391 +3078,274 @@ class AutomatedSystemUI:
         
         self.diffconc_profile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
         self.diffconc_step_time_var = tk.DoubleVar()
-        self.step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_time_var, width=8)
-        self.step_time_entry.pack(side='left', padx=2)
-        self.step_time_entry.config(state ='disabled')
-
+        step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_time_var, width=8)
+        step_time_entry.pack(side='left', padx=5)
+        
         self.diffconc_profile_conc_label = ttk.Label(step_controls_frame, text="Concentration (ppm):").pack(side='left')
         self.diffconc_step_conc_var = tk.DoubleVar()
-        self.step_conc_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_conc_var, width=8)
-        self.step_conc_entry.pack(side='left', padx=2)
-        self.step_conc_entry.config(state ='disabled')
-        
+        step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_conc_var, width=8)
+        step_temp_entry.pack(side='left', padx=2)
+
+        self.diffconc_profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow MFC 1 (mL/min):").pack(side='left')
+
+        self.diffconc_profile_mfc2_label = ttk.Label(step_controls_frame, text="Flow MFC 2 (mL/min):").pack(side='left')
+
+
         self.diffconc_profile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
-        self.diffconc_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        self.step_valve_combo = ttk.Combobox(
+        self.diffconc_profile_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
+        step_valve_combo = ttk.Combobox(
             step_controls_frame, 
-            textvariable=self.diffconc_valve_var, 
+            textvariable=self.diffconc_profile_valve_var, 
             values=[1, 2], 
             width=5
         )
-        self.step_valve_combo.pack(side='left', padx=2)
-        self.step_valve_combo.config(state ='disabled')
-        
-        self.diffconc_profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow MFC 1 (mL/min):").pack(side='left')
-        self.diffconc_flow1_var = tk.DoubleVar()
-        self.step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flow1_var, width=25)
-        self.step_flow1_entry.pack(side='left', padx=2)
-        self.step_flow1_entry.config(state ='disabled')
-
-        self.diffconc_mfc2_label = ttk.Label(step_controls_frame, text="Flow MFC 2 (mL/min):").pack(side='left')
-        self.diffconc_flow2_var = tk.DoubleVar()
-        self.step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flow2_var, width=25)
-        self.step_flow2_entry.pack(side='left', padx=2)
-        self.step_flow2_entry.config(state ='disabled')
-        
-        self.calculate_step_button = ttk.Button(step_controls_frame, text="Calculate Flow Rates", command=self.diffconc_calc_step)
-        self.calculate_step_button.pack(side='left', padx=2)
-        self.calculate_step_button.config(state = 'disabled')
+        step_valve_combo.pack(side='left', padx=2)
 
         # Step buttons
         step_buttons_frame = ttk.Frame(edit_frame)
         step_buttons_frame.pack(fill='both')
+
+        calculate_conc_button = ttk.Button(step_buttons_frame, text="Calculate Flow Rates", command=self.calculate_diffconc_flows)
+        calculate_conc_button.pack(side='left', padx=3)
         
-        self.add_step_button = ttk.Button(step_buttons_frame, text="Add Step", command=self.diffconcadd_step)
-        self.add_step_button.pack(side='left', padx=2)
-        self.add_step_button.config(state = 'disabled')
+        add_step_button = ttk.Button(step_buttons_frame, text="Add Step", command=self.add_diffconc_step)
+        add_step_button.pack(side='left', padx=2)
         
-        self.remove_step_button = ttk.Button(step_buttons_frame, text="Remove Step", command=self.diffconcremove_step)
-        self.remove_step_button.pack(side='left', padx=2)
-        self.remove_step_button.config(state = 'disabled')
-                
-        self.clear_steps_button = ttk.Button(step_buttons_frame, text="Clear All Steps", command=self.diffconcclear_steps)
-        self.clear_steps_button.pack(side='left', padx=2)
-        self.clear_steps_button.config(state = 'disabled')
+        remove_step_button = ttk.Button(step_buttons_frame, text="Remove Step", command=self.remove_diffconc_step)
+        remove_step_button.pack(side='left', padx=2)
+        
+        clear_steps_button = ttk.Button(step_buttons_frame, text="Clear All Steps", command=self.clear_diffconc_steps)
+        clear_steps_button.pack(side='left', padx=2)
         
         # Save and run buttons
         action_buttons_frame = ttk.Frame(edit_frame)
         action_buttons_frame.pack(fill='both')
         
-        self.save_button = ttk.Button(action_buttons_frame, text="Save Profile", command=self.save_diffconcprofile)
-        self.save_button.pack(side='left', padx=2)
-        self.save_button.config(state = 'disabled')
+        save_button = ttk.Button(action_buttons_frame, text="Save Profile", command=self.save_diffconc_profile)
+        save_button.pack(side='left', padx=2)
         
-        self.run_button = ttk.Button(action_buttons_frame, text="Run Profile", command=self.run_diffconcprofile)
-        self.run_button.pack(side='left', padx=2)
-        self.run_button.config(state = 'disabled')
+        run_button = ttk.Button(action_buttons_frame, text="Run Profile", command=self.run_diffconc_profile)
+        run_button.pack(side='left', padx=2)
         
-        self.diffconc_stop_button = ttk.Button(action_buttons_frame, text="Stop", command=self.stop_diffconcprofile)
+        self.diffconc_stop_button = ttk.Button(action_buttons_frame, text="Stop", command=self.stop_diffconc_profile)
         self.diffconc_stop_button.pack(side='left', padx=2)
-        self.diffconc_stop_button.config(state=tk.DISABLED)
-    
-        # Initialize variables
-        self.current_loaded_diffconc_profile = None
-    
-    def enabling_select_diffconcprofile(self):
-        ## Lock the VOC dropdown, total flow and temperature entry
-        self.voc_dropdown.config(state = 'disabled')
-        self.totalflow_entry.config(state = 'disabled')
-        self.temp_entry.config(state = 'disabled')
+        self.diffconc_stop_button.config(state=tk.DISABLED)    
         
-        # Enabling all input fields
-        self.step_time_entry.config(state ='enabled')
-        self.step_conc_entry.config(state ='enabled')
-        # self.step_flow1_entry.config(state ='enabled')
-        # self.step_flow2_entry.config(state ='enabled')
-        self.step_valve_combo.config(state = 'enabled')
-
-        # Enabling all buttons
-        self.calculate_step_button.config(state = 'enabled')
-        # self.add_step_button.config(state = 'enabled')
-        self.remove_step_button.config(state = 'enabled')
-        self.clear_steps_button.config(state = 'enabled')
-        self.save_button.config(state = 'enabled')
-        self.run_button.config(state = 'enabled')
-    
-    def disabling_select_diffconcprofile(self):
-        ## Lock the VOC dropdown, total flow and temperature entry
-        self.voc_dropdown.config(state = 'enabled')
-        self.totalflow_entry.config(state = 'enabled')
-        self.temp_entry.config(state = 'enabled')
-        
-        # Enabling all input fields
-        self.step_time_entry.config(state ='disabled')
-        self.step_conc_entry.config(state ='disabled')
-        self.step_flow1_entry.config(state ='disabled')
-        self.step_flow2_entry.config(state ='disabled')
-        self.step_valve_combo.config(state = 'disabled')
-
-        # Enabling all buttons
-        self.calculate_step_button.config(state = 'disabled')
-        self.add_step_button.config(state = 'disabled')
-        self.remove_step_button.config(state = 'disabled')
-        self.clear_steps_button.config(state = 'disabled')
-        self.save_button.config(state = 'disabled')
-        self.run_button.config(state = 'disabled')        
-    
-    def update_diffconcprofile_list(self):
-        """Refresh the list of available profiles"""
-        #https://youtu.be/Vm0ivVxNaA8
-        
-        #Delete all the items from the listbox
-        self.diffconcprofile_listbox.delete(0, tk.END)
-        
-        #Add all the profiles to the listbox
-        for profile in self.diffconcprofilemanager.get_profiles():
-            self.diffconcprofile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
-
-    def load_diffconcprofile(self):
-        """Load the selected profile into the editor"""
-        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
-        selection = self.diffconcprofile_listbox.curselection()
-        if not selection:
-            messagebox.showwarning("Warning", "Please select a profile to load")
-            return
-        
-        #To ensure that you only select the first selected
-        profile_name = self.diffconcprofile_listbox.get(selection[0])
-        profile = self.diffconcprofilemanager.load_profile(profile_name)
-        
-        self.new_diffconcprofile_label.config(text = "")
-        
-        if profile:
-            self.current_loaded_profile = profile_name
-            #Update the name of the profile
-            self.diffconc_namevar.set(profile_name)
-            
-            #Update the description, temp, voc and total flow in the field
-            self.diffconc_desc_var.set(profile.get("description", ""))
-            self.diffconc_temp_var.set(profile.get("temperature", ""))
-            self.diffconc_voc_var.set(profile.get("voc", "")) 
-            self.diffconc_totalflowrate_var.set(profile.get("total_flow", 0)) 
-            
-            # Clear the existing steps
-            for item in self.diffconc_steps_tree.get_children():
-                self.diffconc_steps_tree.delete(item)
-            
-            # Add new steps
-            for step in profile.get("steps", []):
-                self.diffconc_steps_tree.insert("", tk.END, values=(
-                    step["time"],
-                    step["concentration"],
-                    step["flow mfc1"],
-                    step["flow mfc2"],
-                    step["valve"]
-                ))
-            
-            self.status_var.set(f"Loaded profile: {profile_name}")
-            
-        self.enabling_select_diffconcprofile()
-        
-    def delete_diffconcprofile(self):
-        """Delete the selected profile"""
-        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
-        selection = self.diffconcprofile_listbox.curselection()
-        if not selection:
-            messagebox.showwarning("Warning", "Please select a profile to delete")
-            return
-            
-        profile_name = self.diffconcprofile_listbox.get(selection[0]) #To ensure that you only select the first selected
-        
-        if messagebox.askyesno("Confirm", f"Delete profile '{profile_name}'?"):
-            if self.diffconcprofilemanager.delete_profile(profile_name):
-                #Updating the new profile list
-                self.update_diffconcprofile_list() 
-                #Changing the status
-                self.status_var.set(f"Deleted profile: {profile_name}")
-            else:
-                messagebox.showerror("Error", f"Failed to delete the profile: '{profile_name}'")
-                
-    def create_new_diffconcprofile(self):
-        #Clearing all input fields and steps
-        self.diffconc_namevar.set("")
-        self.diffconc_desc_var.set("")
-        self.diffconc_voc_var.set("")
-        self.diffconc_totalflowrate_var.set("") 
-    
-        self.diffconc_step_time_var.set("")
-        self.diffconc_step_conc_var.set("")
-        self.diffconc_flow1_var.set("")
-        self.diffconc_flow2_var.set("")
-        self.diffconc_temp_var.set("")
-        self.diffconc_valve_var.set("")
-        
-        for item in self.diffconc_steps_tree.get_children():
-            self.diffconc_steps_tree.delete(item)
-        
-        self.new_diffconcprofile_label.config(text = "New profile", foreground = "green")
-        self.disabling_select_diffconcprofile()
-  
-    def diffconcadd_step(self):
-        """Add a new step to the current profile with calculated flows"""
-        try:
-            #Obtain the values
-            time_val = float(self.diffconc_step_time_var.get())
-            concentration_val = float(self.diffconc_step_conc_var.get())
-            f_voc = self.diffconc_flow1_var.get()
-            f_n2 = self.diffconc_flow2_var.get()
-            valve_val = int(self.diffconc_valve_var.get())
-
-            if time_val < 0:
-                raise ValueError("Time cannot be negative")
-            if valve_val not in [1, 2]:
-                raise ValueError("Valve position must be 1 or 2")
-
-            for child in self.diffconc_steps_tree.get_children():
-                if float(self.diffconc_steps_tree.item(child, "values")[0]) == time_val:
-                    if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
-                        return
-                    self.diffconc_steps_tree.delete(child)
-                    break
-
-            # Insert met automatisch berekende flows
-            self.diffconc_steps_tree.insert("", tk.END, values=(time_val, concentration_val, f_voc, f_n2, valve_val))
-            
-            self.calculate_step_button.config(state = 'enabled')
-            self.add_step_button.config(state = 'disabled')
-
-        except ValueError as error:
-            messagebox.showerror("Error", f"Invalid input: {error}")
-
-    def diffconcremove_step(self):
-        """Remove the selected step"""
-        selection = self.diffconc_steps_tree.selection()
-        if selection:
-            self.diffconc_steps_tree.delete(selection)
-    
-    def diffconcclear_steps(self):
-        """Clear all steps"""
-        if messagebox.askyesno("Confirm", "Clear all the steps?"):
-            #Obtain all the steps and delete all the steps
-            for item in self.diffconc_steps_tree.get_children():
-                self.diffconc_steps_tree.delete(item)
-    
-    def save_diffconcprofile(self):
-        """Save the current profile"""
-        #Getting the name
-        name = self.diffconc_namevar.get().strip()
-        
-        #Ensuring that the name isn't empty
-        if not name:
-            messagebox.showwarning("Warning", "Profile name cannot be empty")
-            return
-        
-        # Collect steps from the profile
-        steps = []
-        for child in self.diffconc_steps_tree.get_children():
-            #To obtain all the values of the steps
-            values = self.diffconc_steps_tree.item(child, "values")
-            steps.append({
-                "time": float(values[0]),
-                "concentration": float(values[1]),
-                "flow mfc1": float(values[2]),
-                "flow mfc2": float(values[3]),
-                "valve": int(values[4])
-            })
-        
-        # Sort steps by time
-        #https://docs.python.org/3/howto/sorting.html
-        steps = sorted(steps, key=lambda steps: steps["time"])
-        
-        # Create the profile data
-        profile_data = {
-            "description": self.diffconc_desc_var.get(),
-            "temperature": float(self.diffconc_temp_var.get()),
-            "voc": self.diffconc_voc_var.get(),  
-            "total_flow": float(self.diffconc_totalflowrate_var.get()), 
-            "steps": steps
-        }
-        
-        if self.diffconcprofilemanager.save_profile(name, profile_data):
-            self.update_diffconcprofile_list()
-            self.status_var.set(f"Saved profile: {name}")
-        else:
-            messagebox.showerror("Error", f"Failed to save profile '{name}'")
-    
-    def run_diffconcprofile(self):
-        """Run the current profile"""    
-            
-        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
-            messagebox.showwarning("Error", "One or more devices are not connected")
-            return False
-          
-        #Get the name of the profile without spaces, such that the .json file can be loaded later
-        name = self.diffconc_namevar.get().strip()
-        
-        #Checking whether the name is empty
-        if not name:
-            messagebox.showwarning("Warning", "Please load or create a profile first")
-            return
-
-        # Load the profile that needs to be runned
-        profile = self.diffconcprofilemanager.load_profile(name)
-        if not profile:
-            messagebox.showerror("Error", f"Failed to load profile: '{name}'")
-            return
-        
-        self.update_run_var()
-        #Enabling the stop button, since you can now stop a running profile
-        self.diffconc_stop_button.config(state=tk.NORMAL) 
-        
-        # Start profile in a separate thread, such that the UI doesn't freeze until it finishes
-        # And you'll still be able to see what happens, e.g. popup of not connection
-        self.diffconcprofile_thread = threading.Thread(
-            target=self.run_diffconcprofile_thread,
-            args=(profile,),    
-            daemon=True         # Stops threading by pressing an event, e.g. pressing on stop button
-        )
-        self.diffconcprofile_thread.start()
-    
-    def run_diffconcprofile_thread(self, profile):      
-        try:
-            def safe_update(status):
-                self.root.after(0, lambda: self.update_diffconcprofile_var(status))
-
-            self.status_var.set(f"Running profile: {self.diffconc_namevar.get()}")
-            self.diffconcprofilemanager.run_profile(
-                temp_ambient=self.ambient_temp,
-                update_callback=safe_update
-            )
-            self.root.after(0, self.diffconcprofile_complete)
-
-        except Exception as e:
-            self.root.after(0, lambda: self.diffconcprofile_error(str(e)))
-    
-    def diffconcprofile_complete(self):
-        """Called when profile completes successfully"""
-        self.diffconc_stop_button.config(state=tk.DISABLED)
-        self.status_var.set("Profile run completed")
-    
-    def diffconcprofile_error(self, error):
-        """Called when profile run encounters an error"""
-        self.diffconc_stop_button.config(state=tk.DISABLED)
-        messagebox.showerror("Error", f"Profile run failed: {error}")
-        self.status_var.set("Profile run failed")
-    
-    def stop_diffconcprofile(self):
-        """Stop the currently running profile"""
-        self.diffconcprofilemanager.stop_profile()
-        self.diffconc_stop_button.config(state=tk.DISABLED)
-        self.status_var.set("Profile run stopped by user")
-    
-    def update_diffconcprofile_var(self, status):
-        #when the UI is closed then this won't be "updating" (to debug)
-        if not self.root.winfo_exists():
-            return
-        
-        self.diffconc_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
-        self.diffconc_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
-        self.diffconc_value_label.config(text=f"{status['concentration']} (ppm), {status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['valve']}")
-
-    def diffconc_calc_step(self):
-        try:
-            concentration_val = float(self.diffconc_step_conc_var.get())
-            total_flow = float(self.diffconc_totalflowrate_var.get())
-            voc = self.diffconc_voc_var.get()
-
-            f_voc, f_n2, T, Ps = self.calculate_required_flow(voc, concentration_val, total_flow)
-
-            if f_voc is None or f_n2 is None:
-                messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
+        def calculate_diffconc_flows():
+            try:
+                total_flow = float(self.diffconc_totalflow_var.get())
+                concentration = float(self.diffconc_step_conc_var.get())
+            except ValueError:
+                messagebox.showerror("Invalid input", "Please enter valid numbers for concentration and total flow rate.")
                 return
+            
+            self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow(voc, concentration, total_flow)
+            
+            if self.voc_flow is not None:
+                self.diffconc_profile_mfc1_label.config(text=f"Required Flow: {self.voc_flow} mL/min")
+                self.diffconc_profile_mfc2_label.config(text=f"Required Flow of Nitrogen: {self.voc_N} mL/min")
+                self.voccalc_temp_label.config(text=f"Required Temperature: {self.voc_temp} °C")
+                self.voccalc_ps_label.config(text=f"Saturated Vapor Pressure (Ps): {self.voc_Ps} mmHg")
+                self.voccalc_plotgraph_button.config(state="normal")
+                self.voccalc_run_button.config(state="normal")
+            else:
+                self.voccalc_flow_label.config(text="Required Flow: N/A")
+                self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: N/A")
+                self.voccalc_temp_label.config(text="Required Temperature: N/A")
+                self.voccalc_ps_label.config(text="Saturated Vapor Pressure (Ps): N/A")
+                
+    def calculate_voc_flows(self):
+        try:
+            total = self.voc_total_flow_var.get()
+            voc = self.voc_conc_var.get()
+            if not (0 <= voc <= 100):
+                raise ValueError("VOC % out of bounds")
 
-            ## Set the values to the corresponding labels
-            self.diffconc_flow1_var.set(f_voc)
-            self.diffconc_flow2_var.set(f_n2)
-
-            self.add_step_button.config(state = 'enabled')
-
-        except ValueError as e:
+            mfc1 = total * (voc / 100)
+            mfc2 = total - mfc1
+            self.voc_mfc1_flow.set(f"{mfc1:.2f}")
+            self.voc_mfc2_flow.set(f"{mfc2:.2f}")
+            self.voc_flow_calculated = True
+        except Exception as e:
             messagebox.showerror("Error", f"Invalid input: {e}")
+   
+    def create_voccalculator_tab(self):
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text="VOC Calculator")
+
+        left_frame = ttk.Frame(tab)
+        left_frame.pack(side='left', fill='both', expand=True, padx=10, pady=10)
+
+        right_frame = ttk.Frame(tab)
+        right_frame.pack(side='right', fill='both', expand=True, padx=10, pady=10)
+
+        # --- TOTAL FLOW ENTRY ---
+        ttk.Label(left_frame, text="Total Flow Rate (mL/min):").pack(anchor='w')
+        self.voc_total_flow_var = tk.DoubleVar()
+        ttk.Entry(left_frame, textvariable=self.voc_total_flow_var).pack(fill='x')
+
+        # --- STEP INPUTS ---
+        input_frame = ttk.Frame(left_frame)
+        input_frame.pack(fill='x', pady=10)
+
+        self.voc_time_var = tk.DoubleVar()
+        self.voc_conc_var = tk.DoubleVar()
+        self.voc_mfc1_flow = tk.StringVar(value="-")
+        self.voc_mfc2_flow = tk.StringVar(value="-")
+
+        ttk.Label(input_frame, text="Time (s)").grid(row=0, column=0)
+        ttk.Entry(input_frame, textvariable=self.voc_time_var, width=10).grid(row=1, column=0)
+
+        ttk.Label(input_frame, text="VOC Conc (%)").grid(row=0, column=1)
+        ttk.Entry(input_frame, textvariable=self.voc_conc_var, width=10).grid(row=1, column=1)
+
+        ttk.Label(input_frame, text="MFC1 Flow").grid(row=0, column=2)
+        ttk.Label(input_frame, textvariable=self.voc_mfc1_flow).grid(row=1, column=2)
+
+        ttk.Label(input_frame, text="MFC2 Flow").grid(row=0, column=3)
+        ttk.Label(input_frame, textvariable=self.voc_mfc2_flow).grid(row=1, column=3)
+
+        self.voc_flow_calculated = False
+
+        # Buttons
+        btn_frame = ttk.Frame(left_frame)
+        btn_frame.pack(fill='x', pady=5)
+
+        ttk.Button(btn_frame, text="Calculate Flow Rates", command=self.calculate_voc_flows).pack(side='left')
+        ttk.Button(btn_frame, text="Add Step", command=self.add_diffconc_step).pack(side='left')
+        ttk.Button(btn_frame, text="Remove Step", command=self.remove_diffconc_step).pack(side='left')
+        ttk.Button(btn_frame, text="Clear Steps", command=self.clear_diffconc_steps).pack(side='left')
+
+        # Treeview
+        self.voc_steps = []
+        self.voc_tree = ttk.Treeview(left_frame, columns=("time", "voc", "mfc1", "mfc2"), show="headings")
+        for col in ("time", "voc", "mfc1", "mfc2"):
+            self.voc_tree.heading(col, text=col.capitalize())
+        self.voc_tree.pack(fill='both', expand=True)
+
+        # --- RIGHT PANEL ---
+        # Profile list
+        self.vocprofile_listbox = tk.Listbox(right_frame, height=5)
+        self.vocprofile_listbox.pack(fill='x')
+        self.update_diffconc_profile_list()
+
+        profile_btns = ttk.Frame(right_frame)
+        profile_btns.pack(fill='x', pady=5)
+        ttk.Button(profile_btns, text="Load", command=self.load_diffconc_profile).pack(side='left')
+        ttk.Button(profile_btns, text="Delete", command=self.delete_diffconc_profile).pack(side='left')
+
+        # New profile inputs
+        ttk.Label(right_frame, text="Name").pack()
+        self.vocprofile_name = tk.StringVar()
+        ttk.Entry(right_frame, textvariable=self.vocprofile_name).pack(fill='x')
+
+        ttk.Label(right_frame, text="Description").pack()
+        self.vocprofile_desc = tk.StringVar()
+        ttk.Entry(right_frame, textvariable=self.vocprofile_desc).pack(fill='x')
+
+        ttk.Button(right_frame, text="New Profile", command=self.new_diffconc_profile).pack(fill='x', pady=3)
+        ttk.Button(right_frame, text="Save Profile", command=self.save_diffconc_profile).pack(fill='x', pady=3)
+
+        # Graph
+        self.voc_fig, self.voc_ax = plt.subplots(figsize=(5, 3))
+        self.voc_canvas = FigureCanvasTkAgg(self.voc_fig, master=right_frame)
+        self.voc_canvas.get_tk_widget().pack(fill='both', expand=True)
+
+    def calculate_diffconc_flows(self):
+        try:
+            total = self.voc_total_flow_var.get()
+            voc = self.voc_conc_var.get()
+            if not (0 <= voc <= 100):
+                raise ValueError("VOC % out of bounds")
+
+            mfc1 = total * (voc / 100)
+            mfc2 = total - mfc1
+            self.voc_mfc1_flow.set(f"{mfc1:.2f}")
+            self.voc_mfc2_flow.set(f"{mfc2:.2f}")
+            self.voc_flow_calculated = True
+        except Exception as e:
+            messagebox.showerror("Error", f"Invalid input: {e}")
+
+    def add_diffconc_step(self):
+        if not self.voc_flow_calculated:
+            messagebox.showwarning("Warning", "Please calculate flow rates before adding a step.")
+            return
+        try:
+            step = {
+                "time": self.voc_time_var.get(),
+                "voc_conc": self.voc_conc_var.get(),
+                "flow_mfc1": float(self.voc_mfc1_flow.get()),
+                "flow_mfc2": float(self.voc_mfc2_flow.get())
+            }
+            self.voc_steps.append(step)
+            self.voc_tree.insert("", tk.END, values=(step["time"], step["voc_conc"], step["flow_mfc1"], step["flow_mfc2"]))
+            self.voc_flow_calculated = False
+        except Exception as e:
+            messagebox.showerror("Error", f"Cannot add step: {e}")
+
+    def clear_diffconc_steps(self):
+        self.voc_tree.delete(*self.voc_tree.get_children())
+        self.voc_steps.clear()
+
+    def remove_diffconc_step(self):
+        selected = self.voc_tree.selection()
+        if selected:
+            self.voc_tree.delete(selected[0])
+            del self.voc_steps[self.voc_tree.index(selected[0])]
+
+    def new_diffconc_profile(self):
+        self.vocprofile_name.set("")
+        self.vocprofile_desc.set("")
+        self.clear_voc_steps()
+
+    def save_diffconc_profile(self):
+        name = self.vocprofile_name.get()
+        if not name:
+            messagebox.showerror("Error", "Please provide a name.")
+            return
+        profile = {
+            "description": self.vocprofile_desc.get(),
+            "steps": self.voc_steps
+        }
+        self.vocprofilemanager.save_profile(name, profile)
+        self.update_diffconc_profile_list()
+        self.plot_diffconc_graph()
+
+    def load_diffconc_profile(self):
+        selection = self.vocprofile_listbox.curselection()
+        if selection:
+            name = self.vocprofile_listbox.get(selection[0])
+            profile = self.vocprofilemanager.load_profile(name)
+            self.vocprofile_name.set(name)
+            self.vocprofile_desc.set(profile.get("description", ""))
+            self.clear_voc_steps()
+            for step in profile.get("steps", []):
+                self.voc_steps.append(step)
+                self.voc_tree.insert("", tk.END, values=(step["time"], step["voc_conc"], step["flow_mfc1"], step["flow_mfc2"]))
+
+    def delete_diffconc_profile(self):
+        selection = self.vocprofile_listbox.curselection()
+        if selection:
+            name = self.vocprofile_listbox.get(selection[0])
+            self.vocprofilemanager.delete_profile(name)
+            self.update_diffconc_profile_list()
+
+    def update_diffconc_profile_list(self):
+        self.vocprofile_listbox.delete(0, tk.END)
+        for name in self.vocprofilemanager.get_profiles():
+            self.vocprofile_listbox.insert(tk.END, name)
+
+    def plot_diffconc_graph(self):
+        self.voc_ax.clear()
+        if not self.voc_steps:
+            return
+        times = [step['time'] for step in self.voc_steps]
+        mfc1 = [step['flow_mfc1'] for step in self.voc_steps]
+        mfc2 = [step['flow_mfc2'] for step in self.voc_steps]
+        self.voc_ax.plot(times, mfc1, label="MFC1 Flow")
+        self.voc_ax.plot(times, mfc2, label="MFC2 Flow")
+        self.voc_ax.set_xlabel("Time (s)")
+        self.voc_ax.set_ylabel("Flow (mL/min)")
+        self.voc_ax.set_title("Expected Flow Profiles")
+        self.voc_ax.legend()
+        self.voc_canvas.draw()

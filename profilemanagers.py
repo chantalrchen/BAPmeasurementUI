@@ -442,3 +442,100 @@ class OnoffProfileManager(BaseProfileManager):
     
     def stop_profile(self):
         self.stoprequest = True
+
+
+class DiffConcProfileManager(BaseProfileManager):
+    def __init__(self, UImfcs, UIcooling, UIvalve, profiles_dir):
+        standard_profiles = {}
+        super().__init__(profiles_dir, "profiles_diffconc", standard_profiles)
+        self.mfcs = UImfcs
+        self.cooling = UIcooling
+        self.valve = UIvalve
+    
+    
+    def run_profile(self, temp_ambient, update_callback = None):
+        """Run the current profile with the given device controllers"""
+        # Check devices and ambient temp
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
+            messagebox.showerror("Connection Error", "One or more MFCs not connected.")
+            return
+        if not self.cooling.connected:
+            messagebox.showerror("Connection Error", "Cooling not connected.")
+            return
+        if not self.valve.connected:
+            messagebox.showerror("Connection Error", "Valve not connected.")
+            return
+        if not isinstance(temp_ambient, (int, float)):
+            messagebox.showerror("Error", "Ambient temperature must be set.")
+            return
+        
+        if not self.current_profile:
+            messagebox.showerror("Error", "No profile loaded")
+            return False
+        steps = self.current_profile.get("steps", [])
+        if not steps:
+            messagebox.showerror("Error", "Profile has no steps")
+            return False
+        # Sort steps by time
+        steps = sorted(steps, key=lambda x: x["time"])
+        
+        self.stoprequest = False
+        
+        start_time = time.time()
+        current_step_index = 0
+        profile_complete = False
+        
+        ###Als temperature no value then temperature set to '1'
+        profile_temperature = self.current_profile.get("temperature", 1.0)
+        print("temperature set by the diffconcprofilemanager", profile_temperature)
+        self.cooling.set_temperature(profile_temperature, temp_ambient)
+
+        while not profile_complete and not self.stoprequest:
+            now = time.time()
+            elapsed_time = now - start_time
+
+            # Check if we need to move to next step
+            if current_step_index < len(steps) - 1:
+                next_time = steps[current_step_index + 1]["time"]
+                # Update the current step index when time obtained
+                if elapsed_time >= next_time:
+                    current_step_index += 1
+
+            current_step = steps[current_step_index]
+            
+            # Set devices to current step values
+            self.mfcs[0].set_massflow(current_step["flow mfc1"])
+            self.mfcs[1].set_massflow(current_step["flow mfc2"])
+            self.valve.switch_position(current_step["valve"])
+        
+            # #if update_callback is called then we need to update the status with the corresponding data
+            if update_callback:
+                    update_callback({
+                    "elapsed_time": elapsed_time,
+                    "current_step": current_step_index + 1,
+                    "total_steps": len(steps),
+                    "concentration": current_step["concentration"],
+                    "flow mfc1": current_step["flow mfc1"],
+                    "flow mfc2": current_step["flow mfc2"],
+                    "valve": current_step["valve"]
+                })
+
+            if current_step_index < len(steps) - 1:
+                next_time = steps[current_step_index + 1]["time"]
+                # Calculate how much time we need to wait before the next step should start
+                wait_time = max(0, next_time - (time.time() - start_time))
+                # sleep in small steps until finally wait_time has reached, thus until the next time has reached, kinda stukje bij stukje wachten
+                # Minimum 0.1 s to ensure that UI still is reponsive
+                time.sleep(min(wait_time, 0.1))  
+            else:
+                # Last step
+                final_duration = current_step["time"]
+                if elapsed_time >= final_duration:
+                    profile_complete = True
+                else:
+                    time.sleep(0.1)
+        
+        return True
+    
+    def stop_profile(self):
+        self.stoprequest = True
