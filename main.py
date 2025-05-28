@@ -1,6 +1,5 @@
 import tkinter as tk
 from ui import AutomatedSystemUI
-# from run import AutomatedSystemUI
 
 if __name__ == "__main__":
     root = tk.Tk()
