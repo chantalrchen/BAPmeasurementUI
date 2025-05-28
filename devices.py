@@ -158,6 +158,7 @@ class Koelingsblok:
         self.timeout = timeout
         self.connected = False
         self.instrument = None
+        self.targettemperature = 0
 
     def connect(self):
         try:
@@ -230,6 +231,7 @@ class Koelingsblok:
                 else:
                     response = self.send_command(f"{self.SET_STORE_NEW_SET_POINT_TEMPERATURE}{temperature}")
                     raw = self.instrument.readline()
+                    self.targettemperature = temperature
                     print(f"Raw response bytes: {raw}")
 
                     if response.lower() == "ok":

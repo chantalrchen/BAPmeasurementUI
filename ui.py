@@ -69,7 +69,7 @@ class AutomatedSystemUI:
         self.connection_valve_port_label.pack(fill='both', expand=True)
         
         connect_all_button = ttk.Button(connection_frame, text = "Connect all devices", command = self.connect_all_devices)
-        connect_all_button.pack(side='right', fill = 'both', expand = 'true')
+        connect_all_button.pack(side='right', fill = 'both', expand = True)
         
         othervar_frame  = ttk.Frame(header_frame)
         othervar_frame.pack(side='right', padx=10)
@@ -1940,7 +1940,7 @@ class AutomatedSystemUI:
         self.valve_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
         self.valve_value_label.config(text=f"Position {status['valve']}")
         # Schedule the next update, per 1s
-        self.root.after(1000, lambda: self.update_valveprofile_var)
+        self.root.after(100, lambda: self.update_valveprofile_var)
 
     def run_selected_profiles(self):
         mfc_sel = self.selprof_mfc_listbox.curselection()
@@ -2317,7 +2317,7 @@ class AutomatedSystemUI:
         self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run On/Off Graph", command=self.pureflowrate_run_onoffprofile)
         self.pureflowrate_run_button.grid(row=10, column=0, padx=5, pady=10, sticky="ew")
         
-        self.pureflowrate_plotgraph_button = ttk.Button(self.pureflowrate_tab, text="Plot Expected On/Off Graph", command=self.plot_expected_profile)
+        self.pureflowrate_plotgraph_button = ttk.Button(self.pureflowrate_tab, text="Plot Setpoint On/Off Graph", command=self.plot_expected_profile)
         self.pureflowrate_plotgraph_button.grid(row=10, column=1, padx=5, pady=10, sticky="ew")
 
         self.elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
@@ -2325,7 +2325,7 @@ class AutomatedSystemUI:
         self.elapsed_time_label.grid(row=11, column=0, columnspan=2, sticky='w')
 
         # Graph frame — to the right of all inputs
-        self.graph_frame = ttk.LabelFrame(self.pureflowrate_tab, text="Expected Response")
+        self.graph_frame = ttk.LabelFrame(self.pureflowrate_tab, text="Setpoint Response")
         self.graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")
 
 
@@ -2644,7 +2644,7 @@ class AutomatedSystemUI:
         ax.plot(time_data, signal_data, color='red', linewidth=2)
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Concentration (ppm)")
-        ax.set_title("Expected Response")
+        ax.set_title("Setpoint Response")
         ax.set_xlim(0, time_data[-1] * 1.2 )
         ax.set_ylim(0, conc * 1.2)
         ax.grid(True)
@@ -2730,7 +2730,7 @@ class AutomatedSystemUI:
         self.voccalc_run_button = ttk.Button(self.voccalc_tab, state="disabled", text="Run On/Off Graph", command=self.voccalculator_run_onoffprofile)
         self.voccalc_run_button.grid(row=11, column=0, padx=5, pady=10, sticky="ew")
         
-        self.voccalc_plotgraph_button = ttk.Button(self.voccalc_tab,state="disabled", text="Plot Expected On/Off Graph", command=self.plot_expected_vocprofile)
+        self.voccalc_plotgraph_button = ttk.Button(self.voccalc_tab,state="disabled", text="Plot Setpoint On/Off Graph", command=self.plot_expected_vocprofile)
         self.voccalc_plotgraph_button.grid(row=11, column=1, padx=5, pady=10, sticky="ew")
 
         self.voccalc_elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
@@ -2738,7 +2738,7 @@ class AutomatedSystemUI:
         self.voccalc_elapsed_time_label.grid(row=12, column=0, columnspan=2, sticky='w')
 
         # For the graph
-        self.voccalc_graph_frame = ttk.LabelFrame(self.voccalc_tab, text="Expected Response")
+        self.voccalc_graph_frame = ttk.LabelFrame(self.voccalc_tab, text="Setpoint Response")
         self.voccalc_graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")        
         
     def update_voc_elapsed_time_display(self, start_timestamp, run_time):
@@ -2864,7 +2864,7 @@ class AutomatedSystemUI:
         ax.plot(time_data, signal_data, color='red', linewidth=2)
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Concentration (ppm)")
-        ax.set_title("Expected Response")
+        ax.set_title("Setpoint Response")
         ax.set_xlim(0, time_data[-1] * 1.2 )
         ax.set_ylim(0, conc * 1.2)
         ax.grid(True)
@@ -2937,7 +2937,7 @@ class AutomatedSystemUI:
 
         A, B, C = VOC_data[voc_name]
         P = 760  # mmHg; normale atmosferische luchtdruk
-        min_f = 0.1 #minimum flow rate
+        min_f = 0.1 #minimum flow rate, otw difficult to bubble
 
         if not isinstance(self.ambient_temp, (int, float)):
             messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
