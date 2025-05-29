@@ -1,7 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
 import threading
-from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
+##Koeling Uitzetten omdat hij het nog niet doet
+# # Cooling OFF
+# from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
+
+from profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
 from settingsmanagers import SettingsManager
 import pandas as pd
 import time
@@ -21,19 +25,37 @@ class AutomatedSystemUI:
         saved_ports = self.settings_manager.get_com_ports()
 
         self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"], profiles_dir=settings_path)
-        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], profiles_dir=settings_path)
+
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], profiles_dir=settings_path)
+
         self.valveprofilemanager = RVMProfileManager(saved_ports["valve"], profiles_dir=settings_path)
 
         self.mfcs = self.mfcprofilemanager.mfcs
-        self.cooling = self.coolingprofilemanager.cooling
+        
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.cooling = self.coolingprofilemanager.cooling
+        
         self.valve = self.valveprofilemanager.valve
 
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.onoffprofilemanager = OnoffProfileManager(
+        #     UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve, profiles_dir=settings_path
+        # )
+        
+        # self.diffconcprofilemanager = DiffConcProfileManager(
+        #     UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve, profiles_dir=settings_path
+        # )
+
         self.onoffprofilemanager = OnoffProfileManager(
-            UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve, profiles_dir=settings_path
+            UImfcs=self.mfcs, UIvalve=self.valve, profiles_dir=settings_path
         )
         
         self.diffconcprofilemanager = DiffConcProfileManager(
-            UImfcs=self.mfcs, UIcooling=self.cooling, UIvalve=self.valve, profiles_dir=settings_path
+            UImfcs=self.mfcs, UIvalve=self.valve, profiles_dir=settings_path
         )
 
         
@@ -59,10 +81,11 @@ class AutomatedSystemUI:
                                                  text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
         self.connection_mfc3_port_label.pack(fill='both', expand=True)
         
-        # Cooling        
-        self.connection_cooling_port_label = ttk.Label(connection_frame, 
-                                                     text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
-        self.connection_cooling_port_label.pack(fill='both', expand=True)
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF      
+        # self.connection_cooling_port_label = ttk.Label(connection_frame, 
+        #                                              text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
+        # self.connection_cooling_port_label.pack(fill='both', expand=True)
         
         self.connection_valve_port_label = ttk.Label(connection_frame, 
                                                   text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
@@ -118,14 +141,16 @@ class AutomatedSystemUI:
         self.mfc_value_label = ttk.Label(self.profile_status_frame, text="-")
         self.mfc_value_label.grid(row=1, column=3, padx=5, sticky="w")
 
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
         # Cooling profile
-        ttk.Label(self.profile_status_frame, text="Cooling Running Profile").grid(row=2, column=0, padx=5, sticky="w")
-        self.cooling_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
-        self.cooling_elapsed_label.grid(row=2, column=1, padx=5, sticky="w")
-        self.cooling_step_label = ttk.Label(self.profile_status_frame, text="-")
-        self.cooling_step_label.grid(row=2, column=2, padx=5, sticky="w")
-        self.cooling_value_label = ttk.Label(self.profile_status_frame, text="-")
-        self.cooling_value_label.grid(row=2, column=3, padx=5, sticky="w")
+        # ttk.Label(self.profile_status_frame, text="Cooling Running Profile").grid(row=2, column=0, padx=5, sticky="w")
+        # self.cooling_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
+        # self.cooling_elapsed_label.grid(row=2, column=1, padx=5, sticky="w")
+        # self.cooling_step_label = ttk.Label(self.profile_status_frame, text="-")
+        # self.cooling_step_label.grid(row=2, column=2, padx=5, sticky="w")
+        # self.cooling_value_label = ttk.Label(self.profile_status_frame, text="-")
+        # self.cooling_value_label.grid(row=2, column=3, padx=5, sticky="w")
 
         # Valve profile
         ttk.Label(self.profile_status_frame, text="Valve Running Profile").grid(row=3, column=0, padx=5, sticky="w")
@@ -138,22 +163,22 @@ class AutomatedSystemUI:
 
         # On/Off profile
         ttk.Label(self.profile_status_frame, text="On/Off Running Profile").grid(row=4, column=0, padx=5, sticky="w")
-        self.onoff_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
+        self.onoff_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
         self.onoff_elapsed_label.grid(row=4, column=1, padx=5, sticky="w")
-        self.onoff_step_label = ttk.Label(self.profile_status_frame, text="-")
+        self.onoff_step_label = ttk.Label(self.profile_status_frame, text="--")
         self.onoff_step_label.grid(row=4, column=2, padx=5, sticky="w")
-        self.onoff_value_label = ttk.Label(self.profile_status_frame, text="-")
+        self.onoff_value_label = ttk.Label(self.profile_status_frame, text="--")
         self.onoff_value_label.grid(row=4, column=3, padx=5, sticky="w")
         
 
         # Different Concentration profile
-        ttk.Label(self.profile_status_frame, text="Different Concentration Profile").grid(row=4, column=0, padx=5, sticky="w")
-        self.diffconc_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
-        self.diffconc_elapsed_label.grid(row=4, column=1, padx=5, sticky="w")
-        self.diffconc_step_label = ttk.Label(self.profile_status_frame, text="-")
-        self.diffconc_step_label.grid(row=4, column=2, padx=5, sticky="w")
-        self.diffconc_value_label = ttk.Label(self.profile_status_frame, text="-")
-        self.diffconc_value_label.grid(row=4, column=3, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Different Concentration Profile").grid(row=5, column=0, padx=5, sticky="w")
+        self.diffconc_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.diffconc_elapsed_label.grid(row=5, column=1, padx=5, sticky="w")
+        self.diffconc_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.diffconc_step_label.grid(row=5, column=2, padx=5, sticky="w")
+        self.diffconc_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.diffconc_value_label.grid(row=5, column=3, padx=5, sticky="w")
         
 
         selectprofiles_frame = ttk.LabelFrame(overview_profile, text="Multiple Profile Runner")
@@ -162,7 +187,10 @@ class AutomatedSystemUI:
         # Label row
 
         ttk.Label(selectprofiles_frame, text="Valve Profiles").grid(row=0, column=1)
-        ttk.Label(selectprofiles_frame, text="Cooling Profiles").grid(row=0, column=2)
+        
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # ttk.Label(selectprofiles_frame, text="Cooling Profiles").grid(row=0, column=2)
 
         # MFC listbox with scrollbar
         ttk.Label(selectprofiles_frame, text="MFC Profiles").grid(row=0, column=0)
@@ -186,14 +214,16 @@ class AutomatedSystemUI:
         valve_v_scrollbar.pack(side='right', fill='y')
         self.selprof_valve_listbox.config(yscrollcommand=valve_v_scrollbar.set)
 
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
         # Cooling Listbox with scrollbar
-        cooling_listbox_frame = ttk.Frame(selectprofiles_frame)
-        cooling_listbox_frame.grid(row=1, column=2, padx=5, pady=5)
-        self.selprof_cooling_listbox = tk.Listbox(cooling_listbox_frame, height=2, exportselection=False)
-        self.selprof_cooling_listbox.pack(side='left', fill='y')
-        cooling_v_scrollbar = ttk.Scrollbar(cooling_listbox_frame, orient=tk.VERTICAL, command=self.selprof_cooling_listbox.yview)
-        cooling_v_scrollbar.pack(side='right', fill='y')
-        self.selprof_cooling_listbox.config(yscrollcommand=cooling_v_scrollbar.set)
+        # cooling_listbox_frame = ttk.Frame(selectprofiles_frame)
+        # cooling_listbox_frame.grid(row=1, column=2, padx=5, pady=5)
+        # self.selprof_cooling_listbox = tk.Listbox(cooling_listbox_frame, height=2, exportselection=False)
+        # self.selprof_cooling_listbox.pack(side='left', fill='y')
+        # cooling_v_scrollbar = ttk.Scrollbar(cooling_listbox_frame, orient=tk.VERTICAL, command=self.selprof_cooling_listbox.yview)
+        # cooling_v_scrollbar.pack(side='right', fill='y')
+        # self.selprof_cooling_listbox.config(yscrollcommand=cooling_v_scrollbar.set)
 
 
         # Populate listboxes
@@ -201,8 +231,10 @@ class AutomatedSystemUI:
             self.selprof_mfc_listbox.insert(tk.END, profile)
         for profile in self.valveprofilemanager.get_profiles():
             self.selprof_valve_listbox.insert(tk.END, profile)
-        for profile in self.coolingprofilemanager.get_profiles():
-            self.selprof_cooling_listbox.insert(tk.END, profile)
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # for profile in self.coolingprofilemanager.get_profiles():
+        #     self.selprof_cooling_listbox.insert(tk.END, profile)
 
         # Run Button
         ttk.Button(selectprofiles_frame, text="Run Selected Profiles", command=self.run_selected_profiles).grid(row=1, column=3, padx=10)
@@ -221,9 +253,13 @@ class AutomatedSystemUI:
         self.create_device_tab()
         self.create_onoffprofile_tab()
         self.create_mfcprofile_tab()
-        self.create_coolingprofile_tab()
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.create_coolingprofile_tab()
         self.create_valveprofile_tab()
-        self.create_pureflowrate_tab()
+        
+        ##EXCEL SHEET TAB UITZETTEN
+        # self.create_pureflowrate_tab()
         self.create_voccalculator_tab()
         self.create_diffconc_profile_tab()
         
@@ -235,7 +271,8 @@ class AutomatedSystemUI:
             # Get the value from the entry box
             self.ambient_temp = float(self.ambient_temp_entry.get())
             # Update the status bar to show the ambient temperature has been set
-            self.ambient_temperature_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
+            # Cooling not connected
+            # self.ambient_temperature_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
             self.ambient_temp_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
             self.status_var.set(f"Ambient temperature set to {self.ambient_temp} °C")
         except ValueError:
@@ -265,13 +302,15 @@ class AutomatedSystemUI:
             massflows.append(flow_str)
             self.current_massflow_labels[i].config(text=f"Current mass flow rate: {flow_str}")
 
-        if self.cooling.connected:
-            temp = self.cooling.get_temperature()
-            temp_str = f"{temp:.3f} °C"
-        else:
-            temp = None
-            temp_str = "-"
-        self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # if self.cooling.connected:
+        #     temp = self.cooling.get_temperature()
+        #     temp_str = f"{temp:.3f} °C"
+        # else:
+        #     temp = None
+        #     temp_str = "-"
+        # self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
 
         if self.valve.connected:
             pos = self.valve.current_position
@@ -286,7 +325,8 @@ class AutomatedSystemUI:
                 f"MFC 1 Mass Flow Rate: {massflows[0]} | "
                 f"MFC 2 Mass Flow Rate: {massflows[1]} | "
                 f"MFC 3 Mass Flow Rate: {massflows[2]} | "
-                f"Temperature: {temp_str} | "
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+                # f"Temperature: {temp_str} | "
                 f"Valve Position: {pos}"
             )
         )
@@ -320,46 +360,48 @@ class AutomatedSystemUI:
 
         for i in range(len(self.mfcs)):
             self.create_mfc_frame(all_mfc_frame, i)
-
+            
         coolingandvalve_frame = ttk.LabelFrame(device_tab)
         coolingandvalve_frame.pack(fill='x', padx=10, pady=5)
-        
+
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
         ############	COOLING		###########################
-        cooling_frame = ttk.LabelFrame(coolingandvalve_frame, text='Digital chilling/heating dry bath')
-        cooling_frame.grid(row=0, column=0, padx=10, pady=5, sticky='n')
+        # cooling_frame = ttk.LabelFrame(coolingandvalve_frame, text='Digital chilling/heating dry bath')
+        # cooling_frame.grid(row=0, column=0, padx=10, pady=5, sticky='n')
         
-        # label for the temp
-        temperature_label = tk.Label(cooling_frame, text="Temperature (°C):")
-        temperature_label.grid(row=0, column=0, padx=10, pady=10)
+        # # label for the temp
+        # temperature_label = tk.Label(cooling_frame, text="Temperature (°C):")
+        # temperature_label.grid(row=0, column=0, padx=10, pady=10)
         
-        # entry field for temp
-        self.temperature_var = tk.DoubleVar()
-        temperature_entry = tk.Entry(cooling_frame, textvariable=self.temperature_var)
-        temperature_entry.grid(row=0, column=1, padx=10, pady=10)
+        # # entry field for temp
+        # self.temperature_var = tk.DoubleVar()
+        # temperature_entry = tk.Entry(cooling_frame, textvariable=self.temperature_var)
+        # temperature_entry.grid(row=0, column=1, padx=10, pady=10)
         
-        # button to set the temp
-        set_temperature_button = tk.Button(cooling_frame, text="Set temperature", command=self.set_temperature)
-        set_temperature_button.grid(row=1, column=0, columnspan=2, pady=10)
+        # # button to set the temp
+        # set_temperature_button = tk.Button(cooling_frame, text="Set temperature", command=self.set_temperature)
+        # set_temperature_button.grid(row=1, column=0, columnspan=2, pady=10)
 
-        # Label to display the ambient temp
-        self.ambient_temperature_label = tk.Label(cooling_frame, text=f"Ambient temperature: Not set")
-        self.ambient_temperature_label.grid(row=2, column=0, padx=10, pady=10)
+        # # Label to display the ambient temp
+        # self.ambient_temperature_label = tk.Label(cooling_frame, text=f"Ambient temperature: Not set")
+        # self.ambient_temperature_label.grid(row=2, column=0, padx=10, pady=10)
         
-        # Label to display the current temp
-        self.current_temperature_label = tk.Label(cooling_frame, text="Current temperature: Not available")
-        self.current_temperature_label.grid(row=2, column=1, padx=10, pady=10)
+        # # Label to display the current temp
+        # self.current_temperature_label = tk.Label(cooling_frame, text="Current temperature: Not available")
+        # self.current_temperature_label.grid(row=2, column=1, padx=10, pady=10)
         
-        # Label to display the target temp
-        self.target_temperature_label = tk.Label(cooling_frame, text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
-        self.target_temperature_label.grid(row=2, column=2, padx=10, pady=10)
+        # # Label to display the target temp
+        # self.target_temperature_label = tk.Label(cooling_frame, text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
+        # self.target_temperature_label.grid(row=2, column=2, padx=10, pady=10)
 
-        # Connect button
-        cooling_connect_button = tk.Button(cooling_frame, text="Connect", command=self.connect_cooling)
-        cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
+        # # Connect button
+        # cooling_connect_button = tk.Button(cooling_frame, text="Connect", command=self.connect_cooling)
+        # cooling_connect_button.grid(row=3, column=0, padx=10, pady=10)
         
-        # Disconnect button
-        cooling_disconnect_button = tk.Button(cooling_frame, text="Disconnect", command=self.disconnect_cooling)
-        cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
+        # # Disconnect button
+        # cooling_disconnect_button = tk.Button(cooling_frame, text="Disconnect", command=self.disconnect_cooling)
+        # cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
         ############	VALVE		###########################
         valve_frame = ttk.LabelFrame(coolingandvalve_frame, text='Valve')
@@ -478,21 +520,25 @@ class AutomatedSystemUI:
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.onoffsteps_tree = ttk.Treeview(
             steps_frame, 
-            columns=("time", "flow mfc1", "flow mfc2", "flow mfc3", "temp", "valve"), 
+            ### NO COOLING
+            # columns=("time", "flow mfc1", "flow mfc2", "flow mfc3", "temp", "valve"), 
+                columns=("time", "flow mfc1", "flow mfc2", "flow mfc3", "valve"), 
             show="headings"
         )
         self.onoffsteps_tree.heading("time", text="Time (s)")
         self.onoffsteps_tree.heading("flow mfc1", text="Flow MFC 1 (mL/min)")
         self.onoffsteps_tree.heading("flow mfc2", text="Flow MFC 2 (mL/min)")
         self.onoffsteps_tree.heading("flow mfc3", text="Flow MFC 3 (mL/min)")
-        self.onoffsteps_tree.heading("temp", text="Temperature (°C)")
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+        # self.onoffsteps_tree.heading("temp", text="Temperature (°C)")
         self.onoffsteps_tree.heading("valve", text="Valve Position (1 or 2)")
         
         self.onoffsteps_tree.column("time", width=80, anchor=tk.CENTER)
         self.onoffsteps_tree.column("flow mfc1", width=100, anchor=tk.CENTER)
         self.onoffsteps_tree.column("flow mfc2", width=100, anchor=tk.CENTER)
         self.onoffsteps_tree.column("flow mfc3", width=100, anchor=tk.CENTER)
-        self.onoffsteps_tree.column("temp", width=100, anchor=tk.CENTER)
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+        # self.onoffsteps_tree.column("temp", width=100, anchor=tk.CENTER)
         self.onoffsteps_tree.column("valve", width=80, anchor=tk.CENTER)
         
         self.onoffsteps_tree.pack(fill = 'both' , expand=True)
@@ -519,11 +565,12 @@ class AutomatedSystemUI:
         self.onoffstep_flow3_var = tk.DoubleVar()
         step_flow3_entry = ttk.Entry(step_controls_frame, textvariable=self.onoffstep_flow3_var, width=8)
         step_flow3_entry.pack(side='left', padx=2)
-        
-        self.onoffprofile_mfc4_label = ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
-        self.onoffstep_temp_var = tk.DoubleVar()
-        step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.onoffstep_temp_var, width=8)
-        step_temp_entry.pack(side='left', padx=2)
+
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+        # self.onoffprofile_mfc4_label = ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
+        # self.onoffstep_temp_var = tk.DoubleVar()
+        # step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.onoffstep_temp_var, width=8)
+        # step_temp_entry.pack(side='left', padx=2)
         
         self.onoffprofile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
         self.onoffstep_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
@@ -634,7 +681,9 @@ class AutomatedSystemUI:
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.mfcsteps_tree = ttk.Treeview(
             steps_frame, 
-            columns=("time", "flow mfc1", "flow mfc2", "flow mfc3", "temp", "valve"), 
+            ## NO COOLING
+            # columns=("time", "flow mfc1", "flow mfc2", "flow mfc3", "temp", "valve"), 
+            columns=("time", "flow mfc1", "flow mfc2", "flow mfc3", "valve"), 
             show="headings"
         )
         self.mfcsteps_tree.heading("time", text="Time (s)")
@@ -699,132 +748,134 @@ class AutomatedSystemUI:
         self.mfcstop_button.pack(side='left', padx=2)
         self.mfcstop_button.config(state=tk.DISABLED)
         
-    def create_coolingprofile_tab(self):
-        profile_tab = ttk.Frame(self.notebook)
-        profile_tab.pack(fill = 'both', expand = True)
-        self.notebook.add(profile_tab, text = 'Digital chilling/heating dry bath Profile Management')
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF        
+    # def create_coolingprofile_tab(self):
+    #     profile_tab = ttk.Frame(self.notebook)
+    #     profile_tab.pack(fill = 'both', expand = True)
+    #     self.notebook.add(profile_tab, text = 'Digital chilling/heating dry bath Profile Management')
         
-        # ## Split into two frames
-        list_frame = ttk.Frame(profile_tab, width = 400)
-        list_frame.pack(side= 'left', fill = 'both', expand=True, padx=10, pady=10)
-        list_frame.pack_propagate(False)
+    #     # ## Split into two frames
+    #     list_frame = ttk.Frame(profile_tab, width = 400)
+    #     list_frame.pack(side= 'left', fill = 'both', expand=True, padx=10, pady=10)
+    #     list_frame.pack_propagate(False)
 
         
-        edit_frame = ttk.Frame(profile_tab)
-        edit_frame.pack(side= 'right', fill= 'both', expand=True, padx=10, pady=10)
+    #     edit_frame = ttk.Frame(profile_tab)
+    #     edit_frame.pack(side= 'right', fill= 'both', expand=True, padx=10, pady=10)
         
-        ### Left frame / list frame
-        ## Profile listbox with scrollbar
-        # https://www.pythontutorial.net/tkinter/tkinter-listbox/#adding-a-scrollbar-to-the-listbox
-        # Making an empty profile listbox
-        self.coolingprofile_listbox = tk.Listbox(list_frame, selectmode = tk.SINGLE)
-        self.coolingprofile_listbox.pack(fill= 'both', expand=True, padx=5, pady=5)
+    #     ### Left frame / list frame
+    #     ## Profile listbox with scrollbar
+    #     # https://www.pythontutorial.net/tkinter/tkinter-listbox/#adding-a-scrollbar-to-the-listbox
+    #     # Making an empty profile listbox
+    #     self.coolingprofile_listbox = tk.Listbox(list_frame, selectmode = tk.SINGLE)
+    #     self.coolingprofile_listbox.pack(fill= 'both', expand=True, padx=5, pady=5)
     
-        # Putting all the profiles in the profile listbox
-        self.update_coolingprofile_list()
+    #     # Putting all the profiles in the profile listbox
+    #     self.update_coolingprofile_list()
         
-        #Adding a scrollbar to the profile listbox
-        v_scrollbar = ttk.Scrollbar(self.coolingprofile_listbox, orient = tk.VERTICAL, command = self.coolingprofile_listbox.yview)
+    #     #Adding a scrollbar to the profile listbox
+    #     v_scrollbar = ttk.Scrollbar(self.coolingprofile_listbox, orient = tk.VERTICAL, command = self.coolingprofile_listbox.yview)
         
-        self.coolingprofile_listbox['yscrollcommand'] = v_scrollbar.set
-        v_scrollbar.pack(side='right', fill='y')
+    #     self.coolingprofile_listbox['yscrollcommand'] = v_scrollbar.set
+    #     v_scrollbar.pack(side='right', fill='y')
         
-        ##Adding the buttons to the left frame (list frame)
-        # Profile list buttons
-        button_frame = ttk.Frame(list_frame)
-        button_frame.pack(fill='x', padx=5, pady=5)
+    #     ##Adding the buttons to the left frame (list frame)
+    #     # Profile list buttons
+    #     button_frame = ttk.Frame(list_frame)
+    #     button_frame.pack(fill='x', padx=5, pady=5)
         
-        load_button = ttk.Button(button_frame, text="Load", command=self.load_coolingprofile)
-        load_button.pack(side='left', padx=3, expand=True)
+    #     load_button = ttk.Button(button_frame, text="Load", command=self.load_coolingprofile)
+    #     load_button.pack(side='left', padx=3, expand=True)
         
-        delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_coolingprofile)
-        delete_button.pack(side='left', padx=3, expand=True)
+    #     delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_coolingprofile)
+    #     delete_button.pack(side='left', padx=3, expand=True)
         
-        ##Right frame / edit frame
-        # Profile info
-        info_frame = ttk.Frame(edit_frame)
-        info_frame.pack(fill='both', padx=5, pady=5)
+    #     ##Right frame / edit frame
+    #     # Profile info
+    #     info_frame = ttk.Frame(edit_frame)
+    #     info_frame.pack(fill='both', padx=5, pady=5)
         
-        self.new_coolingprofile_label = ttk.Label(info_frame, text="")
-        self.new_coolingprofile_label.pack(side = 'left', padx=5, expand=True, fill='x')
+    #     self.new_coolingprofile_label = ttk.Label(info_frame, text="")
+    #     self.new_coolingprofile_label.pack(side = 'left', padx=5, expand=True, fill='x')
         
-        ttk.Label(info_frame, text="Name:").pack(side='left')
-        self.coolingname_var = tk.StringVar()
-        name_entry = ttk.Entry(info_frame, textvariable=self.coolingname_var)
-        name_entry.pack(side='left', padx=5, expand=True, fill='x')
+    #     ttk.Label(info_frame, text="Name:").pack(side='left')
+    #     self.coolingname_var = tk.StringVar()
+    #     name_entry = ttk.Entry(info_frame, textvariable=self.coolingname_var)
+    #     name_entry.pack(side='left', padx=5, expand=True, fill='x')
         
-        ttk.Label(info_frame, text="Description:").pack(side='left')
-        self.coolingdesc_var = tk.StringVar()
-        desc_entry = ttk.Entry(info_frame, textvariable=self.coolingdesc_var)
-        desc_entry.pack(side='left', padx=5, expand=True, fill='x')
+    #     ttk.Label(info_frame, text="Description:").pack(side='left')
+    #     self.coolingdesc_var = tk.StringVar()
+    #     desc_entry = ttk.Entry(info_frame, textvariable=self.coolingdesc_var)
+    #     desc_entry.pack(side='left', padx=5, expand=True, fill='x')
         
-        new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_coolingprofile)
-        new_profile_btn.pack(side='right', padx=3, expand=True)
+    #     new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_coolingprofile)
+    #     new_profile_btn.pack(side='right', padx=3, expand=True)
         
-        # Steps in the right/frame
-        steps_frame = ttk.Frame(edit_frame)
-        steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
+    #     # Steps in the right/frame
+    #     steps_frame = ttk.Frame(edit_frame)
+    #     steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
         
-        #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
-        self.coolingsteps_tree = ttk.Treeview(
-            steps_frame, 
-            columns=("time", "temp"), 
-            show="headings"
-        )
-        self.coolingsteps_tree.heading("time", text="Time (s)")
-        self.coolingsteps_tree.heading("temp", text="Temperature (°C)")
+    #     #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
+    #     self.coolingsteps_tree = ttk.Treeview(
+    #         steps_frame, 
+    #         columns=("time", "temp"), 
+    #         show="headings"
+    #     )
+    #     self.coolingsteps_tree.heading("time", text="Time (s)")
+    #     self.coolingsteps_tree.heading("temp", text="Temperature (°C)")
         
-        self.coolingsteps_tree.column("time", width=250, anchor=tk.CENTER)
-        self.coolingsteps_tree.column("temp", width=250, anchor=tk.CENTER)
-        self.coolingsteps_tree.pack(fill = 'both' , expand=True)
+    #     self.coolingsteps_tree.column("time", width=250, anchor=tk.CENTER)
+    #     self.coolingsteps_tree.column("temp", width=250, anchor=tk.CENTER)
+    #     self.coolingsteps_tree.pack(fill = 'both' , expand=True)
         
-        step_controls_frame = ttk.Frame(edit_frame)
-        step_controls_frame.pack(fill='x', padx=5, pady=5)
+    #     step_controls_frame = ttk.Frame(edit_frame)
+    #     step_controls_frame.pack(fill='x', padx=5, pady=5)
         
-        self.coolingprofile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
-        self.coolingstep_time_var = tk.DoubleVar()
-        step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.coolingstep_time_var, width=8)
-        step_time_entry.pack(side='left', padx=5)
+    #     self.coolingprofile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
+    #     self.coolingstep_time_var = tk.DoubleVar()
+    #     step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.coolingstep_time_var, width=8)
+    #     step_time_entry.pack(side='left', padx=5)
         
-        self.coolingprofile_temp_label = ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
-        self.coolingstep_temp_var = tk.DoubleVar()
-        step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.coolingstep_temp_var, width=8)
-        step_temp_entry.pack(side='left', padx=2)
+    #     self.coolingprofile_temp_label = ttk.Label(step_controls_frame, text="Temperature (°C):").pack(side='left')
+    #     self.coolingstep_temp_var = tk.DoubleVar()
+    #     step_temp_entry = ttk.Entry(step_controls_frame, textvariable=self.coolingstep_temp_var, width=8)
+    #     step_temp_entry.pack(side='left', padx=2)
         
-        # Step buttons
-        step_buttons_frame = ttk.Frame(edit_frame)
-        step_buttons_frame.pack(fill='both')
+    #     # Step buttons
+    #     step_buttons_frame = ttk.Frame(edit_frame)
+    #     step_buttons_frame.pack(fill='both')
         
-        add_step_button = ttk.Button(step_buttons_frame, text="Add Step", command=self.add_coolingstep)
-        add_step_button.pack(side='left', padx=2)
+    #     add_step_button = ttk.Button(step_buttons_frame, text="Add Step", command=self.add_coolingstep)
+    #     add_step_button.pack(side='left', padx=2)
         
-        remove_step_button = ttk.Button(step_buttons_frame, text="Remove Step", command=self.remove_coolingstep)
-        remove_step_button.pack(side='left', padx=2)
+    #     remove_step_button = ttk.Button(step_buttons_frame, text="Remove Step", command=self.remove_coolingstep)
+    #     remove_step_button.pack(side='left', padx=2)
         
-        clear_steps_button = ttk.Button(step_buttons_frame, text="Clear All Steps", command=self.clear_coolingsteps)
-        clear_steps_button.pack(side='left', padx=2)
+    #     clear_steps_button = ttk.Button(step_buttons_frame, text="Clear All Steps", command=self.clear_coolingsteps)
+    #     clear_steps_button.pack(side='left', padx=2)
         
-        # Save and run buttons
-        action_buttons_frame = ttk.Frame(edit_frame)
-        action_buttons_frame.pack(fill='both')
+    #     # Save and run buttons
+    #     action_buttons_frame = ttk.Frame(edit_frame)
+    #     action_buttons_frame.pack(fill='both')
         
-        save_button = ttk.Button(action_buttons_frame, text="Save Profile", command=self.save_coolingprofile)
-        save_button.pack(side='left', padx=2)
+    #     save_button = ttk.Button(action_buttons_frame, text="Save Profile", command=self.save_coolingprofile)
+    #     save_button.pack(side='left', padx=2)
         
-        run_button = ttk.Button(action_buttons_frame, text="Run Profile", command=self.run_coolingprofile)
-        run_button.pack(side='left', padx=2)
+    #     run_button = ttk.Button(action_buttons_frame, text="Run Profile", command=self.run_coolingprofile)
+    #     run_button.pack(side='left', padx=2)
         
-        self.coolingstop_button = ttk.Button(action_buttons_frame, text="Stop", command=self.stop_coolingprofile)
-        self.coolingstop_button.pack(side='left', padx=2)
-        self.coolingstop_button.config(state=tk.DISABLED)
+    #     self.coolingstop_button = ttk.Button(action_buttons_frame, text="Stop", command=self.stop_coolingprofile)
+    #     self.coolingstop_button.pack(side='left', padx=2)
+    #     self.coolingstop_button.config(state=tk.DISABLED)
         
-        # # Status bar, to show what has been adjusted
-        # self.status_var = tk.StringVar() 
-        # self.status_bar = ttk.Label(edit_frame, textvariable=self.status_var)
-        # self.status_bar.pack(fill='both', padx=5, pady=5)
+    #     # # Status bar, to show what has been adjusted
+    #     # self.status_var = tk.StringVar() 
+    #     # self.status_bar = ttk.Label(edit_frame, textvariable=self.status_var)
+    #     # self.status_bar.pack(fill='both', padx=5, pady=5)
         
-        # Initialize variables
-        # self.coolingcurrent_loaded_profile = None
+    #     # Initialize variables
+    #     # self.coolingcurrent_loaded_profile = None
     
     def create_valveprofile_tab(self):
         profile_tab = ttk.Frame(self.notebook)
@@ -976,23 +1027,25 @@ class AutomatedSystemUI:
         self.update_connection_devices()
         self.status_var.set(f"MFC {index + 1} disconnected")
     
-    def connect_cooling(self):  
-        if self.cooling.connect():
-            #messagebox.showinfo("Connection", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths successfully connected.")
-            #updating the connection info
-            self.keep_updating_cooling = False
-            self.update_connection_devices()
-            self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths connected")
-        else:
-            messagebox.showinfo("Connection Failed", "Cooling is not connected")
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+    # def connect_cooling(self):  
+    #     if self.cooling.connect():
+    #         #messagebox.showinfo("Connection", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths successfully connected.")
+    #         #updating the connection info
+    #         self.keep_updating_cooling = False
+    #         self.update_connection_devices()
+    #         self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths connected")
+    #     else:
+    #         messagebox.showinfo("Connection Failed", "Cooling is not connected")
          
-    def disconnect_cooling(self):
-        self.cooling.disconnect()
-        self.keep_updating_cooling = False
-        #messagebox.showinfo("Disconnected", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected successfully.")
-        #updating the connection info
-        self.update_connection_devices()
-        self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected")
+    # def disconnect_cooling(self):
+    #     self.cooling.disconnect()
+    #     self.keep_updating_cooling = False
+    #     #messagebox.showinfo("Disconnected", "Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected successfully.")
+    #     #updating the connection info
+    #     self.update_connection_devices()
+    #     self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected")
 
     def connect_valve(self):  
         if self.valve.connect():
@@ -1020,7 +1073,9 @@ class AutomatedSystemUI:
         self.connect_MFC(index = 0)
         self.connect_MFC(index = 1)
         self.connect_MFC(index = 2)
-        self.connect_cooling()
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.connect_cooling()
         self.connect_valve()
         self.status_var.set(f"MFC, Torrey Pines IC20XR Digital Chilling/Heating Dry Baths and RVM Industrial Microfluidic Rotary valve connected")
    
@@ -1029,7 +1084,9 @@ class AutomatedSystemUI:
         self.connection_mfc1_port_label.config (text=f"MFC 1 Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
         self.connection_mfc2_port_label.config (text=f"MFC 2 Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
         self.connection_mfc3_port_label.config (text=f"MFC 3 Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
-        self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
 
     def com_settings(self):
@@ -1059,15 +1116,17 @@ class AutomatedSystemUI:
         self.MFC3_port_var = tk.StringVar(value=self.mfcs[2].port)
         MFC3_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC3_port_var)
         MFC3_port_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # # Cooling settings
+        # cooling_frame = ttk.LabelFrame(settings_window, text="Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
+        # cooling_frame.pack(fill="both", padx=10, pady=10)
         
-        # Cooling settings
-        cooling_frame = ttk.LabelFrame(settings_window, text="Torrey Pines IC20XR Digital Chilling/Heating Dry Baths")
-        cooling_frame.pack(fill="both", padx=10, pady=10)
-        
-        ttk.Label(cooling_frame, text="Port:").grid(row=3, column=0, padx=5, pady=5)
-        self.cooling_port_var = tk.StringVar(value=self.cooling.port)
-        cooling_port_entry = ttk.Entry(cooling_frame, textvariable=self.cooling_port_var)
-        cooling_port_entry.grid(row=3, column=1, padx=5, pady=5)
+        # ttk.Label(cooling_frame, text="Port:").grid(row=3, column=0, padx=5, pady=5)
+        # self.cooling_port_var = tk.StringVar(value=self.cooling.port)
+        # cooling_port_entry = ttk.Entry(cooling_frame, textvariable=self.cooling_port_var)
+        # cooling_port_entry.grid(row=3, column=1, padx=5, pady=5)
         
         # valve settings
         valve_frame = ttk.LabelFrame(settings_window, text="RVM Industrial Microfluidic Rotary valve ")
@@ -1103,7 +1162,10 @@ class AutomatedSystemUI:
             "mfc1": self.MFC1_port_var.get(),
             "mfc2": self.MFC2_port_var.get(),
             "mfc3": self.MFC3_port_var.get(),
-            "cooling": self.cooling_port_var.get(),
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+            # "cooling": self.cooling_port_var.get(),
+            
             "valve": self.valve_port_var.get()
         }
         self.settings_manager.set_com_ports(com_ports)     
@@ -1122,8 +1184,11 @@ class AutomatedSystemUI:
             self.disconnect_MFC(1)
         if self.mfcs[2].connected:
             self.disconnect_MFC(2)
-        if self.cooling.connected:
-            self.disconnect_cooling()
+            
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # if self.cooling.connected:
+        #     self.disconnect_cooling()
         if self.valve.connected:
             self.disconnect_valve()
 
@@ -1135,18 +1200,25 @@ class AutomatedSystemUI:
         # Update the devices to the new COM-ports
         self.settings_manager = SettingsManager(base_dir = new_path)
         self.mfcprofilemanager = MFCProfileManager(saved_ports["mfc1"], saved_ports["mfc2"], saved_ports["mfc3"], new_path)
-        self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], new_path)
+            ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], new_path)
         self.valveprofilemanager = RVMProfileManager(saved_ports["valve"], new_path)
 
         # Update the devices
         self.mfcs = self.mfcprofilemanager.mfcs
-        self.cooling = self.coolingprofilemanager.cooling
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.cooling = self.coolingprofilemanager.cooling
         self.valve = self.valveprofilemanager.valve
 
         # Update the OnOffProfileManager
         self.onoffprofilemanager = OnoffProfileManager(
             UImfcs=self.mfcs,
-            UIcooling=self.cooling,
+
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # # Cooling OFF
+        #     UIcooling=self.cooling,
             UIvalve=self.valve,
             profiles_dir= new_path
         )
@@ -1155,7 +1227,9 @@ class AutomatedSystemUI:
         self.connection_mfc1_port_label.config(text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
         self.connection_mfc2_port_label.config(text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
         self.connection_mfc3_port_label.config(text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
-        self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
 
     def set_MFCmassflow(self, index):
@@ -1192,42 +1266,44 @@ class AutomatedSystemUI:
         # https://www.geeksforgeeks.org/using-lambda-in-gui-programs-in-python/
         self.root.after(1000, lambda: self.update_massflow(index)) #updating the MFC flow rate reading each 1s
         
-    def set_temperature(self):
-        if self.cooling.connected is False:
-            messagebox.showwarning("Device not connected", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected")
-            return False
-        elif not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
-            return False
-        else:    
-            try:
-                temperature = float(self.temperature_var.get())
-                self.cooling.set_temperature(temperature, self.ambient_temp)
-                self.target_temperature_label.config(text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
-                self.update_temperature()
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+    # def set_temperature(self):
+    #     if self.cooling.connected is False:
+    #         messagebox.showwarning("Device not connected", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected")
+    #         return False
+    #     elif not isinstance(self.ambient_temp, (int, float)):
+    #         messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
+    #         return False
+    #     else:    
+    #         try:
+    #             temperature = float(self.temperature_var.get())
+    #             self.cooling.set_temperature(temperature, self.ambient_temp)
+    #             self.target_temperature_label.config(text=f"Target temperature: {self.cooling.targettemperature:.2f} °C")
+    #             self.update_temperature()
                 
-                ##if non-floating number, tk.tclerror occurs
-            except tk.TclError as e:
-                messagebox.showerror("Invalid Input", f"Please enter a floating number for target temperature. {e}")
+    #             ##if non-floating number, tk.tclerror occurs
+    #         except tk.TclError as e:
+    #             messagebox.showerror("Invalid Input", f"Please enter a floating number for target temperature. {e}")
                 
-    def update_temperature(self):    
-        #when the UI is closed then this won't be "updating" (to debug)
-        if not self.root.winfo_exists():
-            return
+    # def update_temperature(self):    
+    #     #when the UI is closed then this won't be "updating" (to debug)
+    #     if not self.root.winfo_exists():
+    #         return
             
-        if not self.keep_updating_cooling:
-            return
+    #     if not self.keep_updating_cooling:
+    #         return
 
-        current_temp = self.cooling.get_temperature()
-        self.update_run_var()
-        if current_temp is not None:
-            self.current_temperature_label.config(text=f"Current temperature: {current_temp:.2f} °C")
-        else:
-            self.status_var.set("Failed to read the temperature.")
+    #     current_temp = self.cooling.get_temperature()
+    #     self.update_run_var()
+    #     if current_temp is not None:
+    #         self.current_temperature_label.config(text=f"Current temperature: {current_temp:.2f} °C")
+    #     else:
+    #         self.status_var.set("Failed to read the temperature.")
         
-        #Updating temperature every 1s; otherwise the simulation/reading the data won't work. It would only happen one time.
-        #https://www.geeksforgeeks.org/python-after-method-in-tkinter/
-        self.root.after(1000, self.update_temperature) 
+    #     #Updating temperature every 1s; otherwise the simulation/reading the data won't work. It would only happen one time.
+    #     #https://www.geeksforgeeks.org/python-after-method-in-tkinter/
+    #     self.root.after(1000, self.update_temperature) 
         
     def set_valve(self):
         position = self.valve_pos_var.get()
@@ -1487,232 +1563,233 @@ class AutomatedSystemUI:
         # Schedule the next update, per 1s
         self.root.after(1000, lambda: self.update_mfcprofile_var)
         
-    
-    ###COOLING PROFILE
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+    # ###COOLING PROFILE
         
-    def update_coolingprofile_list(self):
-        """Refresh the list of available profiles"""
-        #https://youtu.be/Vm0ivVxNaA8
+    # def update_coolingprofile_list(self):
+    #     """Refresh the list of available profiles"""
+    #     #https://youtu.be/Vm0ivVxNaA8
         
-        #Delete all the items from the listbox
-        self.coolingprofile_listbox.delete(0, tk.END)
+    #     #Delete all the items from the listbox
+    #     self.coolingprofile_listbox.delete(0, tk.END)
         
-        #Add all the profiles to the listbox
-        for profile in self.coolingprofilemanager.get_profiles():
-            self.coolingprofile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
+    #     #Add all the profiles to the listbox
+    #     for profile in self.coolingprofilemanager.get_profiles():
+    #         self.coolingprofile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
 
-    def load_coolingprofile(self):
-        """Load the selected profile into the editor"""
-        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
-        selection = self.coolingprofile_listbox.curselection()
-        if not selection:
-            messagebox.showwarning("Warning", "Please select a profile to load")
-            return
+    # def load_coolingprofile(self):
+    #     """Load the selected profile into the editor"""
+    #     #https://pythonassets.com/posts/listbox-in-tk-tkinter/
+    #     selection = self.coolingprofile_listbox.curselection()
+    #     if not selection:
+    #         messagebox.showwarning("Warning", "Please select a profile to load")
+    #         return
         
-        #To ensure that you only select the first selected
-        profile_name = self.coolingprofile_listbox.get(selection[0])
-        profile = self.coolingprofilemanager.load_profile(profile_name)
+    #     #To ensure that you only select the first selected
+    #     profile_name = self.coolingprofile_listbox.get(selection[0])
+    #     profile = self.coolingprofilemanager.load_profile(profile_name)
         
-        self.new_coolingprofile_label.config(text = "")
+    #     self.new_coolingprofile_label.config(text = "")
         
-        if profile:
-            # self.coolingcurrent_loaded_profile = profile_name
-            #Update the name of the profile
-            self.coolingname_var.set(profile_name)
-            #Update the description in the field
-            self.coolingdesc_var.set(profile.get("description", ""))
+    #     if profile:
+    #         # self.coolingcurrent_loaded_profile = profile_name
+    #         #Update the name of the profile
+    #         self.coolingname_var.set(profile_name)
+    #         #Update the description in the field
+    #         self.coolingdesc_var.set(profile.get("description", ""))
             
-            # Clear the existing steps
-            for item in self.coolingsteps_tree.get_children():
-                self.coolingsteps_tree.delete(item)
+    #         # Clear the existing steps
+    #         for item in self.coolingsteps_tree.get_children():
+    #             self.coolingsteps_tree.delete(item)
             
-            # Add new steps
-            for step in profile.get("steps", []):
-                self.coolingsteps_tree.insert("", tk.END, values=(
-                    step["time"],
-                    step["temperature"]
-                ))
+    #         # Add new steps
+    #         for step in profile.get("steps", []):
+    #             self.coolingsteps_tree.insert("", tk.END, values=(
+    #                 step["time"],
+    #                 step["temperature"]
+    #             ))
             
-            self.status_var.set(f"Loaded profile: {profile_name}")
+    #         self.status_var.set(f"Loaded profile: {profile_name}")
         
-    def delete_coolingprofile(self):
-        """Delete the selected profile"""
-        #https://pythonassets.com/posts/listbox-in-tk-tkinter/
-        selection = self.coolingprofile_listbox.curselection()
-        if not selection:
-            messagebox.showwarning("Warning", "Please select a profile to delete")
-            return
+    # def delete_coolingprofile(self):
+    #     """Delete the selected profile"""
+    #     #https://pythonassets.com/posts/listbox-in-tk-tkinter/
+    #     selection = self.coolingprofile_listbox.curselection()
+    #     if not selection:
+    #         messagebox.showwarning("Warning", "Please select a profile to delete")
+    #         return
             
-        profile_name = self.coolingprofile_listbox.get(selection[0]) #To ensure that you only select the first selected
+    #     profile_name = self.coolingprofile_listbox.get(selection[0]) #To ensure that you only select the first selected
         
-        if messagebox.askyesno("Confirm", f"Delete profile '{profile_name}'?"):
-            if self.coolingprofilemanager.delete_profile(profile_name):
-                #Updating the new profile list
-                self.update_coolingprofile_list() 
-                #Changing the status
-                self.status_var.set(f"Deleted profile: {profile_name}")
-            else:
-                messagebox.showerror("Error", f"Failed to delete the profile: '{profile_name}'")
+    #     if messagebox.askyesno("Confirm", f"Delete profile '{profile_name}'?"):
+    #         if self.coolingprofilemanager.delete_profile(profile_name):
+    #             #Updating the new profile list
+    #             self.update_coolingprofile_list() 
+    #             #Changing the status
+    #             self.status_var.set(f"Deleted profile: {profile_name}")
+    #         else:
+    #             messagebox.showerror("Error", f"Failed to delete the profile: '{profile_name}'")
                 
-    def create_new_coolingprofile(self):
-        #Clearing all input fields and steps
-        self.coolingname_var.set("")
-        self.coolingdesc_var.set("")
-        self.coolingstep_time_var.set("0")
-        self.coolingstep_temp_var.set("0")
+    # def create_new_coolingprofile(self):
+    #     #Clearing all input fields and steps
+    #     self.coolingname_var.set("")
+    #     self.coolingdesc_var.set("")
+    #     self.coolingstep_time_var.set("0")
+    #     self.coolingstep_temp_var.set("0")
         
-        for item in self.coolingsteps_tree.get_children():
-            self.coolingsteps_tree.delete(item)
+    #     for item in self.coolingsteps_tree.get_children():
+    #         self.coolingsteps_tree.delete(item)
         
-        self.new_coolingprofile_label.config(text = "New profile", foreground = "green")
+    #     self.new_coolingprofile_label.config(text = "New profile", foreground = "green")
         
-    def add_coolingstep(self):
-        """Add a new step to the current profile"""
-        try:
-            time_val = float(self.coolingstep_time_var.get())
-            temp_val = float(self.coolingstep_temp_var.get())
+    # def add_coolingstep(self):
+    #     """Add a new step to the current profile"""
+    #     try:
+    #         time_val = float(self.coolingstep_time_var.get())
+    #         temp_val = float(self.coolingstep_temp_var.get())
             
-            if time_val < 0:
-                raise ValueError("Time cannot be negative")
+    #         if time_val < 0:
+    #             raise ValueError("Time cannot be negative")
 
-            # Check if the time already exists
-            for child in self.coolingsteps_tree.get_children():
-                if float(self.coolingsteps_tree.item(child, "values")[0]) == time_val:
-                    if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
-                        return #if True, thus no then return
-                    self.coolingsteps_tree.delete(child)
-                    break
+    #         # Check if the time already exists
+    #         for child in self.coolingsteps_tree.get_children():
+    #             if float(self.coolingsteps_tree.item(child, "values")[0]) == time_val:
+    #                 if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
+    #                     return #if True, thus no then return
+    #                 self.coolingsteps_tree.delete(child)
+    #                 break
             
-            self.coolingsteps_tree.insert("", tk.END, values=(time_val, temp_val))
+    #         self.coolingsteps_tree.insert("", tk.END, values=(time_val, temp_val))
             
-        except ValueError as error:
-            messagebox.showerror("Error", f"Invalid input: {error}")
+    #     except ValueError as error:
+    #         messagebox.showerror("Error", f"Invalid input: {error}")
     
-    def remove_coolingstep(self):
-        """Remove the selected step"""
-        selection = self.coolingsteps_tree.selection()
-        if selection:
-            self.coolingsteps_tree.delete(selection)
+    # def remove_coolingstep(self):
+    #     """Remove the selected step"""
+    #     selection = self.coolingsteps_tree.selection()
+    #     if selection:
+    #         self.coolingsteps_tree.delete(selection)
     
-    def clear_coolingsteps(self):
-        """Clear all steps"""
-        if messagebox.askyesno("Confirm", "Clear all the steps?"):
-            #Obtain all the steps and delete all the steps
-            for item in self.coolingsteps_tree.get_children():
-                self.coolingsteps_tree.delete(item)
+    # def clear_coolingsteps(self):
+    #     """Clear all steps"""
+    #     if messagebox.askyesno("Confirm", "Clear all the steps?"):
+    #         #Obtain all the steps and delete all the steps
+    #         for item in self.coolingsteps_tree.get_children():
+    #             self.coolingsteps_tree.delete(item)
     
-    def save_coolingprofile(self):
-        """Save the current profile"""
-        #Getting the name
-        name = self.coolingname_var.get().strip()
+    # def save_coolingprofile(self):
+    #     """Save the current profile"""
+    #     #Getting the name
+    #     name = self.coolingname_var.get().strip()
         
-        #Ensuring that the name isn't empty
-        if not name:
-            messagebox.showwarning("Warning", "Profile name cannot be empty")
-            return
+    #     #Ensuring that the name isn't empty
+    #     if not name:
+    #         messagebox.showwarning("Warning", "Profile name cannot be empty")
+    #         return
         
-        # Collect steps from the profile
-        steps = []
-        for child in self.coolingsteps_tree.get_children():
-            #To obtain all the values of the steps
-            values = self.coolingsteps_tree.item(child, "values")
-            steps.append({
-                "time": float(values[0]),
-                "temperature": float(values[1])
-            })
+    #     # Collect steps from the profile
+    #     steps = []
+    #     for child in self.coolingsteps_tree.get_children():
+    #         #To obtain all the values of the steps
+    #         values = self.coolingsteps_tree.item(child, "values")
+    #         steps.append({
+    #             "time": float(values[0]),
+    #             "temperature": float(values[1])
+    #         })
         
-        # Sort steps by time
-        #https://docs.python.org/3/howto/sorting.html
-        steps = sorted(steps, key=lambda steps: steps["time"])
+    #     # Sort steps by time
+    #     #https://docs.python.org/3/howto/sorting.html
+    #     steps = sorted(steps, key=lambda steps: steps["time"])
         
-        # Create the profile data
-        profile_data = {
-            "description": self.coolingdesc_var.get(),
-            "steps": steps
-        }
+    #     # Create the profile data
+    #     profile_data = {
+    #         "description": self.coolingdesc_var.get(),
+    #         "steps": steps
+    #     }
         
-        if self.coolingprofilemanager.save_profile(name, profile_data):
-            self.update_coolingprofile_list()
-            self.status_var.set(f"Saved profile: {name}")
-        else:
-            messagebox.showerror("Error", f"Failed to save profile '{name}'")
+    #     if self.coolingprofilemanager.save_profile(name, profile_data):
+    #         self.update_coolingprofile_list()
+    #         self.status_var.set(f"Saved profile: {name}")
+    #     else:
+    #         messagebox.showerror("Error", f"Failed to save profile '{name}'")
     
-    def run_coolingprofile(self):
-        """Run the current profile"""    
+    # def run_coolingprofile(self):
+    #     """Run the current profile"""    
             
-        if not self.cooling.connected:
-            messagebox.showwarning("Error", "One or more devices are not connected")
-            return False
+    #     if not self.cooling.connected:
+    #         messagebox.showwarning("Error", "One or more devices are not connected")
+    #         return False
         
-        if not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
-            return False
-        #Get the name of the profile without spaces, such that the .json file can be loaded later
-        name = self.coolingname_var.get().strip()
+    #     if not isinstance(self.ambient_temp, (int, float)):
+    #         messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
+    #         return False
+    #     #Get the name of the profile without spaces, such that the .json file can be loaded later
+    #     name = self.coolingname_var.get().strip()
         
-        #Checking whether the name is empty
-        if not name:
-            messagebox.showwarning("Warning", "Please load or create a profile first")
-            return
+    #     #Checking whether the name is empty
+    #     if not name:
+    #         messagebox.showwarning("Warning", "Please load or create a profile first")
+    #         return
 
-        # Load the profile that needs to be runned
-        profile = self.coolingprofilemanager.load_profile(name)
-        if not profile:
-            messagebox.showerror("Error", f"Failed to load profile: '{name}'")
-            return
+    #     # Load the profile that needs to be runned
+    #     profile = self.coolingprofilemanager.load_profile(name)
+    #     if not profile:
+    #         messagebox.showerror("Error", f"Failed to load profile: '{name}'")
+    #         return
         
-        self.update_run_var()
-        #Enabling the stop button, since you can now stop a running profile
-        self.coolingstop_button.config(state=tk.NORMAL) 
+    #     self.update_run_var()
+    #     #Enabling the stop button, since you can now stop a running profile
+    #     self.coolingstop_button.config(state=tk.NORMAL) 
         
 
         
-        # Start profile in a separate thread, such that the UI doesn't freeze until it finishes
-        # And you'll still be able to see what happens, e.g. popup of not connection
-        self.coolingprofile_thread = threading.Thread(
-            target=self.run_coolingprofile_thread,  
-            daemon=True         # Stops threading by pressing an event, e.g. pressing on stop button
-        )
-        self.coolingprofile_thread.start()
+    #     # Start profile in a separate thread, such that the UI doesn't freeze until it finishes
+    #     # And you'll still be able to see what happens, e.g. popup of not connection
+    #     self.coolingprofile_thread = threading.Thread(
+    #         target=self.run_coolingprofile_thread,  
+    #         daemon=True         # Stops threading by pressing an event, e.g. pressing on stop button
+    #     )
+    #     self.coolingprofile_thread.start()
     
-    def run_coolingprofile_thread(self):
-        """Thread function to run the profile"""
-        try:
-            # Displaying which profile is running
-            self.status_var.set(f"Running profile: {self.coolingname_var.get()}")
-            self.coolingprofilemanager.run_profile(temp_ambient = self.ambient_temp, update_callback=self.update_coolingprofile_var)
-            self.root.after(0, lambda: self.coolingprofile_complete)
+    # def run_coolingprofile_thread(self):
+    #     """Thread function to run the profile"""
+    #     try:
+    #         # Displaying which profile is running
+    #         self.status_var.set(f"Running profile: {self.coolingname_var.get()}")
+    #         self.coolingprofilemanager.run_profile(temp_ambient = self.ambient_temp, update_callback=self.update_coolingprofile_var)
+    #         self.root.after(0, lambda: self.coolingprofile_complete)
 
-        except Exception as e:
-            self.root.after(0, lambda: self.coolingprofile_error(e))
+    #     except Exception as e:
+    #         self.root.after(0, lambda: self.coolingprofile_error(e))
     
-    def coolingprofile_complete(self):
-        """Called when profile completes successfully"""
-        self.coolingstop_button.config(state=tk.DISABLED)
-        self.status_var.set("Profile run completed")
+    # def coolingprofile_complete(self):
+    #     """Called when profile completes successfully"""
+    #     self.coolingstop_button.config(state=tk.DISABLED)
+    #     self.status_var.set("Profile run completed")
     
-    def coolingprofile_error(self, error):
-        """Called when profile run encounters an error"""
-        self.coolingstop_button.config(state=tk.DISABLED)
-        messagebox.showerror("Error", f"Profile run failed: {error}")
-        self.status_var.set("Profile run failed")
+    # def coolingprofile_error(self, error):
+    #     """Called when profile run encounters an error"""
+    #     self.coolingstop_button.config(state=tk.DISABLED)
+    #     messagebox.showerror("Error", f"Profile run failed: {error}")
+    #     self.status_var.set("Profile run failed")
     
-    def stop_coolingprofile(self):
-        """Stop the currently running profile"""
-        self.coolingprofilemanager.stop_profile()
-        self.coolingstop_button.config(state=tk.DISABLED)
-        self.status_var.set("Profile run stopped by user")
+    # def stop_coolingprofile(self):
+    #     """Stop the currently running profile"""
+    #     self.coolingprofilemanager.stop_profile()
+    #     self.coolingstop_button.config(state=tk.DISABLED)
+    #     self.status_var.set("Profile run stopped by user")
 
-    def update_coolingprofile_var(self, status):
-        #when the UI is closed then this won't be "updating" (to debug)
-        if not self.root.winfo_exists():
-            return
+    # def update_coolingprofile_var(self, status):
+    #     #when the UI is closed then this won't be "updating" (to debug)
+    #     if not self.root.winfo_exists():
+    #         return
         
-        self.cooling_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
-        self.cooling_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
-        self.cooling_value_label.config(text=f"{status['temperature']:.2f} °C")
-        # Schedule the next update, per 1s
-        self.root.after(1000, lambda: self.update_coolingprofile_var)
+    #     self.cooling_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
+    #     self.cooling_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
+    #     self.cooling_value_label.config(text=f"{status['temperature']:.2f} °C")
+    #     # Schedule the next update, per 1s
+    #     self.root.after(1000, lambda: self.update_coolingprofile_var)
 
 
 
@@ -1945,23 +2022,30 @@ class AutomatedSystemUI:
     def run_selected_profiles(self):
         mfc_sel = self.selprof_mfc_listbox.curselection()
         valve_sel = self.selprof_valve_listbox.curselection()
-        cooling_sel = self.selprof_cooling_listbox.curselection()
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # cooling_sel = self.selprof_cooling_listbox.curselection()
 
-        if not mfc_sel or not valve_sel or not cooling_sel:
+        # if not mfc_sel or not valve_sel or not cooling_sel:
+        if not mfc_sel or not valve_sel:
             messagebox.showwarning("Selection Error", "Please select a profile from each list.")
             return
 
         mfc_name = self.selprof_mfc_listbox.get(mfc_sel[0])
-        cooling_name = self.selprof_cooling_listbox.get(cooling_sel[0])
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # cooling_name = self.selprof_cooling_listbox.get(cooling_sel[0])
         valve_name = self.selprof_valve_listbox.get(valve_sel[0])
 
         # Load profiles
         if not self.mfcprofilemanager.load_profile(mfc_name):
             messagebox.showerror("Error", f"Failed to load MFC profile '{mfc_name}'")
             return
-        if not self.coolingprofilemanager.load_profile(cooling_name):
-            messagebox.showerror("Error", f"Failed to load Cooling profile '{cooling_name}'")
-            return
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # if not self.coolingprofilemanager.load_profile(cooling_name):
+        #     messagebox.showerror("Error", f"Failed to load Cooling profile '{cooling_name}'")
+        #     return
         if not self.valveprofilemanager.load_profile(valve_name):
             messagebox.showerror("Error", f"Failed to load Valve profile '{valve_name}'")
             return
@@ -1970,9 +2054,11 @@ class AutomatedSystemUI:
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
             messagebox.showerror("Connection Error", "One or more MFCs not connected.")
             return
-        if not self.cooling.connected:
-            messagebox.showerror("Connection Error", "Cooling not connected.")
-            return
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # if not self.cooling.connected:
+        #     messagebox.showerror("Connection Error", "Cooling not connected.")
+        #     return
         if not self.valve.connected:
             messagebox.showerror("Connection Error", "Valve not connected.")
             return
@@ -1985,10 +2071,15 @@ class AutomatedSystemUI:
         
         # Start all three profiles in threads
         threading.Thread(target=self.run_mfcprofile_thread, daemon=True).start()
-        threading.Thread(target=self.run_coolingprofile_thread, daemon=True).start()
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # threading.Thread(target=self.run_coolingprofile_thread, daemon=True).start()
         threading.Thread(target=self.run_valveprofile_thread, daemon=True).start()
 
-        self.status_var.set(f"Running MFC: {mfc_name}, Valve: {valve_name}, Cooling: {cooling_name}")
+        # self.status_var.set(f"Running MFC: {mfc_name}, Valve: {valve_name}, Cooling: {cooling_name}")
+
+        self.status_var.set(f"Running MFC: {mfc_name}, Valve: {valve_name}")
+
  ###on/offprofile
     def update_onoffprofile_list(self):
         """Refresh the list of available profiles"""
@@ -2033,7 +2124,8 @@ class AutomatedSystemUI:
                     step["flow mfc1"],
                     step["flow mfc2"],
                     step["flow mfc3"],
-                    step["temperature"],
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+                    # step["temperature"],
                     step["valve"]
                 ))
             
@@ -2066,7 +2158,8 @@ class AutomatedSystemUI:
         self.onoffstep_flow1_var.set("0")
         self.onoffstep_flow2_var.set("0")
         self.onoffstep_flow3_var.set("0")
-        self.onoffstep_temp_var.set("0")
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+        # self.onoffstep_temp_var.set("0")
         self.onoffstep_valve_var.set("0")
         
         for item in self.onoffsteps_tree.get_children():
@@ -2081,7 +2174,8 @@ class AutomatedSystemUI:
             flow1_val = float(self.onoffstep_flow1_var.get())
             flow2_val = float(self.onoffstep_flow2_var.get())
             flow3_val = float(self.onoffstep_flow3_var.get())
-            temp_val = float(self.onoffstep_temp_var.get())
+        # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+            # temp_val = float(self.onoffstep_temp_var.get())
             valve_val = int(self.onoffstep_valve_var.get())
             
             if time_val < 0:
@@ -2096,8 +2190,9 @@ class AutomatedSystemUI:
                         return #if True, thus no then return
                     self.onoffsteps_tree.delete(child)
                     break
-            
-            self.onoffsteps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val, temp_val, valve_val))
+            # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+            # self.onoffsteps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val, temp_val, valve_val))
+            self.onoffsteps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val, valve_val))
             
         except ValueError as error:
             messagebox.showerror("Error", f"Invalid input: {error}")
@@ -2135,8 +2230,10 @@ class AutomatedSystemUI:
                 "flow mfc1": float(values[1]),
                 "flow mfc2": float(values[2]),
                 "flow mfc3": float(values[3]),
-                "temperature": float(values[4]),
-                "valve": int(values[5])
+            # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+                # "temperature": float(values[4]),
+                # "valve": int(values[5])
+                "valve": int(values[4])
             })
         
         # Sort steps by time
@@ -2157,8 +2254,12 @@ class AutomatedSystemUI:
     
     def run_onoffprofile(self):
         """Run the current profile"""    
-            
-        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
+
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.valve.connected):
+
             messagebox.showwarning("Error", "One or more devices are not connected")
             return False
           
@@ -2196,7 +2297,7 @@ class AutomatedSystemUI:
 
             self.status_var.set(f"Running profile: {self.onoffname_var.get()}")
             self.onoffprofilemanager.run_profile(
-                temp_ambient=self.ambient_temp,
+                # temp_ambient=self.ambient_temp,
                 update_callback=safe_update
             )
             self.root.after(0, self.onoffprofile_complete)
@@ -2224,443 +2325,474 @@ class AutomatedSystemUI:
     
     def update_onoffprofile_var(self, status):
         #when the UI is closed then this won't be "updating" (to debug)
-        if not self.root.winfo_exists():
+        try:
+            if not self.root.winfo_exists():
+                return
+            
+            print(status['elapsed_time'], status['current_step'])
+            self.onoff_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
+            self.onoff_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
+                # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
+            # self.onoff_value_label.config(text=f"{status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['flow mfc3']:.2f}, {status['temperature']:.1f}°C, V{status['valve']}")
+            self.onoff_value_label.config(text=f"{status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['flow mfc3']:.2f}, {status['valve']}")
+        except tk.TclError:
             return
-        
-        self.onoff_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
-        self.onoff_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
-        self.onoff_value_label.config(text=f"{status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['flow mfc3']:.2f}, {status['temperature']:.1f}°C, V{status['valve']}")
-        # self.root.after(1000, lambda: self.update_onoffprofile_var(status))  # loop or trigger update
+
 
     def stop_all_profiles(self):
         """Stop all profiles running from run_selected_profiles"""
         self.mfcprofilemanager.stop_profile()
-        self.coolingprofilemanager.stop_profile()
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # self.coolingprofilemanager.stop_profile()
         self.valveprofilemanager.stop_profile()
         self.status_var.set("All profiles stopped by user")
+
+
+###EXCEL SHEET TAB
+# ### Constant Flow Rate Profile
+#     def create_pureflowrate_tab(self):
+#         self.pureflowrate_tab = ttk.Frame(self.notebook)
+#         self.notebook.add(self.pureflowrate_tab, text="Constant Flow Rate Profile")
+
+#         # Read Excel sheet, sheet 1
+#         # skiprows = 4, because the first 4 rows contains the information that we don't want
+#         self.pureflowrate_data = pd.read_excel(self.path_pureflowrate, sheet_name=0, skiprows=4)
+
+#         ##Renaming the columns such that it can be read easilier later 
+#         #https://www.geeksforgeeks.org/how-to-rename-columns-in-pandas-dataframe/
+#         self.pureflowrate_data = self.pureflowrate_data.rename(columns={
+#             self.pureflowrate_data.columns[0]: 'VOC',
+#             self.pureflowrate_data.columns[1]: 'Concentration',
+#             self.pureflowrate_data.columns[2]: 'Temperature',
+#             self.pureflowrate_data.columns[4]: 'Flowrate_liquid',
+#             self.pureflowrate_data.columns[5]: 'Flowrate_N'
+#         })
         
-### Constant Flow Rate Profile
-    def create_pureflowrate_tab(self):
-        self.pureflowrate_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.pureflowrate_tab, text="Constant Flow Rate Profile")
+#         #Dropping values that have both VOC and Concentration values
+#         #https://www.programiz.com/python-programming/pandas/methods/dropna
+#         self.pureflowrate_data = self.pureflowrate_data.dropna(subset=['VOC', 'Concentration'])
 
-        # Read Excel sheet, sheet 1
-        # skiprows = 4, because the first 4 rows contains the information that we don't want
-        self.pureflowrate_data = pd.read_excel(self.path_pureflowrate, sheet_name=0, skiprows=4)
-
-        ##Renaming the columns such that it can be read easilier later 
-        #https://www.geeksforgeeks.org/how-to-rename-columns-in-pandas-dataframe/
-        self.pureflowrate_data = self.pureflowrate_data.rename(columns={
-            self.pureflowrate_data.columns[0]: 'VOC',
-            self.pureflowrate_data.columns[1]: 'Concentration',
-            self.pureflowrate_data.columns[2]: 'Temperature',
-            self.pureflowrate_data.columns[4]: 'Flowrate_liquid',
-            self.pureflowrate_data.columns[5]: 'Flowrate_N'
-        })
+#         ttk.Label(self.pureflowrate_tab, text="Select VOC:").grid(row=0, column=0)
+#         self.pureflowrate_voc_var = tk.StringVar()
         
-        #Dropping values that have both VOC and Concentration values
-        #https://www.programiz.com/python-programming/pandas/methods/dropna
-        self.pureflowrate_data = self.pureflowrate_data.dropna(subset=['VOC', 'Concentration'])
-
-        ttk.Label(self.pureflowrate_tab, text="Select VOC:").grid(row=0, column=0)
-        self.pureflowrate_voc_var = tk.StringVar()
+#         # Combobox for the type of VOC
+#         # https://www.pythontutorial.net/tkinter/tkinter-combobox/
+#         self.pureflowrate_voc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_voc_var, state="readonly")
+#         self.pureflowrate_voc_dropdown.grid(row=0, column=1)
+#         # obtain all unique values in the list
+#         voc_list = self.pureflowrate_data['VOC'].unique()
+#         self.pureflowrate_voc_dropdown['values'] = sorted(voc_list)
         
-        # Combobox for the type of VOC
-        # https://www.pythontutorial.net/tkinter/tkinter-combobox/
-        self.pureflowrate_voc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_voc_var, state="readonly")
-        self.pureflowrate_voc_dropdown.grid(row=0, column=1)
-        # obtain all unique values in the list
-        voc_list = self.pureflowrate_data['VOC'].unique()
-        self.pureflowrate_voc_dropdown['values'] = sorted(voc_list)
+#         # the update_concentration_dropdown function will execute when the selected value of the combobox changes.
+#         self.pureflowrate_voc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_update_concentration_dropdown)
+
+#         ttk.Label(self.pureflowrate_tab, text="Select Concentration (ppm):").grid(row=1, column=0)
+#         self.pureflowrate_conc_var = tk.StringVar()
+#         self.pureflowrate_conc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_conc_var, state="readonly")
+#         self.pureflowrate_conc_dropdown.grid(row=1, column=1)
+#         # display excel target function will execute when the selected value of the combobox changes.
+#         self.pureflowrate_conc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_sel_targets)
+
+
+#         self.pureflowrate_lbl_selconc_temp = ttk.Label(self.pureflowrate_tab, text="Target Temp: -")
+#         self.pureflowrate_lbl_selconc_temp.grid(row=2, column=0, columnspan=2, sticky='w')
+#         self.pureflowrate_lbl_selconc_flow1 = ttk.Label(self.pureflowrate_tab, text="Target MFC1 (Fluid): -")
+#         self.pureflowrate_lbl_selconc_flow1.grid(row=3, column=0, columnspan=2, sticky='w')
+#         self.pureflowrate_lbl_selconc_flowN = ttk.Label(self.pureflowrate_tab, text="Target MFC2 (Nitrogen): -")
+#         self.pureflowrate_lbl_selconc_flowN.grid(row=4, column=0, columnspan=2, sticky='w')
+
+#         self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run Continuously", command=self.pureflowrate_run_cnt)
+#         self.pureflowrate_run_button.grid(row=5, column=0, padx=5, pady=10, sticky="ew")
+
+#         self.pureflowrate_stop_button = ttk.Button(self.pureflowrate_tab, text="Stop", command=self.pureflowrate_stop_cnt)
+#         self.pureflowrate_stop_button.grid(row=5, column=1, padx=5, pady=10, sticky="ew")
+
+#         # For Graph
+#         # ttk.Label(self.pureflowrate_tab, text="Start Delay Time (s):").grid(row=6, column=0)
+#         # self.start_delay_entry = ttk.Entry(self.pureflowrate_tab)
+#         # self.start_delay_entry.grid(row=6, column=1)
+
+#         ttk.Label(self.pureflowrate_tab, text="On Time (s):").grid(row=7, column=0)
+#         self.on_time_entry = ttk.Entry(self.pureflowrate_tab)
+#         self.on_time_entry.grid(row=7, column=1)
+
+#         ttk.Label(self.pureflowrate_tab, text="Off Time (s):").grid(row=8, column=0)
+#         self.off_time_entry = ttk.Entry(self.pureflowrate_tab)
+#         self.off_time_entry.grid(row=8, column=1)
+
+#         ttk.Label(self.pureflowrate_tab, text="Run Time (s):").grid(row=9, column=0)
+#         self.run_time_entry = ttk.Entry(self.pureflowrate_tab)
+#         self.run_time_entry.grid(row=9, column=1)
         
-        # the update_concentration_dropdown function will execute when the selected value of the combobox changes.
-        self.pureflowrate_voc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_update_concentration_dropdown)
-
-        ttk.Label(self.pureflowrate_tab, text="Select Concentration (ppm):").grid(row=1, column=0)
-        self.pureflowrate_conc_var = tk.StringVar()
-        self.pureflowrate_conc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_conc_var, state="readonly")
-        self.pureflowrate_conc_dropdown.grid(row=1, column=1)
-        # display excel target function will execute when the selected value of the combobox changes.
-        self.pureflowrate_conc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_sel_targets)
-
-
-        self.pureflowrate_lbl_selconc_temp = ttk.Label(self.pureflowrate_tab, text="Target Temp: -")
-        self.pureflowrate_lbl_selconc_temp.grid(row=2, column=0, columnspan=2, sticky='w')
-        self.pureflowrate_lbl_selconc_flow1 = ttk.Label(self.pureflowrate_tab, text="Target MFC1 (Fluid): -")
-        self.pureflowrate_lbl_selconc_flow1.grid(row=3, column=0, columnspan=2, sticky='w')
-        self.pureflowrate_lbl_selconc_flowN = ttk.Label(self.pureflowrate_tab, text="Target MFC2 (Nitrogen): -")
-        self.pureflowrate_lbl_selconc_flowN.grid(row=4, column=0, columnspan=2, sticky='w')
-
-        self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run Continuously", command=self.pureflowrate_run_cnt)
-        self.pureflowrate_run_button.grid(row=5, column=0, padx=5, pady=10, sticky="ew")
-
-        self.pureflowrate_stop_button = ttk.Button(self.pureflowrate_tab, text="Stop", command=self.pureflowrate_stop_cnt)
-        self.pureflowrate_stop_button.grid(row=5, column=1, padx=5, pady=10, sticky="ew")
-
-        # For Graph
-        # ttk.Label(self.pureflowrate_tab, text="Start Delay Time (s):").grid(row=6, column=0)
-        # self.start_delay_entry = ttk.Entry(self.pureflowrate_tab)
-        # self.start_delay_entry.grid(row=6, column=1)
-
-        ttk.Label(self.pureflowrate_tab, text="On Time (s):").grid(row=7, column=0)
-        self.on_time_entry = ttk.Entry(self.pureflowrate_tab)
-        self.on_time_entry.grid(row=7, column=1)
-
-        ttk.Label(self.pureflowrate_tab, text="Off Time (s):").grid(row=8, column=0)
-        self.off_time_entry = ttk.Entry(self.pureflowrate_tab)
-        self.off_time_entry.grid(row=8, column=1)
-
-        ttk.Label(self.pureflowrate_tab, text="Run Time (s):").grid(row=9, column=0)
-        self.run_time_entry = ttk.Entry(self.pureflowrate_tab)
-        self.run_time_entry.grid(row=9, column=1)
+#         self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run On/Off Graph", command=self.pureflowrate_run_onoffprofile)
+#         self.pureflowrate_run_button.grid(row=10, column=0, padx=5, pady=10, sticky="ew")
         
-        self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run On/Off Graph", command=self.pureflowrate_run_onoffprofile)
-        self.pureflowrate_run_button.grid(row=10, column=0, padx=5, pady=10, sticky="ew")
+#         self.pureflowrate_plotgraph_button = ttk.Button(self.pureflowrate_tab, text="Plot Expected On/Off Graph", command=self.plot_expected_profile)
+#         self.pureflowrate_plotgraph_button.grid(row=10, column=1, padx=5, pady=10, sticky="ew")
+
+#         self.elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
+#         self.elapsed_time_label = ttk.Label(self.pureflowrate_tab, textvariable=self.elapsed_time_var)
+#         self.elapsed_time_label.grid(row=11, column=0, columnspan=2, sticky='w')
+
+#         # Graph frame — to the right of all inputs
+#         self.graph_frame = ttk.LabelFrame(self.pureflowrate_tab, text="Expected On/Off Graph")
+#         self.graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")
+
+
+#     def pureflowrate_update_concentration_dropdown(self, event):
+#         selected_voc = self.pureflowrate_voc_var.get()
         
-        self.pureflowrate_plotgraph_button = ttk.Button(self.pureflowrate_tab, text="Plot Expected On/Off Graph", command=self.plot_expected_profile)
-        self.pureflowrate_plotgraph_button.grid(row=10, column=1, padx=5, pady=10, sticky="ew")
-
-        self.elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
-        self.elapsed_time_label = ttk.Label(self.pureflowrate_tab, textvariable=self.elapsed_time_var)
-        self.elapsed_time_label.grid(row=11, column=0, columnspan=2, sticky='w')
-
-        # Graph frame — to the right of all inputs
-        self.graph_frame = ttk.LabelFrame(self.pureflowrate_tab, text="Expected On/Off Graph")
-        self.graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")
-
-
-    def pureflowrate_update_concentration_dropdown(self, event):
-        selected_voc = self.pureflowrate_voc_var.get()
+#         # Obtain the filtered data according to the selected_voc
+#         # https://www.youtube.com/watch?v=xzslFdjO0Ts  
+#         # https://www.geeksforgeeks.org/ways-to-filter-pandas-dataframe-by-column-values/
         
-        # Obtain the filtered data according to the selected_voc
-        # https://www.youtube.com/watch?v=xzslFdjO0Ts  
-        # https://www.geeksforgeeks.org/ways-to-filter-pandas-dataframe-by-column-values/
-        
-        # rows are kept where voc = selected_voc
-        filtered = self.pureflowrate_data[self.pureflowrate_data['VOC'] == selected_voc]
-        #gives the sorted unique concentration values of the rows that are kept
-        sorted_unique_voc = sorted(filtered['Concentration'].unique())
-        self.pureflowrate_conc_dropdown['values'] = sorted_unique_voc
-        self.pureflowrate_conc_var.set('')  
+#         # rows are kept where voc = selected_voc
+#         filtered = self.pureflowrate_data[self.pureflowrate_data['VOC'] == selected_voc]
+#         #gives the sorted unique concentration values of the rows that are kept
+#         sorted_unique_voc = sorted(filtered['Concentration'].unique())
+#         self.pureflowrate_conc_dropdown['values'] = sorted_unique_voc
+#         self.pureflowrate_conc_var.set('')  
 
-    def pureflowrate_sel_targets(self, event):
-        voc = self.pureflowrate_voc_var.get()
-        conc = float(self.pureflowrate_conc_var.get())
+#     def pureflowrate_sel_targets(self, event):
+#         voc = self.pureflowrate_voc_var.get()
+#         conc = float(self.pureflowrate_conc_var.get())
         
-        # #https://www.geeksforgeeks.org/difference-between-loc-and-iloc-in-pandas-dataframe/
-        # using iloc[0] such that only the first one should be selected
-        selectedrow = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)].iloc[0]
-        self.pureflowrate_sel_temp = float(selectedrow['Temperature'])
-        self.pureflowrate_sel_flow1 = float(selectedrow['Flowrate_liquid'])
-        self.pureflowrate_sel_flow2 = float(selectedrow['Flowrate_N'])
+#         # #https://www.geeksforgeeks.org/difference-between-loc-and-iloc-in-pandas-dataframe/
+#         # using iloc[0] such that only the first one should be selected
+#         selectedrow = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)].iloc[0]
+#         self.pureflowrate_sel_temp = float(selectedrow['Temperature'])
+#         self.pureflowrate_sel_flow1 = float(selectedrow['Flowrate_liquid'])
+#         self.pureflowrate_sel_flow2 = float(selectedrow['Flowrate_N'])
         
-        # row = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)]
+#         # row = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)]
 
-        self.pureflowrate_lbl_selconc_temp.config(text=f"Target Temp: {self.pureflowrate_sel_temp} °C")
-        self.pureflowrate_lbl_selconc_flow1.config(text=f"Target MFC1: {self.pureflowrate_sel_flow1} mL/min")
-        self.pureflowrate_lbl_selconc_flowN.config(text=f"Target MFC2: {self.pureflowrate_sel_flow2} mL/min")
+#         self.pureflowrate_lbl_selconc_temp.config(text=f"Target Temp: {self.pureflowrate_sel_temp} °C")
+#         self.pureflowrate_lbl_selconc_flow1.config(text=f"Target MFC1: {self.pureflowrate_sel_flow1} mL/min")
+#         self.pureflowrate_lbl_selconc_flowN.config(text=f"Target MFC2: {self.pureflowrate_sel_flow2} mL/min")
 
-    def pureflowrate_run_cnt(self):
+#     def pureflowrate_run_cnt(self):
         
-        # check whether ambient temp is set
-        if not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showerror("Error", "Ambient temperature must be set.")
-            return False
+#         # check whether ambient temp is set
+#         if not isinstance(self.ambient_temp, (int, float)):
+#             messagebox.showerror("Error", "Ambient temperature must be set.")
+#             return False
     
-        if not self.mfcs[0].connected:
-            messagebox.showerror("Connection Error", "MFC 1 is not connected.")
-            return False
-        if not self.mfcs[1].connected:
-            messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
-            return False
-        if not self.cooling.connected:
-            messagebox.showerror("Connection Error", "Cooling is not connected.")
-            return False
-        if not self.valve.connected:
-            messagebox.showerror("Connection Error", "Valve is not connected.")            
-            return False
+#         if not self.mfcs[0].connected:
+#             messagebox.showerror("Connection Error", "MFC 1 is not connected.")
+#             return False
+#         if not self.mfcs[1].connected:
+#             messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
+#             return False
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # if not self.cooling.connected:
+#         #     messagebox.showerror("Connection Error", "Cooling is not connected.")
+#         #     return False
+#         if not self.valve.connected:
+#             messagebox.showerror("Connection Error", "Valve is not connected.")            
+#             return False
         
-        #switch position valve to open
-        self.valve.switch_position(2)
-        
-        threading.Thread(
-            target=lambda: self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp),
-            daemon=True
-        ).start()
+#         #switch position valve to open
+#         self.valve.switch_position(2)
 
-        threading.Thread(
-            target=lambda: self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1),
-            daemon=True
-        ).start()
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # threading.Thread(
+#         #     target=lambda: self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp),
+#         #     daemon=True
+#         # ).start()
 
-        threading.Thread(
-            target=lambda: self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2),
-            daemon=True
-        ).start()
+#         threading.Thread(
+#             target=lambda: self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1),
+#             daemon=True
+#         ).start()
+
+#         threading.Thread(
+#             target=lambda: self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2),
+#             daemon=True
+#         ).start()
         
-        self.status_var.set(f"Running Constant Flow Rate for Concentration {self.pureflowrate_conc_var.get()} ppm | MFC1: {self.pureflowrate_sel_flow1} mL/min | MFC2 (Nitrogen): {self.pureflowrate_sel_flow2} mL/min | Temp: {self.pureflowrate_sel_temp} °C, | Valve set to position 1 ")
+#         self.status_var.set(f"Running Constant Flow Rate for Concentration {self.pureflowrate_conc_var.get()} ppm | MFC1: {self.pureflowrate_sel_flow1} mL/min | MFC2 (Nitrogen): {self.pureflowrate_sel_flow2} mL/min | Temp: {self.pureflowrate_sel_temp} °C, | Valve set to position 1 ")
         
-        self.update_run_var()
+#         self.update_run_var()
     
-    def pureflowrate_stop_cnt(self):
-        self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
-        self.mfcs[0].set_massflow(0)
-        self.mfcs[1].set_massflow(0)
-        self.valve.switch_position(2)
+#     def pureflowrate_stop_cnt(self):
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+#         self.mfcs[0].set_massflow(0)
+#         self.mfcs[1].set_massflow(0)
+#         self.valve.switch_position(2)
 
-        self.status_var.set(f"Stopping Constant Flow Rate Profile | MFC1 set to 0 mL/min, | MFC2 (Nitrogen) set to 0 mL/min | Temperature set to Ambient temperature: {self.ambient_temp} °C, | Valve set to position 2")
+#         self.status_var.set(f"Stopping Constant Flow Rate Profile | MFC1 set to 0 mL/min, | MFC2 (Nitrogen) set to 0 mL/min | Temperature set to Ambient temperature: {self.ambient_temp} °C, | Valve set to position 2")
         
-    # ###with start time but:     ##elapsed time do not align with the run profile elapsed time
-    # def update_elapsed_time_display(self, start_timestamp, run_time):
-    #     elapsed = time.time() - start_timestamp
-    #     self.elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
+#     # ###with start time but:     ##elapsed time do not align with the run profile elapsed time
+#     # def update_elapsed_time_display(self, start_timestamp, run_time):
+#     #     elapsed = time.time() - start_timestamp
+#     #     self.elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
 
-    #     if elapsed < run_time:
-    #         self.root.after(1, lambda: self.update_elapsed_time_display(start_timestamp, run_time))
-    #     else:
-    #         self.elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s")
+#     #     if elapsed < run_time:
+#     #         self.root.after(1, lambda: self.update_elapsed_time_display(start_timestamp, run_time))
+#     #     else:
+#     #         self.elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s")
             
-    # def pureflowrate_run_onoffprofile(self):
-        self.plot_expected_profile()
-        try:
-            start_time = float(self.start_delay_entry.get())
-            on_time = float(self.on_time_entry.get())
-            off_time = float(self.off_time_entry.get())
-            run_time = float(self.run_time_entry.get())
-        except ValueError:
-            messagebox.showerror("Input Error", "All timing fields must be numbers.")
-            return
+#     # def pureflowrate_run_onoffprofile(self):
+#         self.plot_expected_profile()
+#         try:
+#             start_time = float(self.start_delay_entry.get())
+#             on_time = float(self.on_time_entry.get())
+#             off_time = float(self.off_time_entry.get())
+#             run_time = float(self.run_time_entry.get())
+#         except ValueError:
+#             messagebox.showerror("Input Error", "All timing fields must be numbers.")
+#             return
 
-        if not self.mfcs[0].connected:
-            messagebox.showerror("Connection Error", "MFC 1 is not connected.")
-            return False
-        if not self.mfcs[1].connected:
-            messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
-            return False
-        if not self.cooling.connected:
-            messagebox.showerror("Connection Error", "Cooling is not connected.")
-            return False
-        if not self.valve.connected:
-            messagebox.showerror("Connection Error", "Valve is not connected.")            
-            return False
+#         if not self.mfcs[0].connected:
+#             messagebox.showerror("Connection Error", "MFC 1 is not connected.")
+#             return False
+#         if not self.mfcs[1].connected:
+#             messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
+#             return False
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # if not self.cooling.connected:
+#         #     messagebox.showerror("Connection Error", "Cooling is not connected.")
+#         #     return False
+#         if not self.valve.connected:
+#             messagebox.showerror("Connection Error", "Valve is not connected.")            
+#             return False
 
-        # check whether ambient temp is set
-        if not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showerror("Error", "Ambient temperature must be set.")
-            return False
+#         # check whether ambient temp is set
+#         if not isinstance(self.ambient_temp, (int, float)):
+#             messagebox.showerror("Error", "Ambient temperature must be set.")
+#             return False
     
 
-        def run_pulse_cycle():
-            self.update_run_var()
-            self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp)
-            ###Ik weet nou niet of we eerst moeten wachten totdat deze temp is bereikt of niet tho..
-            pulse_starttime = time.time()
+#         def run_pulse_cycle():
+#             self.update_run_var()
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # # Cooling OFF
+#         #     self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp)
+#             ###Ik weet nou niet of we eerst moeten wachten totdat deze temp is bereikt of niet tho..
+#             pulse_starttime = time.time()
             
-            self.root.after(0, lambda: self.update_elapsed_time_display(pulse_starttime, run_time))
-            self.status_var.set(f" Start Delay Time of {start_time}")
-            time.sleep(start_time)
-            elapsed = time.time() + start_time
-            while elapsed < run_time:
-                # ON state
-                self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1)
-                self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2)
-                self.valve.switch_position(2)
-                self.status_var.set(f" ON-state | MFC1 set to {self.pureflowrate_sel_flow1} mL/min | MFC2 (Nitrogen) set to {self.pureflowrate_sel_flow2} mL/min | Temp set to {self.pureflowrate_sel_temp} °C, | Valve set to Position 2")
-                time.sleep(on_time)
-                elapsed += on_time
+#             self.root.after(0, lambda: self.update_elapsed_time_display(pulse_starttime, run_time))
+#             self.status_var.set(f" Start Delay Time of {start_time}")
+#             time.sleep(start_time)
+#             elapsed = time.time() + start_time
+#             while elapsed < run_time:
+#                 # ON state
+#                 self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1)
+#                 self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2)
+#                 self.valve.switch_position(2)
+#                 self.status_var.set(f" ON-state | MFC1 set to {self.pureflowrate_sel_flow1} mL/min | MFC2 (Nitrogen) set to {self.pureflowrate_sel_flow2} mL/min | Temp set to {self.pureflowrate_sel_temp} °C, | Valve set to Position 2")
+#                 time.sleep(on_time)
+#                 elapsed += on_time
 
-                if elapsed >= run_time:
-                    break
-                # OFF state
-                self.mfcs[0].set_massflow(0)
-                self.mfcs[1].set_massflow(2)
-                self.valve.switch_position(1)
-                self.status_var.set(f" OFF-state | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | Temp set to {self.pureflowrate_sel_temp} °C | Valve set to Position 1")
-                time.sleep(off_time)
-                elapsed += off_time
+#                 if elapsed >= run_time:
+#                     break
+#                 # OFF state
+#                 self.mfcs[0].set_massflow(0)
+#                 self.mfcs[1].set_massflow(2)
+#                 self.valve.switch_position(1)
+#                 self.status_var.set(f" OFF-state | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | Temp set to {self.pureflowrate_sel_temp} °C | Valve set to Position 1")
+#                 time.sleep(off_time)
+#                 elapsed += off_time
 
 
-            # Final
-            self.mfcs[0].set_massflow(0)
-            self.mfcs[1].set_massflow(0)
-            self.valve.switch_position(1)
-            self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
-            self.status_var.set(f" Final Stop | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | Temp set to {self.ambient_temp} °C | Valve set to Position 1")
+#             # Final
+#             self.mfcs[0].set_massflow(0)
+#             self.mfcs[1].set_massflow(0)
+#             self.valve.switch_position(1)
+#             ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#             # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+#             self.status_var.set(f" Final Stop | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | Temp set to {self.ambient_temp} °C | Valve set to Position 1")
 
-        threading.Thread(target=run_pulse_cycle, daemon=True).start()
+#         threading.Thread(target=run_pulse_cycle, daemon=True).start()
             
-    ##Without start time
-    def update_elapsed_time_display(self, start_timestamp, run_time):
-        #when the UI is closed then this won't be "updating" (to debug)
-        if not self.root.winfo_exists():
-            return
+#     ##Without start time
+#     def update_elapsed_time_display(self, start_timestamp, run_time):
+#         #when the UI is closed then this won't be "updating" (to debug)
+#         if not self.root.winfo_exists():
+#             return
                 
-        #elapsed time
-        elapsed = time.time() - start_timestamp  
-        self.elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
+#         #elapsed time
+#         elapsed = time.time() - start_timestamp  
+#         self.elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
 
-        if elapsed < run_time:
-            self.root.after(100, lambda: self.update_elapsed_time_display(start_timestamp, run_time))
-        else:
-            self.elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s / {run_time:.1f} s")
+#         if elapsed < run_time:
+#             self.root.after(100, lambda: self.update_elapsed_time_display(start_timestamp, run_time))
+#         else:
+#             self.elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s / {run_time:.1f} s")
 
-    def pureflowrate_run_onoffprofile(self):
-        self.plot_expected_profile()
-        try:
-            on_time = float(self.on_time_entry.get())
-            off_time = float(self.off_time_entry.get())
-            run_time = float(self.run_time_entry.get())
-        except ValueError:
-            messagebox.showerror("Input Error", "All timing fields must be numbers.")
-            return
+#     def pureflowrate_run_onoffprofile(self):
+#         self.plot_expected_profile()
+#         try:
+#             on_time = float(self.on_time_entry.get())
+#             off_time = float(self.off_time_entry.get())
+#             run_time = float(self.run_time_entry.get())
+#         except ValueError:
+#             messagebox.showerror("Input Error", "All timing fields must be numbers.")
+#             return
 
-        if not self.mfcs[0].connected:
-            messagebox.showerror("Connection Error", "MFC 1 is not connected.")
-            return False
-        if not self.mfcs[1].connected:
-            messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
-            return False
-        if not self.cooling.connected:
-            messagebox.showerror("Connection Error", "Cooling is not connected.")
-            return False
-        if not self.valve.connected:
-            messagebox.showerror("Connection Error", "Valve is not connected.")            
-            return False
+#         if not self.mfcs[0].connected:
+#             messagebox.showerror("Connection Error", "MFC 1 is not connected.")
+#             return False
+#         if not self.mfcs[1].connected:
+#             messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
+#             return False
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
 
-        # check whether ambient temp is set
-        if not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showerror("Error", "Ambient temperature must be set.")
-            return False
+#         # if not self.cooling.connected:
+#         #     messagebox.showerror("Connection Error", "Cooling is not connected.")
+#         #     return False
+#         if not self.valve.connected:
+#             messagebox.showerror("Connection Error", "Valve is not connected.")            
+#             return False
+
+#         # check whether ambient temp is set
+#         if not isinstance(self.ambient_temp, (int, float)):
+#             messagebox.showerror("Error", "Ambient temperature must be set.")
+#             return False
     
 
-        def run_pulse_cycle():
-            self.update_run_var()
-            self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp)
+#         def run_pulse_cycle():
+#             self.update_run_var()
 
-            # Obtain the time that the code is start with running
-            pulse_starttime = time.time()
-            self.root.after(0, lambda: self.update_elapsed_time_display(pulse_starttime, run_time))
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#             # self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp)
 
-            while True:
-                # Check of tijd op is
-                if time.time() - pulse_starttime >= run_time:
-                    break
+#             # Obtain the time that the code is start with running
+#             pulse_starttime = time.time()
+#             self.root.after(0, lambda: self.update_elapsed_time_display(pulse_starttime, run_time))
 
-                # ON state
-                self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1)
-                self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2)
-                self.valve.switch_position(2)
-                self.status_var.set(
-                    f" ON-state | MFC1 set to {self.pureflowrate_sel_flow1} mL/min | "
-                    f"MFC2 (Nitrogen) set to {self.pureflowrate_sel_flow2} mL/min | "
-                    f"Temp set to {self.pureflowrate_sel_temp} °C, | Valve set to Position 2"
-                )
-                on_start = time.time()
+#             while True:
+#                 # Check of tijd op is
+#                 if time.time() - pulse_starttime >= run_time:
+#                     break
 
-                while time.time() - on_start < on_time:
-                    if time.time() - pulse_starttime >= run_time:
-                        break
-                    time.sleep(0.05)
+#                 # ON state
+#                 self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1)
+#                 self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2)
+#                 self.valve.switch_position(2)
+#                 self.status_var.set(
+#                     f" ON-state | MFC1 set to {self.pureflowrate_sel_flow1} mL/min | "
+#                     f"MFC2 (Nitrogen) set to {self.pureflowrate_sel_flow2} mL/min | "
+#                     f"Temp set to {self.pureflowrate_sel_temp} °C, | Valve set to Position 2"
+#                 )
+#                 on_start = time.time()
+
+#                 while time.time() - on_start < on_time:
+#                     if time.time() - pulse_starttime >= run_time:
+#                         break
+#                     time.sleep(0.05)
                     
-                ##When it ends within the on-time
-                if time.time() - pulse_starttime >= run_time:
-                    break
+#                 ##When it ends within the on-time
+#                 if time.time() - pulse_starttime >= run_time:
+#                     break
 
-                # OFF state
-                self.mfcs[0].set_massflow(0)
-                self.mfcs[1].set_massflow(2)
-                self.valve.switch_position(1)
-                self.status_var.set(
-                    f" OFF-state | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | "
-                    f"Temp set to {self.pureflowrate_sel_temp} °C | Valve set to Position 1"
-                )
+#                 # OFF state
+#                 self.mfcs[0].set_massflow(0)
+#                 self.mfcs[1].set_massflow(2)
+#                 self.valve.switch_position(1)
+#                 self.status_var.set(
+#                     f" OFF-state | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | "
+#                     f"Temp set to {self.pureflowrate_sel_temp} °C | Valve set to Position 1"
+#                 )
 
-                off_start = time.time()
-                while time.time() - off_start < off_time:
-                    if time.time() - pulse_starttime >= run_time:
-                        break
-                    time.sleep(0.05)
+#                 off_start = time.time()
+#                 while time.time() - off_start < off_time:
+#                     if time.time() - pulse_starttime >= run_time:
+#                         break
+#                     time.sleep(0.05)
 
-            # Final state after run_time is reached
-            self.mfcs[0].set_massflow(0)
-            self.mfcs[1].set_massflow(0)
-            self.valve.switch_position(1)
-            self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
-            self.status_var.set(
-                f" Final Stop | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | "
-                f"Temp set to {self.ambient_temp} °C | Valve set to Position 1"
-            )
+#             # Final state after run_time is reached
+#             self.mfcs[0].set_massflow(0)
+#             self.mfcs[1].set_massflow(0)
+#             self.valve.switch_position(1)
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
 
-        threading.Thread(target=run_pulse_cycle, daemon=True).start()
+#             # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+#             self.status_var.set(
+#                 f" Final Stop | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | "
+#                 f"Temp set to {self.ambient_temp} °C | Valve set to Position 1"
+#             )
+
+#         threading.Thread(target=run_pulse_cycle, daemon=True).start()
             
-    def plot_expected_profile(self):
-        #Expected Graph
-        try:
-            # Obtaining time fields
-            # start_time = float(self.start_delay_entry.get())
-            on_time = float(self.on_time_entry.get())
-            off_time = float(self.off_time_entry.get())
-            run_time = float(self.run_time_entry.get())
-            conc = float(self.pureflowrate_conc_var.get())
-        except ValueError:
-            messagebox.showerror("Input Error", "Start Delay Time, On time, Off Time, Run Time and Concentrations must be numbers.")
-            return
+#     def plot_expected_profile(self):
+#         #Expected Graph
+#         try:
+#             # Obtaining time fields
+#             # start_time = float(self.start_delay_entry.get())
+#             on_time = float(self.on_time_entry.get())
+#             off_time = float(self.off_time_entry.get())
+#             run_time = float(self.run_time_entry.get())
+#             conc = float(self.pureflowrate_conc_var.get())
+#         except ValueError:
+#             messagebox.showerror("Input Error", "Start Delay Time, On time, Off Time, Run Time and Concentrations must be numbers.")
+#             return
 
-        time_data = []
-        signal_data = []
-        total_time = 0
+#         time_data = []
+#         signal_data = []
+#         total_time = 0
 
-        # # Generating the start delay time 
-        # # Keep adding concentration 0 until the start time has reached
-        # for time in range(int(start_time)):
-        #     time_data.append(total_time)
-        #     signal_data.append(0)
-        #     total_time += 1
+#         # # Generating the start delay time 
+#         # # Keep adding concentration 0 until the start time has reached
+#         # for time in range(int(start_time)):
+#         #     time_data.append(total_time)
+#         #     signal_data.append(0)
+#         #     total_time += 1
 
-        # Generating the on and off pattern
-        while total_time < run_time:
-            for time in range(int(on_time)):
-                # on pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "ON" moet staan
-                if total_time >= run_time:
-                    break
-                time_data.append(total_time)
-                signal_data.append(conc)
-                total_time += 1
-                # off pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "OFF" moet staan
-            for time in range(int(off_time)):
-                if total_time >= run_time:
-                    break
-                time_data.append(total_time)
-                signal_data.append(0)
-                total_time += 1
+#         # Generating the on and off pattern
+#         while total_time < run_time:
+#             for time in range(int(on_time)):
+#                 # on pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "ON" moet staan
+#                 if total_time >= run_time:
+#                     break
+#                 time_data.append(total_time)
+#                 signal_data.append(conc)
+#                 total_time += 1
+#                 # off pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "OFF" moet staan
+#             for time in range(int(off_time)):
+#                 if total_time >= run_time:
+#                     break
+#                 time_data.append(total_time)
+#                 signal_data.append(0)
+#                 total_time += 1
 
-        # Clear previous canvas if exists
-        # https://stackoverflow.com/questions/65544881/clearing-and-plotting-mathplot-figure-on-tkinter
-        for child in self.graph_frame.winfo_children():
-            child.destroy()
+#         # Clear previous canvas if exists
+#         # https://stackoverflow.com/questions/65544881/clearing-and-plotting-mathplot-figure-on-tkinter
+#         for child in self.graph_frame.winfo_children():
+#             child.destroy()
 
-        # Create plot
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.plot(time_data, signal_data, linewidth=2)
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Concentration (ppm)")
-        ax.set_title("Expected On/Off Graph")
-        ax.set_xlim(0, time_data[-1] * 1.2 )
-        ax.set_ylim(0, conc * 1.2)
-        ax.grid(True)
-        fig.tight_layout()  
+#         # Create plot
+#         fig, ax = plt.subplots(figsize=(6, 4))
+#         ax.plot(time_data, signal_data, linewidth=2)
+#         ax.set_xlabel("Time (s)")
+#         ax.set_ylabel("Concentration (ppm)")
+#         ax.set_title("Expected On/Off Graph")
+#         ax.set_xlim(0, time_data[-1] * 1.2 )
+#         ax.set_ylim(0, conc * 1.2)
+#         ax.grid(True)
+#         fig.tight_layout()  
 
-       # Embed in Tkinter
-        canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
-        canvas.draw()
+#        # Embed in Tkinter
+#         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
+#         canvas.draw()
 
-        canvas_widget = canvas.get_tk_widget()
-        # Graph size 400 x 300
-        canvas_widget.config(width=500, height=300) 
-        # Prevent Frame Shrinking
-        # https://youtu.be/onIEw70Uw-4
-        canvas_widget.pack_propagate(False)  # prevent auto-resizing
-        canvas_widget.pack(fill='none', expand=False)
+#         canvas_widget = canvas.get_tk_widget()
+#         # Graph size 400 x 300
+#         canvas_widget.config(width=500, height=300) 
+#         # Prevent Frame Shrinking
+#         # https://youtu.be/onIEw70Uw-4
+#         canvas_widget.pack_propagate(False)  # prevent auto-resizing
+#         canvas_widget.pack(fill='none', expand=False)
 
 ###MATLABCODE 
     def create_voccalculator_tab(self):
@@ -2765,7 +2897,10 @@ class AutomatedSystemUI:
             messagebox.showerror("Input Error", "All timing fields must be numbers.")
             return
 
-        if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.cooling.connected or not self.valve.connected:
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.cooling.connected or not self.valve.connected:
+        if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.valve.connected:
             messagebox.showerror("Connection Error", "Ensure all devices are connected.")
             return
 
@@ -2775,7 +2910,10 @@ class AutomatedSystemUI:
 
         def run_pulse_cycle():
             self.update_run_var()
-            self.cooling.set_temperature(self.voc_temp, self.ambient_temp)
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+            # self.cooling.set_temperature(self.voc_temp, self.ambient_temp)
+            
             pulse_starttime = time.time()
             self.root.after(0, lambda: self.update_voc_elapsed_time_display(pulse_starttime, run_time))
 
@@ -2803,7 +2941,10 @@ class AutomatedSystemUI:
             # Final reset
             self.mfcs[0].set_massflow(0)
             self.mfcs[1].set_massflow(0)
-            self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+            # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+            
             self.valve.switch_position(1)
             self.status_var.set("VOC Run complete")
 
@@ -2948,6 +3089,13 @@ class AutomatedSystemUI:
         
         min_T = self.ambient_temp - 30
         
+        if concentration_ppm == 0:
+            f = 0
+            F = 0 
+            T = self.ambient_temp #It doesn't matter what temperature it is
+            Ps = 0 #By setting pressure to zero we ensure no flow thus no concentration
+            return f, F, T, Ps
+        
         #Range of Torrey Pines XR: -10 to 110 degrees, however also depending on ambient temp
         for T in range(-10, 110):
             Ps = 10 ** (A - B / (C + T))
@@ -3085,20 +3233,22 @@ class AutomatedSystemUI:
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.diffconc_steps_tree = ttk.Treeview(
             steps_frame, 
-            columns=("time", "concentration", "flow mfc1", "flow mfc2", "valve"), 
+            columns=("time", "valve", "concentration", "flow mfc1", "flow mfc2"), 
             show="headings"
         )
         self.diffconc_steps_tree.heading("time", text="Time (s)")
+        self.diffconc_steps_tree.heading("valve", text="Valve Position (1 or 2)")
         self.diffconc_steps_tree.heading("concentration", text="Concentration (ppm)")
         self.diffconc_steps_tree.heading("flow mfc1", text="Flow MFC 1 (mL/min)")
         self.diffconc_steps_tree.heading("flow mfc2", text="Flow MFC 2 (mL/min)")
-        self.diffconc_steps_tree.heading("valve", text="Valve Position (1 or 2)")
+
         
         self.diffconc_steps_tree.column("time", width=80, anchor=tk.CENTER)
+        self.diffconc_steps_tree.column("valve", width=80, anchor=tk.CENTER)
         self.diffconc_steps_tree.column("concentration", width=100, anchor=tk.CENTER)
         self.diffconc_steps_tree.column("flow mfc1", width=100, anchor=tk.CENTER)
         self.diffconc_steps_tree.column("flow mfc2", width=100, anchor=tk.CENTER)
-        self.diffconc_steps_tree.column("valve", width=80, anchor=tk.CENTER)
+
         
         self.diffconc_steps_tree.pack(fill = 'both' , expand=True)
         
@@ -3111,12 +3261,6 @@ class AutomatedSystemUI:
         self.step_time_entry.pack(side='left', padx=2)
         self.step_time_entry.config(state ='disabled')
 
-        self.diffconc_profile_conc_label = ttk.Label(step_controls_frame, text="Concentration (ppm):").pack(side='left')
-        self.diffconc_step_conc_var = tk.DoubleVar()
-        self.step_conc_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_conc_var, width=8)
-        self.step_conc_entry.pack(side='left', padx=2)
-        self.step_conc_entry.config(state ='disabled')
-        
         self.diffconc_profile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
         self.diffconc_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
         self.step_valve_combo = ttk.Combobox(
@@ -3127,6 +3271,13 @@ class AutomatedSystemUI:
         )
         self.step_valve_combo.pack(side='left', padx=2)
         self.step_valve_combo.config(state ='disabled')
+        
+        self.diffconc_profile_conc_label = ttk.Label(step_controls_frame, text="Concentration (ppm):").pack(side='left')
+        self.diffconc_step_conc_var = tk.DoubleVar()
+        self.step_conc_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_conc_var, width=8)
+        self.step_conc_entry.pack(side='left', padx=2)
+        self.step_conc_entry.config(state ='disabled')
+
         
         self.diffconc_profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow MFC 1 (mL/min):").pack(side='left')
         self.diffconc_flow1_var = tk.DoubleVar()
@@ -3265,10 +3416,10 @@ class AutomatedSystemUI:
             for step in profile.get("steps", []):
                 self.diffconc_steps_tree.insert("", tk.END, values=(
                     step["time"],
+                    step["valve"],
                     step["concentration"],
                     step["flow mfc1"],
-                    step["flow mfc2"],
-                    step["valve"]
+                    step["flow mfc2"]
                 ))
             self.update_diffconc_graph(profile.get("steps", []))
             
@@ -3338,7 +3489,7 @@ class AutomatedSystemUI:
                     break
 
             # Insert met automatisch berekende flows
-            self.diffconc_steps_tree.insert("", tk.END, values=(time_val, concentration_val, f_voc, f_n2, valve_val))
+            self.diffconc_steps_tree.insert("", tk.END, values=(time_val, valve_val, concentration_val, f_voc, f_n2))
             
             self.calculate_step_button.config(state = 'enabled')
             self.add_step_button.config(state = 'disabled')
@@ -3376,10 +3527,11 @@ class AutomatedSystemUI:
             values = self.diffconc_steps_tree.item(child, "values")
             steps.append({
                 "time": float(values[0]),
-                "concentration": float(values[1]),
-                "flow mfc1": float(values[2]),
-                "flow mfc2": float(values[3]),
-                "valve": int(values[4])
+                "valve": int(values[1]),
+                "concentration": float(values[2]),
+                "flow mfc1": float(values[3]),
+                "flow mfc2": float(values[4])
+
             })
         
         # Sort steps by time
@@ -3403,8 +3555,12 @@ class AutomatedSystemUI:
     
     def run_diffconcprofile(self):
         """Run the current profile"""    
-            
-        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
+
+        ##Koeling Uitzetten omdat hij het nog niet doet
+        # # Cooling OFF
+        # if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
+
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.valve.connected):
             messagebox.showwarning("Error", "One or more devices are not connected")
             return False
           

@@ -14,4 +14,8 @@ if __name__ == "__main__":
     
     app = AutomatedSystemUI(root)
     root.mainloop()
+
+
+##VRAGEN
+##ALS VALVE POSITION OP UIT STAAT, MOET HET DAN OOK NOG CONCENTRATIE GEVEN?
     

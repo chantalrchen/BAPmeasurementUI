@@ -3,8 +3,7 @@
             "mfc1": "COM61",
             "mfc2": "COM51",
             "mfc3": "COM31",
-            "cooling": "COM71",
-            "valve": "COM8"
+            "valve": "COM9"
       },
       "profiles_path": "C:/Users/chant/OneDrive - Delft University of Technology/test"
 }
