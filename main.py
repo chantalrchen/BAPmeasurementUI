@@ -1,8 +1,11 @@
 import tkinter as tk
-from ui import AutomatedSystemUI
+# from ui import AutomatedSystemUI
+from uiscrollable import AutomatedSystemUI
 
 if __name__ == "__main__":
     root = tk.Tk()
+    
+    # root.update_idletasks()
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -10,7 +13,7 @@ if __name__ == "__main__":
     print(screen_width, screen_height)
     root.geometry(f"{screen_width}x{screen_height}")
     
-    root.state("zoomed")
+    # root.state("zoomed")
     
     app = AutomatedSystemUI(root)
     root.mainloop()
