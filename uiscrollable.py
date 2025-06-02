@@ -3671,7 +3671,7 @@ class AutomatedSystemUI:
         
         #To check whether the temperature has already been set to the filled temperature
         # and asking whether it is thermal eq
-        if not self.diffconcprofile_checkthermaleq(profile):
+        if not self.diffconcprofile_checkthermaleq_alarm(profile):
             return
             
         self.update_run_var()
@@ -3687,7 +3687,7 @@ class AutomatedSystemUI:
         )
         self.diffconcprofile_thread.start()
 
-    def diffconcprofile_checkthermaleq(self, profile):
+    def diffconcprofile_checkthermaleq_alarm(self, profile):
         #Checking whether the temperature has already been set to the filled temperature
         # https://www.pythontutorial.net/tkinter/tkinter-askyesno/
         temperature = profile.get("temperature", None)
