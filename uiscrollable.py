@@ -20,7 +20,7 @@ class AutomatedSystemUI:
         
         self.path_pureflowrate = "C:/Users/chant/Downloads/Pure and Mixed flow rates.xlsx"
                 
-        self.settings_manager = SettingsManager(base_dir = "profilestab")
+        self.settings_manager = SettingsManager()
         settings_path = self.settings_manager.get_profiles_path()
         saved_ports = self.settings_manager.get_com_ports()
 
@@ -363,7 +363,11 @@ class AutomatedSystemUI:
         # Settings menu
         settings_menu = tk.Menu(menu, tearoff=0)
         settings_menu.add_command(label="Connection Settings", command=self.com_settings)
+        
+        voc_menu = tk.Menu(menu, tearoff=0)
+        voc_menu.add_command(label="Add VOCSs", command=self.voc_settings)
         menu.add_cascade(label="Settings", menu=settings_menu)
+        menu.add_cascade(label="VOC Settings", menu=voc_menu)
         
         self.root.config(menu=menu)
     
@@ -1370,6 +1374,7 @@ class AutomatedSystemUI:
         
         #Add all the profiles to the listbox
         for profile in self.mfcprofilemanager.get_profiles():
+            #Append the profiles at the end
             self.mfcprofile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
 
     def load_mfcprofile(self):
@@ -2848,14 +2853,10 @@ class AutomatedSystemUI:
         # VOC selection
         ttk.Label(self.voccalc_tab, text="Select VOC:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
         self.voccalc_voc_var = tk.StringVar()
-        vocs = [
-            '2-Nonanol', 'Nonanal', 'Tetradecane', '1-dodecanethiol', 'Ethanol', '1 propanol', '2 propanol',
-            'methanol', 'Aceton', 'acetic acid', 'α-Pinene', 'water', 'α-Terpinene', '1-Butanol', 'Toluene',
-            '2-Butanone (MEK)', 'DMSO'
-        ]
-        voc_dropdown = ttk.Combobox(self.voccalc_tab, textvariable=self.voccalc_voc_var, values=vocs, state="readonly")
-        voc_dropdown.grid(row=0, column=1, padx=10, pady=10)
-        voc_dropdown.current(0)
+        self.vocslist = list(self.settings_manager.get_voc_data().keys())
+        self.voc_dropdown_voccalculator = ttk.Combobox(self.voccalc_tab, textvariable=self.voccalc_voc_var, values=self.vocslist, state="readonly")
+        self.voc_dropdown_voccalculator.grid(row=0, column=1, padx=10, pady=10)
+        self.voc_dropdown_voccalculator.current(0)
 
         # Concentration input
         ttk.Label(self.voccalc_tab, text="Concentration (ppm):").grid(row=1, column=0, padx=10, pady=10, sticky='e')
@@ -2908,7 +2909,7 @@ class AutomatedSystemUI:
         self.voccalc_run_button = ttk.Button(self.voccalc_tab, state="disabled", text="Run On/Off Graph", command=self.voccalculator_run_onoffprofile)
         self.voccalc_run_button.grid(row=11, column=0, padx=5, pady=10, sticky="ew")
         
-        self.voccalc_plotgraph_button = ttk.Button(self.voccalc_tab,state="disabled", text="Plot Expected On/Off Graph", command=self.plot_expected_vocprofile)
+        self.voccalc_plotgraph_button = ttk.Button(self.voccalc_tab,state="disabled", text="Plot Setpoint Concentration On/Off Graph", command=self.plot_expected_vocprofile)
         self.voccalc_plotgraph_button.grid(row=11, column=1, padx=5, pady=10, sticky="ew")
 
         self.voccalc_elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
@@ -2916,7 +2917,7 @@ class AutomatedSystemUI:
         self.voccalc_elapsed_time_label.grid(row=12, column=0, columnspan=2, sticky='w')
 
         # For the graph
-        self.voccalc_graph_frame = ttk.LabelFrame(self.voccalc_tab, text="Expected On/Off Graph")
+        self.voccalc_graph_frame = ttk.LabelFrame(self.voccalc_tab, text="Setpoint Concentration On/Off Graph")
         self.voccalc_graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")        
         
     def update_voc_elapsed_time_display(self, start_timestamp, run_time):
@@ -3064,7 +3065,7 @@ class AutomatedSystemUI:
         ax.plot(time_data, signal_data, color='red', linewidth=2)
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Concentration (ppm)")
-        ax.set_title("Expected On/Off Graph")
+        ax.set_title("Setpoint Concentration On/Off Graph")
         ax.set_xlim(0, time_data[-1] * 1.2 )
         ax.set_ylim(0, conc * 1.2)
         ax.grid(True)
@@ -3086,10 +3087,11 @@ class AutomatedSystemUI:
         canvas_widget.pack(fill='none', expand=False)
        
     def calculate_voc_flow(self):
-        voc = self.voccalc_voc_var.get()
         try:
+            voc = self.voccalc_voc_var.get()
             concentration = float(self.voccalc_concentration_var.get())
             total_flow = float(self.voccalc_totalflowrate_var.get())
+            print(concentration, total_flow)
         except ValueError:
             messagebox.showerror("Invalid input", "Please enter valid numbers for concentration and total flow rate.")
             return
@@ -3099,6 +3101,7 @@ class AutomatedSystemUI:
         
         ## 
         self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow(voc, concentration, total_flow)
+        print(self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps)
         
         if self.voc_flow is not None:
             self.voccalc_flow_label.config(text=f"Required Flow: {self.voc_flow} mL/min")
@@ -3113,58 +3116,16 @@ class AutomatedSystemUI:
             self.voccalc_temp_label.config(text="Required Temperature: N/A")
             self.voccalc_ps_label.config(text="Saturated Vapor Pressure (Ps): N/A")
 
-    def calculate_required_flow(self, voc_name, concentration_ppm, total_flow_rate):
-        
-        # VOC_data = {
-        #     '2-Nonanol': (7.87942, 1966.54, 194.918),
-        #     'Nonanal': (7.42543, 1825.65, 206.718),
-        #     'Tetradecane': (7.2715, 1926.44, 187.657),
-        #     '1-dodecanethiol': (7.62037, 2309.1, 212.597),
-        #     'Ethanol': (8.13484, 1662.48, 238.131),
-        #     '1 propanol': (8.37895, 1788.02, 227.438),
-        #     '2 propanol': (8.87829, 2010.33, 252.636),
-        #     'methanol': (8.09126, 1582.91, 239.096),
-        #     'Aceton': (7.31414, 1315.67, 240.479),
-        #     'acetic acid': (7.8152, 1800.03, 246.894), 
-        #     'α-Pinene': (7.06153, 1621.22, 231.645),
-        #     'water': (8.07131, 1730.63, 233.426),
-        #     'α-Terpinene': (7.13456, 1673.54, 216.227),
-        #     '1-Butanol': (7.62121, 1543.89, 208.029),
-        #     'Toluene': (7.1362, 1457.29, 231.827),
-        #     '2-Butanone (MEK)': (7.29427, 1400.37, 237.655),
-        #     'DMSO': (7.25197, 1733.52, 207.58)
-        # }
-        
-        ##Also implementing the minimum and maximum temperature according to the PDF
-        ## A B C Tmin Tmax
-        VOC_data = {
-            '2-Nonanol': (7.87942, 1966.54, 194.918, -35, 349.85),
-            'Nonanal': (7.42543, 1825.65, 206.718, -18, 366.85),
-            'Tetradecane': (7.2715, 1926.44, 187.657, -12.85, 418.85),
-            '1-dodecanethiol': (7.62037, 2309.1, 212.597, -8, 450.85),
-            'Ethanol': (8.13484, 1662.48, 238.131, -114.1, 243.1),
-            '1 propanol': (8.37895, 1788.02, 227.438, 0, 100), ####niet in doc, ###WHERE IS THE T_MIN, T_MAX
-            '2 propanol': (8.87829, 2010.33, 252.636, 0, 100), ####niet in doc, ###WHERE IS THE T_MIN, T_MAX
-            'methanol': (8.09126, 1582.91, 239.096, -97.68, 239.43), #methylalcohol
-            'Acetone': (7.31414, 1315.67, 240.479, -94.7, 235.05), 
-            'acetic acid': (7.8152, 1800.03, 246.894, 16.66, 319.56), 
-            'α-Pinene': (7.06153, 1621.22, 231.645, -64, 358.85), #alpha-pinene
-            'water': (8.07131, 1730.63, 233.426, 0, 100), #niet in doc, ###WHERE IS THE T_MIN, T_MAX
-            'α-Terpinene': (7.13456, 1673.54, 216.227, -53.15, 378.85), #alpha-terpinene
-            '1-Butanol': (7.62121, 1543.89, 208.029, -89.3, 289.78),
-            'Toluene': (7.1362, 1457.29, 231.827, -94.97, 318.64),
-            '2-Butanone (MEK)': (7.29427, 1400.37, 237.655, -86.67, 262.35), #methyl ethyl ketone
-            'DMSO': (7.25197, 1733.52, 207.58, 18.52, 452.85) #dimethyl sulfoxide
-        }
-        
-        if voc_name not in VOC_data:
+    def calculate_required_flow(self, voc_name, concentration_ppm, total_flow_rate):       
+        voc_data = self.settings_manager.get_voc_data()
+        # print("vocdata", voc_data)
+    
+        if voc_name not in voc_data:
             return None, None, None, None
-
-        # without using the tmin and tmax
-        # A, B, C = VOC_data[voc_name]
-        
+       
         ##with using the tmin and tmax
-        A, B, C, Tmin, Tmax = VOC_data[voc_name]
+        A, B, C, Tmin, Tmax = voc_data[voc_name]
+        # print(A, B, C, Tmin, Tmax)
         P = 760  # mmHg; normale atmosferische luchtdruk
         min_f = 0.1 #minimum flow rate
 
@@ -3186,8 +3147,9 @@ class AutomatedSystemUI:
             Ps = 10 ** (A - B / (C + T))
             f = concentration_ppm * (total_flow_rate * P / Ps) * 1e-6
             F = total_flow_rate - f
+            # print(min_f, f, total_flow_rate)
             if min_f <= f <= total_flow_rate: # f should be smaller than the total flow rate but bigger than the minimum flow rate
-                print("ambient temp", min_T, f, F, T, Ps)
+                # print("ambient temp", min_T, f, F, T, Ps)
                 if T > min_T:
                     print("T bigger than minimum temp regarding ambient temp")
                     # Regarding the Tmin and Tmax of the Antoine eq table
@@ -3244,7 +3206,7 @@ class AutomatedSystemUI:
         graph_frame.pack(fill='both', expand=True, padx=5, pady=5)
 
         self.diffconc_fig, self.diffconc_ax = plt.subplots(figsize=(4, 2))
-        self.diffconc_ax.set_title("Expected Concentration vs Time")
+        self.diffconc_ax.set_title("Setpoint Concentration vs Time Graph")
         self.diffconc_ax.set_xlabel("Time (s)")
         self.diffconc_ax.set_ylabel("Concentration (ppm)")
         self.diffconc_ax.grid(True)
@@ -3288,15 +3250,11 @@ class AutomatedSystemUI:
         # VOC selection
         ttk.Label(secondrow_frame, text="Select VOC:").pack(side='left', padx=5)
         self.diffconc_voc_var = tk.StringVar()
-        vocs = [
-            '2-Nonanol', 'Nonanal', 'Tetradecane', '1-dodecanethiol', 'Ethanol', '1 propanol', '2 propanol',
-            'methanol', 'Aceton', 'acetic acid', 'α-Pinene', 'water', 'α-Terpinene', '1-Butanol', 'Toluene',
-            '2-Butanone (MEK)', 'DMSO'
-        ]
-        self.voc_dropdown = ttk.Combobox(secondrow_frame, textvariable=self.diffconc_voc_var, values=vocs, state="readonly")
-        self.voc_dropdown.pack(side='left', padx=5)
-        self.voc_dropdown.current(0)
-        self.voc_dropdown.config(state = 'enabled')
+        self.vocslist = list(self.settings_manager.get_voc_data().keys())
+        self.voc_dropdown_diffconcprofile = ttk.Combobox(secondrow_frame, textvariable=self.diffconc_voc_var, values=self.vocslist, state="readonly")
+        self.voc_dropdown_diffconcprofile.pack(side='left', padx=5)
+        self.voc_dropdown_diffconcprofile.current(0)
+        self.voc_dropdown_diffconcprofile.config(state = 'enabled')
         
         # Total flow rate
         ttk.Label(secondrow_frame, text="Total Flow Rate (mL/min):").pack(side='left', padx=5)
@@ -3423,7 +3381,7 @@ class AutomatedSystemUI:
     
     def enabling_select_diffconcprofile(self):
         ## Lock the VOC dropdown, total flow and temperature entry
-        self.voc_dropdown.config(state = 'disabled')
+        self.voc_dropdown_diffconcprofile.config(state = 'disabled')
         self.totalflow_entry.config(state = 'disabled')
         self.temp_entry.config(state = 'disabled')
         
@@ -3444,7 +3402,7 @@ class AutomatedSystemUI:
     
     def disabling_select_diffconcprofile(self):
         ## Lock the VOC dropdown, total flow and temperature entry
-        self.voc_dropdown.config(state = 'enabled')
+        self.voc_dropdown_diffconcprofile.config(state = 'enabled')
         self.totalflow_entry.config(state = 'enabled')
         self.temp_entry.config(state = 'enabled')
         
@@ -3625,6 +3583,8 @@ class AutomatedSystemUI:
 
             })
         
+        self.update_diffconc_graph(steps)
+            
         # Sort steps by time
         #https://docs.python.org/3/howto/sorting.html
         steps = sorted(steps, key=lambda steps: steps["time"])
@@ -3788,7 +3748,7 @@ class AutomatedSystemUI:
 
             self.diffconc_ax.clear()
             self.diffconc_ax.step(times, concs, where='post', linestyle='-', marker='o', markersize = 3, linewidth=2, color='red' )
-            self.diffconc_ax.set_title("Expected Different Concentration Graph")
+            self.diffconc_ax.set_title("Setpoint Concentration Graph")
             self.diffconc_ax.set_xlim(0, max(times))
             self.diffconc_ax.set_ylim(0, max(concs) * 1.5)
             self.diffconc_ax.set_xlabel("Time (s)")
@@ -3797,7 +3757,127 @@ class AutomatedSystemUI:
             self.diffconc_canvas.draw()
 
             # Om figure te saven        
-            self.diffconc_fig.savefig("C:/Users/chant/Downloads/expected_concentration_plot.png", dpi=300, bbox_inches='tight')
+            self.diffconc_fig.savefig("C:/Users/chant/Downloads/setpoint_concentration_plot.png", dpi=300, bbox_inches='tight')
             
         except tk.TclError:
                 return
+
+###Add VOCs
+    def voc_settings(self):
+        window = tk.Toplevel(self.root)
+        window.title("VOC Manager")
+
+        vocs = self.settings_manager.get_voc_data()
+
+        # VOC list
+        list_frame = ttk.LabelFrame(window, text="Existing VOCs")
+        list_frame.pack(padx=15, pady=10, fill="x")
+
+        self.voc_listbox = tk.Listbox(list_frame, height=6, width=40)
+        self.voc_listbox.pack(padx=10, pady=5)
+        for name in sorted(vocs.keys()):
+            self.voc_listbox.insert(tk.END, name)
+
+        self.voc_listbox.bind("<<ListboxSelect>>", self.load_voc_to_entries)
+
+        # New VOC entry
+        entry_frame = ttk.LabelFrame(window, text="Add New VOC")
+        entry_frame.pack(padx=15, pady=10, fill="x")
+
+        # VOC Name veld
+        self.voc_name_entry = ttk.Entry(entry_frame, width=25)
+        self.voc_name_entry.grid(row=0, column=1)
+
+        self.voc_value_entries = []
+        labels = ["Antoine A", "Antoine B", "Antoine C", "Tmin", "Tmax"]
+        for i, label in enumerate(labels):
+            ttk.Label(entry_frame, text=label).grid(row=i+1, column=0)
+            entry = ttk.Entry(entry_frame, width=25)
+            entry.grid(row=i+1, column=1)
+            self.voc_value_entries.append(entry)
+
+        # New VOC button by clearing the field
+        new_button = ttk.Button(entry_frame, text="New VOC", command=self.new_voc_fields)
+        new_button.grid(row=6, column=0, padx=5, pady=10)
+        
+        save_button = ttk.Button(entry_frame, text="Save VOC", command=self.save_voc_from_ui)
+        save_button.grid(row=6, column=1, padx=5, pady=10)
+
+        # Delete button
+        delete_button = ttk.Button(entry_frame, text="Delete VOC", command=self.delete_voc_from_ui)
+        delete_button.grid(row=6, column=2, padx=5, pady=10)
+        
+    def load_voc_to_entries(self, event=None):
+        selection = self.voc_listbox.curselection()
+        if not selection:
+            return
+
+        voc_name = self.voc_listbox.get(selection[0])
+        data = self.settings_manager.get_voc_data().get(voc_name)
+        print(data)
+        if data:
+            self.voc_name_entry.delete(0, tk.END)
+            self.voc_name_entry.insert(0, voc_name)
+
+            for i in range(5):
+                self.voc_value_entries[i].delete(0, tk.END)
+                self.voc_value_entries[i].insert(tk.END, str(data[i]))
+
+    def save_voc_from_ui(self):
+        try:
+            name = self.voc_name_entry.get().strip()
+            if not name:
+                raise ValueError("VOC name cannot be empty.")
+
+            values = []
+            for voc in self.voc_value_entries:
+                val = float(voc.get()) 
+                values.append(val)
+
+            print(values)
+            self.settings_manager.add_voc(name, values)
+            messagebox.showinfo("Success", f"VOC '{name}' is saved.")
+
+            self.refresh_voc_list()
+            
+            self.voc_name_entry.delete(0, tk.END)
+            for voc in self.voc_value_entries:
+                voc.delete(0, tk.END)
+
+        except ValueError as e:
+            messagebox.showerror("Error", str(e))
+
+    def refresh_voc_list(self):
+        voc_names = list(self.settings_manager.get_voc_data().keys())
+
+        self.voc_dropdown_diffconcprofile['values'] = voc_names
+        self.voc_dropdown_voccalculator['values'] = voc_names
+
+        #Update the listbox
+        self.voc_listbox.delete(0, tk.END)
+        for name in sorted(voc_names):
+            self.voc_listbox.insert(tk.END, name)
+            
+    def delete_voc_from_ui(self):
+        selected = self.voc_listbox.curselection()
+        if not selected:
+            messagebox.showwarning("No VOC selected", "Please select a VOC to delete.")
+            return
+
+        voc_name = self.voc_listbox.get(selected[0])
+
+        confirm = messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete '{voc_name}'?")
+        if confirm:
+            self.settings_manager.delete_voc(voc_name)
+            self.refresh_voc_list()
+            self.voc_name_entry.delete(0, tk.END)
+            for entry in self.voc_value_entries:
+                entry.delete(0, tk.END)
+
+            messagebox.showinfo("VOC Deleted", f"'{voc_name}' has been deleted.")
+            
+    def new_voc_fields(self):
+        self.voc_name_entry.delete(0, tk.END)
+        for entry in self.voc_value_entries:
+            entry.delete(0, tk.END)
+        self.voc_listbox.selection_clear(0, tk.END) #clear the selection of the list

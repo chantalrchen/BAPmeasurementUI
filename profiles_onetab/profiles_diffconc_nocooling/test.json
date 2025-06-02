@@ -1,0 +1,43 @@
+{
+      "description": "testets",
+      "temperature": 15.0,
+      "voc": "2-Nonanol",
+      "total_flow": 2.0,
+      "steps": [
+            {
+                  "time": 2.0,
+                  "valve": 1,
+                  "concentration": 2.0,
+                  "flow mfc1": 0.8014874119720751,
+                  "flow mfc2": 1.198512588027925
+            },
+            {
+                  "time": 3.0,
+                  "valve": 2,
+                  "concentration": 5.0,
+                  "flow mfc1": 1.770784252569727,
+                  "flow mfc2": 0.22921574743027295
+            },
+            {
+                  "time": 4.0,
+                  "valve": 1,
+                  "concentration": 3.0,
+                  "flow mfc1": 1.2022311179581127,
+                  "flow mfc2": 0.7977688820418873
+            },
+            {
+                  "time": 4.5,
+                  "valve": 2,
+                  "concentration": 4.0,
+                  "flow mfc1": 1.6029748239441501,
+                  "flow mfc2": 0.39702517605584986
+            },
+            {
+                  "time": 5.0,
+                  "valve": 1,
+                  "concentration": 5.0,
+                  "flow mfc1": 1.770784252569727,
+                  "flow mfc2": 0.22921574743027295
+            }
+      ]
+}
