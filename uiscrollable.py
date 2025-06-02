@@ -3781,10 +3781,11 @@ class AutomatedSystemUI:
         self.voc_listbox.bind("<<ListboxSelect>>", self.load_voc_to_entries)
 
         # New VOC entry
-        entry_frame = ttk.LabelFrame(window, text="Add New VOC")
+        entry_frame = ttk.LabelFrame(window)
         entry_frame.pack(padx=15, pady=10, fill="x")
 
         # VOC Name veld
+        ttk.Label(entry_frame, text = 'VOC Name').grid(row = 0, column = 0)
         self.voc_name_entry = ttk.Entry(entry_frame, width=25)
         self.voc_name_entry.grid(row=0, column=1)
 
