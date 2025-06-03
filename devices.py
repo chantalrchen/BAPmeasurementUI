@@ -5,6 +5,133 @@ import serial   # Cooling and Valve
 import time 
 
 
+# # class BronkhorstMFC:
+#     def __init__(self, port = "COM3"):
+#         self.port = port
+#         self.connected = False
+#         self.instrument = None
+#         # self.channel = channel
+#         self.massflow = 0
+#         self.targetmassflow = 0
+#         # self.maxmassflow = 4.0
+        
+#     def connect(self):
+#         try:
+#             self.instrument = propar.instrument(self.port) # channel = self.channel)
+#             # print("I am in the MFC connecting function. My port is ", self.port)
+            
+#             ##toegevoegd om te checken whether it is really connected, nog niet getest tho
+#             if self.get_massflow() is not False:
+#                 self.connected = True
+#                 self.initialize()
+#                 return self.connected
+#         except Exception as err:
+#             messagebox.showerror("Error",
+#                 f"An error occurred while connecting the Bronkhorst MFC with port {self.port}: {err}"
+#             )
+#         return False  
+
+
+#         ##FOR SIMULATION
+#         # self.connected = True
+#         # return self.connected
+    
+
+#     def disconnect(self):
+#     # reset the value, fsetpoint = 0 
+#         try:
+#             param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
+#             self.instrument.write_parameters(param) #Fsetpoint
+            
+#         except Exception as err:
+#             messagebox.showerror("Error",
+#              f"An error occurred while disconnecting the Bronkhorst MFC: {err}")
+     
+#         # self.connected = False
+#         # self.instrument = None
+        
+    
+#     def initialize(self):
+#         try:
+#             # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
+#             param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 0}]
+#             # print("HI I AM IN MFC INITIALIZE FUNCTION MY CONNECTION IS", self.connected )
+#             self.instrument.write_parameters(param)
+#             return True
+
+
+#         except Exception as err:
+#             messagebox.showerror("Error",
+#                 f"An error occurred while initializing the Bronkhorst MFC with channel"# {self.channel}: {err}"
+#             )
+#         return False  
+    
+#         # #FOR SIMULATION
+#         # return True
+  
+#     def get_massflow(self):
+#         ##the following should be connected when connected with Bronkhorst MFC
+#         if self.connected and self.instrument is not None:  # device is connected and assigned
+#             try:
+#                 param = [{'proc_nr':  33, 'parm_nr': 0, 'parm_type': propar.PP_TYPE_FLOAT}] #Fmeasure
+#                 self.massflow = self.instrument.read_parameters(param)
+#                 return self.massflow  
+#             except Exception as err:
+#                 messagebox.showerror("Error",
+#                     f"An error occurred while reading the mass flow rate: {err}"
+#                 )
+#                 return False  
+#         else:
+#             messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
+#             return False  
+
+#         # ##FOR SIMULATION
+#         # if self.connected:
+#         #     try:
+#         #         self.massflow += (self.targetmassflow - self.massflow) * 0.1
+#         #         if abs(self.massflow - self.targetmassflow) < 0.001:
+#         #             self.massflow = self.targetmassflow
+#         #         return self.massflow
+#         #     except Exception as err:
+#         #         messagebox.showerror("Error",
+#         #             f"An error occurred while reading the mass flow rate: {err}"
+#         #         )
+#         #         return False
+#         # else:
+#         #     messagebox.showerror("Error","The Bronkhorst MFC is not connected.")
+#         #     return False 
+
+#     def set_massflow(self, value: float):
+#         # ##the following should be connected when connected with Bronkhorst MFC
+#         if self.connected and self.instrument is not None:  # device is connected and assigned
+#         # if self.connected:
+#             try:
+#                 # print("HI I AM IN THE SET_MASSFLOW LOOP AND SELF.CONNECTED IS", self.connected)
+#                 # print(value, self.targetmassflow, self.maxmassflow)
+#                 if value < 0:
+#                     messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
+#                     return False             
+#                 else:
+#                     self.targetmassflow = value
+                    
+#                     #####
+#                     ###the following should be connected when connected with Bronkhorst MFC
+#                     param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
+#                     self.instrument.write_parameters(param1) #Fsetpoint
+#                     # print("HI IM NOW SETTING A MASSFLOW TO ", value)
+#                     ###
+                    
+#                     return True  
+#             except Exception as err:
+#                 messagebox.showerror("Error",
+#                     f"An error occurred while setting the mass flow rate: {err}"
+#                 )
+#                 return False  
+#         else:
+#             messagebox.showerror("Error", "The Bronkhorst MFCs is not connected.")
+#             return False  
+#         ##
+
 class BronkhorstMFC:
     def __init__(self, port = "COM3"):
         self.port = port
@@ -13,18 +140,15 @@ class BronkhorstMFC:
         # self.channel = channel
         self.massflow = 0
         self.targetmassflow = 0
-        # self.maxmassflow = 4.0
+        self.maxmassflow = 4.0
         
     def connect(self):
         try:
             self.instrument = propar.instrument(self.port) # channel = self.channel)
-            # print("I am in the MFC connecting function. My port is ", self.port)
-            
-            ##toegevoegd om te checken whether it is really connected, nog niet getest tho
-            if self.get_massflow() is not False:
-                self.connected = True
-                self.initialize()
-                return self.connected
+            print("I am in the MFC connecting function. My port is ", self.port)
+            self.connected = True
+            self.initialize()
+            return self.connected
         except Exception as err:
             messagebox.showerror("Error",
                 f"An error occurred while connecting the Bronkhorst MFC with port {self.port}: {err}"
@@ -36,9 +160,8 @@ class BronkhorstMFC:
         # self.connected = True
         # return self.connected
     
-
+    #reset the value, fsetpoint = 0 
     def disconnect(self):
-    # reset the value, fsetpoint = 0 
         try:
             param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
             self.instrument.write_parameters(param) #Fsetpoint
@@ -47,17 +170,18 @@ class BronkhorstMFC:
             messagebox.showerror("Error",
              f"An error occurred while disconnecting the Bronkhorst MFC: {err}")
      
-        # self.connected = False
-        # self.instrument = None
+
+
+    #     self.connected = False
+    #     self.instrument = None
         
     
     def initialize(self):
         try:
             # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
             param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 0}]
-            # print("HI I AM IN MFC INITIALIZE FUNCTION MY CONNECTION IS", self.connected )
+            print("HI I AM IN MFC INITIALIZE FUNCTION MY CONNECTION IS", self.connected )
             self.instrument.write_parameters(param)
-            return True
 
 
         except Exception as err:
@@ -66,8 +190,8 @@ class BronkhorstMFC:
             )
         return False  
     
-        # #FOR SIMULATION
-        # return True
+        #FOR SIMULATION
+        #  return True
   
     def get_massflow(self):
         ##the following should be connected when connected with Bronkhorst MFC
@@ -85,7 +209,7 @@ class BronkhorstMFC:
             messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
             return False  
 
-        # ##FOR SIMULATION
+        ##FOR SIMULATION
         # if self.connected:
         #     try:
         #         self.massflow += (self.targetmassflow - self.massflow) * 0.1
@@ -102,15 +226,27 @@ class BronkhorstMFC:
         #     return False 
 
     def set_massflow(self, value: float):
-        # ##the following should be connected when connected with Bronkhorst MFC
+        ##the following should be connected when connected with Bronkhorst MFC
         if self.connected and self.instrument is not None:  # device is connected and assigned
         # if self.connected:
             try:
-                # print("HI I AM IN THE SET_MASSFLOW LOOP AND SELF.CONNECTED IS", self.connected)
-                # print(value, self.targetmassflow, self.maxmassflow)
+                print("HI I AM IN THE SET_MASSFLOW LOOP AND SELF.CONNECTED IS", self.connected)
+                print(value, self.targetmassflow, self.maxmassflow)
                 if value < 0:
                     messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
                     return False             
+                elif value > self.maxmassflow:
+                    messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow:.2f} mL/min. The mass flow rate will be set to {self.maxmassflow:.2f} mL/min.")
+                    self.targetmassflow = self.maxmassflow
+                    
+                    # ####
+                    # ##the following should be connected when connected with Bronkhorst MFC
+                    param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
+                    self.instrument.write_parameters(param)
+                    print("HI IM NOW SETTING A MASSFLOW TO ", self.maxmassflow)
+                    # ###
+                    
+                    return True
                 else:
                     self.targetmassflow = value
                     
@@ -118,8 +254,8 @@ class BronkhorstMFC:
                     ###the following should be connected when connected with Bronkhorst MFC
                     param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
                     self.instrument.write_parameters(param1) #Fsetpoint
-                    # print("HI IM NOW SETTING A MASSFLOW TO ", value)
-                    ###
+                    print("HI IM NOW SETTING A MASSFLOW TO ", value)
+                    ####
                     
                     return True  
             except Exception as err:

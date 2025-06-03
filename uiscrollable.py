@@ -18,7 +18,7 @@ class AutomatedSystemUI:
         self.root.title("Automated System")
         self.root.geometry("1400x800")
         
-        self.path_pureflowrate = "C:/Users/chant/Downloads/Pure and Mixed flow rates.xlsx"
+        # self.path_pureflowrate = "C:/Users/chant/Downloads/Pure and Mixed flow rates.xlsx"
                 
         self.settings_manager = SettingsManager()
         settings_path = self.settings_manager.get_profiles_path()
@@ -313,11 +313,11 @@ class AutomatedSystemUI:
             for i in range(3):
                 if self.mfcs[i].connected:
                     
-                    # flow = self.mfcs[i].get_massflow()[0]['data']
+                    flow = self.mfcs[i].get_massflow()[0]['data']
                     
                     #TO SIMULATE
-                    flow = self.mfcs[i].get_massflow()
-                    flow_str = f"{flow:.3f} mL/min"
+                #     flow = self.mfcs[i].get_massflow()
+                    flow_str = f"{flow} mL/min"
                 else:
                     flow = None
                     flow_str = "-"
@@ -2993,7 +2993,7 @@ class AutomatedSystemUI:
 
                 # OFF state
                 self.mfcs[0].set_massflow(0)
-                self.mfcs[1].set_massflow(0)
+                self.mfcs[1].set_massflow(4) #nitrogen max flow rate
                 self.valve.switch_position(1)
                 self.status_var.set("VOC OFF-state")
                 time.sleep(off_time)
@@ -3072,7 +3072,7 @@ class AutomatedSystemUI:
         fig.tight_layout()  
 
         # Om figure te saven        
-        fig.savefig("C:/Users/chant/Downloads/expected_onoffconcentration_plot.png", dpi=300, bbox_inches='tight')
+        # fig.savefig("C:/Users/chant/Downloads/expected_onoffconcentration_plot.png", dpi=300, bbox_inches='tight')
 
        # Embed in Tkinter
         canvas = FigureCanvasTkAgg(fig, master=self.voccalc_graph_frame)
@@ -3757,7 +3757,7 @@ class AutomatedSystemUI:
             self.diffconc_canvas.draw()
 
             # Om figure te saven        
-            self.diffconc_fig.savefig("C:/Users/chant/Downloads/setpoint_concentration_plot.png", dpi=300, bbox_inches='tight')
+            # self.diffconc_fig.savefig("C:/Users/chant/Downloads/setpoint_concentration_plot.png", dpi=300, bbox_inches='tight')
             
         except tk.TclError:
                 return
