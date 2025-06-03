@@ -313,10 +313,12 @@ class AutomatedSystemUI:
             for i in range(3):
                 if self.mfcs[i].connected:
                     
-                    flow = self.mfcs[i].get_massflow()[0]['data']
-                    
+                    # flow = self.mfcs[i].get_massflow()[0]['data']
+                
+                ###DIT MOET AAN EN DE REGEL HIEBOVEN MOET UIT OM TE SIMULEREN    
                     #TO SIMULATE
-                #     flow = self.mfcs[i].get_massflow()
+                    flow = self.mfcs[i].get_massflow()
+            
                     flow_str = f"{flow} mL/min"
                 else:
                     flow = None
@@ -2993,7 +2995,7 @@ class AutomatedSystemUI:
 
                 # OFF state
                 self.mfcs[0].set_massflow(0)
-                self.mfcs[1].set_massflow(4) #nitrogen max flow rate
+                self.mfcs[1].set_massflow(0) #nitrogen max flow rate
                 self.valve.switch_position(1)
                 self.status_var.set("VOC OFF-state")
                 time.sleep(off_time)
@@ -3711,18 +3713,26 @@ class AutomatedSystemUI:
             concentration_val = float(self.diffconc_step_conc_var.get())
             total_flow = float(self.diffconc_totalflowrate_var.get())
             voc = self.diffconc_voc_var.get()
+            valve_position = int(self.diffconc_valve_var.get())
+            print(valve_position)
 
-            f_voc, f_n2, T, Ps = self.calculate_required_flow(voc, concentration_val, total_flow)
+            if valve_position == 2:
+                self.diffconc_flow1_var.set(0)
+                self.diffconc_flow2_var.set(0)
+                
+                self.add_step_button.config(state = 'enabled')
+            else:
+                f_voc, f_n2, T, Ps = self.calculate_required_flow(voc, concentration_val, total_flow)
 
-            if f_voc is None or f_n2 is None:
-                messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
-                return
+                if f_voc is None or f_n2 is None:
+                    messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
+                    return
 
-            ## Set the values to the corresponding labels
-            self.diffconc_flow1_var.set(f_voc)
-            self.diffconc_flow2_var.set(f_n2)
+                ## Set the values to the corresponding labels
+                self.diffconc_flow1_var.set(f_voc)
+                self.diffconc_flow2_var.set(f_n2)
 
-            self.add_step_button.config(state = 'enabled')
+                self.add_step_button.config(state = 'enabled')
 
         except ValueError as e:
             messagebox.showerror("Error", f"Invalid input: {e}")
