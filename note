@@ -1,0 +1,3 @@
+pip install:
+
+bronkhorst-propar,pyserial, matplotlib, pandas 
