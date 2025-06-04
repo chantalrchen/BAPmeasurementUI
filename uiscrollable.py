@@ -96,17 +96,18 @@ class AutomatedSystemUI:
         
         othervar_frame  = ttk.Frame(header_frame)
         othervar_frame.pack(side='right', padx=10)
-        
+
+        ### niet meer nodig        
         # Ambient temperature section
-        ttk.Label(othervar_frame, text="Set Ambient Temperature", font=("Arial", 9, "bold")).pack(fill='both', expand=True)
-        # Label and Entry for ambient temperature
-        self.ambient_temp_label = tk.Label(othervar_frame, text=f"Ambient Temperature (°C): not set")
-        self.ambient_temp_label.pack(fill='both', expand=True)
-        self.ambient_temp = tk.DoubleVar()  # Use DoubleVar for floating-point values
-        self.ambient_temp_entry = tk.Entry(othervar_frame, textvariable = self.ambient_temp)
-        self.ambient_temp_entry.pack(fill='both', expand=True)
-        ambient_temp_button = ttk.Button(othervar_frame, text = "Set ambient temperature", command = self.set_ambient_temp)
-        ambient_temp_button.pack(fill='both', expand=True)
+        # ttk.Label(othervar_frame, text="Set Ambient Temperature", font=("Arial", 9, "bold")).pack(fill='both', expand=True)
+        # # Label and Entry for ambient temperature
+        # self.ambient_temp_label = tk.Label(othervar_frame, text=f"Ambient Temperature (°C): not set")
+        # self.ambient_temp_label.pack(fill='both', expand=True)
+        # self.ambient_temp = tk.DoubleVar()  # Use DoubleVar for floating-point values
+        # self.ambient_temp_entry = tk.Entry(othervar_frame, textvariable = self.ambient_temp)
+        # self.ambient_temp_entry.pack(fill='both', expand=True)
+        # ambient_temp_button = ttk.Button(othervar_frame, text = "Set ambient temperature", command = self.set_ambient_temp)
+        # ambient_temp_button.pack(fill='both', expand=True)
         
         # Status bar, to show what has been adjusted
         # Status label
@@ -283,22 +284,23 @@ class AutomatedSystemUI:
         scrollable_frame.bind("<Configure>", configure_scroll_region)
 
         return scrollable_frame
-        
-    def set_ambient_temp(self):
-        """
-        Retrieve the ambient temperature from the entry box and set it.
-        """
-        try:
-            # Get the value from the entry box
-            self.ambient_temp = float(self.ambient_temp_entry.get())
-            # Update the status bar to show the ambient temperature has been set
-            # Cooling not connected
-            # self.ambient_temperature_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
-            self.ambient_temp_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
-            self.status_var.set(f"Ambient temperature set to {self.ambient_temp} °C")
-        except ValueError:
-            self.status_var.set("Invalid input! Enter a floating number for the ambient temperature.")
-            messagebox.showerror("Invalid Input", "Please enter a floating number for ambient temperature.")
+    
+    ### NIET MEER NODIG
+    # def set_ambient_temp(self):
+    #     """
+    #     Retrieve the ambient temperature from the entry box and set it.
+    #     """
+    #     try:
+    #         # Get the value from the entry box
+    #         self.ambient_temp = float(self.ambient_temp_entry.get())
+    #         # Update the status bar to show the ambient temperature has been set
+    #         # Cooling not connected
+    #         # self.ambient_temperature_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
+    #         self.ambient_temp_label.config(text=f"Ambient temperature: {self.ambient_temp} °C")
+    #         self.status_var.set(f"Ambient temperature set to {self.ambient_temp} °C")
+    #     except ValueError:
+    #         self.status_var.set("Invalid input! Enter a floating number for the ambient temperature.")
+    #         messagebox.showerror("Invalid Input", "Please enter a floating number for ambient temperature.")
     
     def update_run_var(self):
         
@@ -2100,7 +2102,7 @@ class AutomatedSystemUI:
             messagebox.showerror("Error", f"Failed to load Valve profile '{valve_name}'")
             return
 
-        # Check devices and ambient temp
+        # Check devices 
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
             messagebox.showerror("Connection Error", "One or more MFCs not connected.")
             return
@@ -2112,9 +2114,9 @@ class AutomatedSystemUI:
         if not self.valve.connected:
             messagebox.showerror("Connection Error", "Valve not connected.")
             return
-        if not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showerror("Error", "Ambient temperature must be set.")
-            return
+        # if not isinstance(self.ambient_temp, (int, float)):
+        #     messagebox.showerror("Error", "Ambient temperature must be set.")
+        #     return
         
         self.update_run_var()
         self.stop_all_button.config(state=tk.NORMAL)
@@ -2848,7 +2850,7 @@ class AutomatedSystemUI:
     def create_voccalculator_tab(self):
 
         ##Make it scrollable
-        self.voccalc_tab = self.create_scrollable_tab(self.notebook, "VOC Flow Calculator")
+        self.voccalc_tab = self.create_scrollable_tab(self.notebook, "VOC Flow Calculator with T = 0")
         # self.voccalc_tab = ttk.Frame(self.notebook)
         # self.notebook.add(self.voccalc_tab, text="VOC Flow Calculator")
 
@@ -2883,9 +2885,9 @@ class AutomatedSystemUI:
         self.voccalc_N_label = ttk.Label(self.voccalc_tab, text="Required Mass Flow of Nitrogen: -")
         self.voccalc_N_label.grid(row=5, column=0, columnspan=2, pady=5)
 
-
-        self.voccalc_temp_label = ttk.Label(self.voccalc_tab, text="Required Temperature: -")
-        self.voccalc_temp_label.grid(row=6, column=0, columnspan=2, pady=5)
+        # No need
+        # self.voccalc_temp_label = ttk.Label(self.voccalc_tab, text="Required Temperature: -")
+        # self.voccalc_temp_label.grid(row=6, column=0, columnspan=2, pady=5)
 
         self.voccalc_ps_label = ttk.Label(self.voccalc_tab, text="Saturated Vapor Pressure (Ps): -")
         self.voccalc_ps_label.grid(row=7, column=0, columnspan=2, pady=5)
@@ -2956,20 +2958,29 @@ class AutomatedSystemUI:
             messagebox.showerror("Connection Error", "Ensure all devices are connected.")
             return
 
-        if not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showerror("Error", "Ambient temperature must be set.")
-            return
+        # if not isinstance(self.ambient_temp, (int, float)):
+        #     messagebox.showerror("Error", "Ambient temperature must be set.")
+        #     return
         
         #Checking whether the temperature has already been set to the filled temperature
         # https://www.pythontutorial.net/tkinter/tkinter-askyesno/
-        print(self.voc_temp)
-        if self.voc_temp is not None:
-            confirm = messagebox.askyesno(
-                "Cooling Plate Temperature",
-                f"Did you set the cooling plate temperature to {self.voc_temp:.1f} °C?"
-            )
-            if not confirm:
-                return  
+        # print(self.voc_temp)
+        # if self.voc_temp is not None:
+        #     confirm = messagebox.askyesno(
+        #         "Cooling Plate Temperature",
+        #         f"Did you set the cooling plate temperature to {self.voc_temp:.1f} °C?"
+        #     )
+        #     if not confirm:
+        #         return  
+
+        # T = 0
+        confirm = messagebox.askyesno(
+            "Cooling Plate Temperature",
+            f"Did you set the cooling plate temperature to 0 °C?"
+        )
+        if not confirm:
+            return  
+            
         def run_pulse_cycle():
             self.update_run_var()
         ##Koeling Uitzetten omdat hij het nog niet doet
@@ -3098,27 +3109,71 @@ class AutomatedSystemUI:
             messagebox.showerror("Invalid input", "Please enter valid numbers for concentration and total flow rate.")
             return
 
-        ### Standard temperature of 1 degree
-        # self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow_T1(voc, concentration, total_flow)
+        ### Standard temperature of 0 degree
+        self.voc_flow, self.voc_N, self.voc_Ps = self.calculate_required_flow_0degrees(voc, concentration, total_flow)
         
-        ## 
-        self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow(voc, concentration, total_flow)
-        print(self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps)
+        # ## Variating temp
+        # self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow(voc, concentration, total_flow)
+        # print(self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps)
         
         if self.voc_flow is not None:
             self.voccalc_flow_label.config(text=f"Required Flow: {self.voc_flow} mL/min")
             self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: {self.voc_N} mL/min")
-            self.voccalc_temp_label.config(text=f"Required Temperature: {self.voc_temp} °C")
+            # self.voccalc_temp_label.config(text=f"Required Temperature: {self.voc_temp} °C")
             self.voccalc_ps_label.config(text=f"Saturated Vapor Pressure (Ps): {self.voc_Ps} mmHg")
             self.voccalc_plotgraph_button.config(state="normal")
             self.voccalc_run_button.config(state="normal")
         else:
             self.voccalc_flow_label.config(text="Required Flow: N/A")
             self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: N/A")
-            self.voccalc_temp_label.config(text="Required Temperature: N/A")
+            # self.voccalc_temp_label.config(text="Required Temperature: N/A")
             self.voccalc_ps_label.config(text="Saturated Vapor Pressure (Ps): N/A")
 
-    def calculate_required_flow(self, voc_name, concentration_ppm, total_flow_rate):       
+    # def calculate_required_flow_variating_temp(self, voc_name, concentration_ppm, total_flow_rate):       
+    #     voc_data = self.settings_manager.get_voc_data()
+    #     # print("vocdata", voc_data)
+    
+    #     if voc_name not in voc_data:
+    #         return None, None, None, None
+       
+    #     ##with using the tmin and tmax
+    #     A, B, C, Tmin, Tmax = voc_data[voc_name]
+    #     # print(A, B, C, Tmin, Tmax)
+    #     P = 760  # mmHg; normale atmosferische luchtdruk
+    #     min_f = 0.1 #minimum flow rate
+
+    #     if not isinstance(self.ambient_temp, (int, float)):
+    #         messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
+    #         return None, None, None, None
+        
+    #     # When temperature variates (cooling)
+    #     min_T = self.ambient_temp - 30
+        
+    #     if concentration_ppm == 0:
+    #         f = 0
+    #         F = 0 
+    #         T = self.ambient_temp #It doesn't matter what temperature it is
+    #         Ps = 0 #By setting pressure to zero we ensure no flow thus no concentration
+    #         return f, F, T, Ps
+        
+    #     #Range of Torrey Pines XR: -10 to 110 degrees, however also depending on ambient temp
+    #     for T in range(-10, 110):
+    #         Ps = 10 ** (A - B / (C + T))
+    #         f = concentration_ppm * (total_flow_rate * P / Ps) * 1e-6
+    #         F = total_flow_rate - f
+    #         # print(min_f, f, total_flow_rate)
+    #         if min_f <= f <= total_flow_rate: # f should be smaller than the total flow rate but bigger than the minimum flow rate
+    #             # print("ambient temp", min_T, f, F, T, Ps)
+    #             if T > min_T:
+    #                 print("T bigger than minimum temp regarding ambient temp")
+    #                 # Regarding the Tmin and Tmax of the Antoine eq table
+    #                 if Tmin <= T <= Tmax:
+    #                     return f, F, T, Ps
+
+    #     return None, None, None, None
+
+    def calculate_required_flow_0degrees(self, voc_name, concentration_ppm, total_flow_rate):       
+        T = 0
         voc_data = self.settings_manager.get_voc_data()
         # print("vocdata", voc_data)
     
@@ -3131,34 +3186,21 @@ class AutomatedSystemUI:
         P = 760  # mmHg; normale atmosferische luchtdruk
         min_f = 0.1 #minimum flow rate
 
-        if not isinstance(self.ambient_temp, (int, float)):
-            messagebox.showwarning("Invalid Input", "Ambient Temperature has not been set yet or is an non-numeric value.")
-            return None, None, None, None
-        
-        min_T = self.ambient_temp - 30
-        
         if concentration_ppm == 0:
             f = 0
             F = 0 
-            T = self.ambient_temp #It doesn't matter what temperature it is
             Ps = 0 #By setting pressure to zero we ensure no flow thus no concentration
-            return f, F, T, Ps
-        
-        #Range of Torrey Pines XR: -10 to 110 degrees, however also depending on ambient temp
-        for T in range(-10, 110):
-            Ps = 10 ** (A - B / (C + T))
-            f = concentration_ppm * (total_flow_rate * P / Ps) * 1e-6
-            F = total_flow_rate - f
-            # print(min_f, f, total_flow_rate)
-            if min_f <= f <= total_flow_rate: # f should be smaller than the total flow rate but bigger than the minimum flow rate
-                # print("ambient temp", min_T, f, F, T, Ps)
-                if T > min_T:
-                    print("T bigger than minimum temp regarding ambient temp")
-                    # Regarding the Tmin and Tmax of the Antoine eq table
-                    if Tmin <= T <= Tmax:
-                        return f, F, T, Ps
+            return f, F, Ps
 
-        return None, None, None, None
+        Ps = 10 ** (A - B / (C + T))
+        f = concentration_ppm * (total_flow_rate * P / Ps) * 1e-6
+        F = total_flow_rate - f
+        # print(min_f, f, total_flow_rate)
+        if min_f <= f <= total_flow_rate: # f should be smaller than the total flow rate but bigger than the minimum flow rate
+            if Tmin <= T <= Tmax:
+                return f, F, Ps
+
+        return None, None, None
     
 ####Tab different concentration
     def create_diffconc_profile_tab(self):
@@ -3265,11 +3307,12 @@ class AutomatedSystemUI:
         self.totalflow_entry.pack(side='left', padx=5)
         self.totalflow_entry.config(state = 'enabled')
         
-        ttk.Label(secondrow_frame, text="Temperature (°C)").pack(side='left')
-        self.diffconc_temp_var = tk.DoubleVar()
-        self.temp_entry = ttk.Entry(secondrow_frame, textvariable=self.diffconc_temp_var)
-        self.temp_entry.pack(side='left', padx=5, expand=True, fill='x')
-        self.temp_entry.config(state = 'enabled')
+        # temperature always set to 0 degrees
+        # ttk.Label(secondrow_frame, text="Temperature (°C)").pack(side='left')
+        # self.diffconc_temp_var = tk.DoubleVar()
+        # self.temp_entry = ttk.Entry(secondrow_frame, textvariable=self.diffconc_temp_var)
+        # self.temp_entry.pack(side='left', padx=5, expand=True, fill='x')
+        # self.temp_entry.config(state = 'enabled')
         
         # Select Button, zodat de temperature, voc button enz niet meer kan worden gewijzigd maar nu wel stappen kan toevoegen
         ttk.Button(secondrow_frame, text="Select", command=self.enabling_select_diffconcprofile).pack(side='left', padx=5)
@@ -3385,7 +3428,7 @@ class AutomatedSystemUI:
         ## Lock the VOC dropdown, total flow and temperature entry
         self.voc_dropdown_diffconcprofile.config(state = 'disabled')
         self.totalflow_entry.config(state = 'disabled')
-        self.temp_entry.config(state = 'disabled')
+        # self.temp_entry.config(state = 'disabled')
         
         # Enabling all input fields
         self.step_time_entry.config(state ='enabled')
@@ -3406,7 +3449,7 @@ class AutomatedSystemUI:
         ## Lock the VOC dropdown, total flow and temperature entry
         self.voc_dropdown_diffconcprofile.config(state = 'enabled')
         self.totalflow_entry.config(state = 'enabled')
-        self.temp_entry.config(state = 'enabled')
+        # self.temp_entry.config(state = 'enabled')
         
         # Enabling all input fields
         self.step_time_entry.config(state ='disabled')
@@ -3455,7 +3498,7 @@ class AutomatedSystemUI:
             
             #Update the description, temp, voc and total flow in the field
             self.diffconc_desc_var.set(profile.get("description", ""))
-            self.diffconc_temp_var.set(profile.get("temperature", ""))
+            # self.diffconc_temp_var.set(profile.get("temperature", ""))
             self.diffconc_voc_var.set(profile.get("voc", "")) 
             self.diffconc_totalflowrate_var.set(profile.get("total_flow", 0)) 
             
@@ -3508,7 +3551,7 @@ class AutomatedSystemUI:
         self.diffconc_step_conc_var.set("")
         self.diffconc_flow1_var.set("")
         self.diffconc_flow2_var.set("")
-        self.diffconc_temp_var.set("")
+        # self.diffconc_temp_var.set("")
         self.diffconc_valve_var.set("")
         
         for item in self.diffconc_steps_tree.get_children():
@@ -3594,7 +3637,7 @@ class AutomatedSystemUI:
         # Create the profile data
         profile_data = {
             "description": self.diffconc_desc_var.get(),
-            "temperature": float(self.diffconc_temp_var.get()),
+            # "temperature": float(self.diffconc_temp_var.get()),
             "voc": self.diffconc_voc_var.get(),  
             "total_flow": float(self.diffconc_totalflowrate_var.get()), 
             "steps": steps
@@ -3652,14 +3695,13 @@ class AutomatedSystemUI:
     def diffconcprofile_checkthermaleq_alarm(self, profile):
         #Checking whether the temperature has already been set to the filled temperature
         # https://www.pythontutorial.net/tkinter/tkinter-askyesno/
-        temperature = profile.get("temperature", None)
-        if temperature is not None:
-            confirm = messagebox.askyesno(
-                "Cooling Plate Temperature",
-                f"Did you set the cooling plate temperature to {temperature:.1f} °C? And is the temperature constant and stable?"
-            )
+        confirm = messagebox.askyesno(
+            "Cooling Plate Temperature",
+            f"Did you set the cooling plate temperature to 0 °C? And is the temperature constant and stable?"
+        )
+        if not confirm:
             return confirm
-        return True  # If no temperature is specified, no check needed
+        return True 
 
     def run_diffconcprofile_thread(self, profile):      
         try:
@@ -3674,7 +3716,7 @@ class AutomatedSystemUI:
             self.root.after(0, self.diffconcprofile_complete)
 
         except Exception as e:
-            self.root.after(0, lambda: self.diffconcprofile_error(str(e)))
+            self.root.after(0, lambda: self.diffconcprofile_error(e))
     
     def diffconcprofile_complete(self):
         """Called when profile completes successfully"""
@@ -3722,8 +3764,7 @@ class AutomatedSystemUI:
                 
                 self.add_step_button.config(state = 'enabled')
             else:
-                f_voc, f_n2, T, Ps = self.calculate_required_flow(voc, concentration_val, total_flow)
-
+                f_voc, f_n2 = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
                 if f_voc is None or f_n2 is None:
                     messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
                     return

@@ -696,8 +696,8 @@ class DiffConcProfileManager(BaseProfileManager):
         profile_complete = False
         
         ###Als temperature no value then temperature set to '1'
-        profile_temperature = self.current_profile.get("temperature", 1.0)
-        print("temperature set by the diffconcprofilemanager", profile_temperature)
+        # profile_temperature = self.current_profile.get("temperature", 1.0)
+        # print("temperature set by the diffconcprofilemanager", profile_temperature)
         # self.cooling.set_temperature(profile_temperature, temp_ambient)
 
         while not profile_complete and not self.stoprequest:
