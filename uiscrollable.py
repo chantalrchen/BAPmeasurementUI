@@ -3969,22 +3969,16 @@ class AutomatedSystemUI:
             valve_position = int(self.diffconc_valve_var.get())
             print(valve_position)
 
-            if valve_position == 2:
-                self.diffconc_flow1_var.set(0)
-                self.diffconc_flow2_var.set(0)
-                
-                self.add_step_button.config(state = 'enabled')
-            else:
-                f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
-                if f_voc is None or f_n2 is None:
-                    messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
-                    return
+            f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
+            if f_voc is None or f_n2 is None:
+                messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
+                return
 
-                ## Set the values to the corresponding labels
-                self.diffconc_flow1_var.set(f_voc)
-                self.diffconc_flow2_var.set(f_n2)
+            ## Set the values to the corresponding labels
+            self.diffconc_flow1_var.set(f_voc)
+            self.diffconc_flow2_var.set(f_n2)
 
-                self.add_step_button.config(state = 'enabled')
+            self.add_step_button.config(state = 'enabled')
 
         except ValueError as e:
             messagebox.showerror("Error", f"Invalid input: {e}")
@@ -4006,7 +4000,7 @@ class AutomatedSystemUI:
                 conc = step.get("concentration", 0)
                 valve = step.get("valve", 1)
                 times.append(time)
-                concs.append(0 if valve == 2 else conc)
+                concs.append(conc)
 
             self.diffconc_ax.clear()
             self.diffconc_ax.step(times, concs, where='post', linestyle='-', marker='o', markersize = 3, linewidth=2, color='red' )
