@@ -342,7 +342,7 @@ class AutomatedSystemUI:
             # self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
 
             if self.valve.connected:
-                pos = self.valve.current_position
+                pos = self.valve.get_position()
             else:
                 pos = "-"
             self.current_valve_label.config(text=f"Current position of the valve: {pos}")
