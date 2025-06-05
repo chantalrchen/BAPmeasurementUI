@@ -170,7 +170,7 @@ class AutomatedSystemUI:
         self.valve_value_label.grid(row=3, column=3, padx=5, sticky="w")
 
         # On/Off profile
-        ttk.Label(self.profile_status_frame, text="On/Off Running Profile").grid(row=4, column=0, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Pure Gas On/Off Running Profile").grid(row=4, column=0, padx=5, sticky="w")
         self.onoff_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.onoff_elapsed_label.grid(row=4, column=1, padx=5, sticky="w")
         self.onoff_step_label = ttk.Label(self.profile_status_frame, text="-")
@@ -180,7 +180,7 @@ class AutomatedSystemUI:
         
 
         # Different Concentration profile
-        ttk.Label(self.profile_status_frame, text="Different Concentration Profile").grid(row=5, column=0, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Different Pure Gas Concentration Profile").grid(row=5, column=0, padx=5, sticky="w")
         self.diffconc_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.diffconc_elapsed_label.grid(row=5, column=1, padx=5, sticky="w")
         self.diffconc_step_label = ttk.Label(self.profile_status_frame, text="-")
@@ -2514,7 +2514,7 @@ class AutomatedSystemUI:
     def create_voccalculator_tab(self):
 
         ##Make it scrollable
-        voccalc_tab = self.create_scrollable_tab(self.notebook, "ON/OFF Profile")
+        voccalc_tab = self.create_scrollable_tab(self.notebook, "Pure Gas ON/OFF Profile")
         # self.voccalc_tab = ttk.Frame(self.notebook)
         # self.notebook.add(self.voccalc_tab, text="VOC Flow Calculator")
 
@@ -2577,7 +2577,7 @@ class AutomatedSystemUI:
         desc_entry.config(width=30)
         
         ttk.Label(profile_info_frame, text="Select VOC1 (MFC2) or VOC2 (MFC3):").grid(row=3, column=0, padx=10, pady=5)
-        self.onoffconc_voc_mfc_choice = ttk.Combobox(profile_info_frame, values=["VOC1 in MFC 2", "VOC 2 in MFC 3"], state="readonly")
+        self.onoffconc_voc_mfc_choice = ttk.Combobox(profile_info_frame, values=["VOC1 (MFC2)", "VOC2 (MFC3)"], state="readonly")
         self.onoffconc_voc_mfc_choice.grid(row=3, column=1, padx=5, pady=5)
         self.onoffconc_voc_mfc_choice.current(0)  # default to MFC 2
 
@@ -3160,7 +3160,7 @@ class AutomatedSystemUI:
         
                 
         ##Make it scrollable
-        profile_tab = self.create_scrollable_tab(self.notebook, "Different Concentration Profile Management")
+        profile_tab = self.create_scrollable_tab(self.notebook, "Different Pure Gas Concentration Profile Management")
         ## Split into two frames
         list_frame = ttk.Frame(profile_tab)
         list_frame.pack(side= 'left', fill = 'both', expand=True, padx=5, pady=5)
