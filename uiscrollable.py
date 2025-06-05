@@ -1269,9 +1269,9 @@ class AutomatedSystemUI:
         )
 
         # Update the UI labels
-        self.connection_mfc1_port_label.config(text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
-        self.connection_mfc2_port_label.config(text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
-        self.connection_mfc3_port_label.config(text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
+        self.connection_mfc1_port_label.config(text=f"MFC 1 Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
+        self.connection_mfc2_port_label.config(text=f"MFC 2 Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
+        self.connection_mfc3_port_label.config(text=f"MFC 3 Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
         ##Koeling Uitzetten omdat hij het nog niet doet
         # # Cooling OFF
         # self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
