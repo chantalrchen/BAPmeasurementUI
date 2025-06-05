@@ -70,15 +70,15 @@ class AutomatedSystemUI:
         ttk.Label(connection_frame, text="Device Connections", font=("Arial", 10, "bold")).pack(fill = 'both', expand = True)
         # Connection status labels
         self.connection_mfc1_port_label = ttk.Label(connection_frame, 
-                                                 text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
+                                                 text=f"MFC 1 Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
         self.connection_mfc1_port_label.pack(fill='both', expand=True)
         
         self.connection_mfc2_port_label = ttk.Label(connection_frame, 
-                                                 text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
+                                                 text=f"MFC 2 Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
         self.connection_mfc2_port_label.pack(fill='both', expand=True)
         
         self.connection_mfc3_port_label = ttk.Label(connection_frame, 
-                                                 text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
+                                                 text=f"MFC 3 Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
         self.connection_mfc3_port_label.pack(fill='both', expand=True)
         
         ##Koeling Uitzetten omdat hij het nog niet doet
@@ -164,21 +164,21 @@ class AutomatedSystemUI:
 
         # On/Off profile
         ttk.Label(self.profile_status_frame, text="On/Off Running Profile").grid(row=4, column=0, padx=5, sticky="w")
-        self.onoff_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.onoff_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.onoff_elapsed_label.grid(row=4, column=1, padx=5, sticky="w")
-        self.onoff_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.onoff_step_label = ttk.Label(self.profile_status_frame, text="-")
         self.onoff_step_label.grid(row=4, column=2, padx=5, sticky="w")
-        self.onoff_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.onoff_value_label = ttk.Label(self.profile_status_frame, text="-")
         self.onoff_value_label.grid(row=4, column=3, padx=5, sticky="w")
         
 
         # Different Concentration profile
         ttk.Label(self.profile_status_frame, text="Different Concentration Profile").grid(row=5, column=0, padx=5, sticky="w")
-        self.diffconc_elapsed_label = ttk.Label(self.profile_status_frame, text="--")
+        self.diffconc_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.diffconc_elapsed_label.grid(row=5, column=1, padx=5, sticky="w")
-        self.diffconc_step_label = ttk.Label(self.profile_status_frame, text="--")
+        self.diffconc_step_label = ttk.Label(self.profile_status_frame, text="-")
         self.diffconc_step_label.grid(row=5, column=2, padx=5, sticky="w")
-        self.diffconc_value_label = ttk.Label(self.profile_status_frame, text="--")
+        self.diffconc_value_label = ttk.Label(self.profile_status_frame, text="-")
         self.diffconc_value_label.grid(row=5, column=3, padx=5, sticky="w")
         
 
@@ -490,7 +490,7 @@ class AutomatedSystemUI:
         
     def create_onoffprofile_tab(self):
         #Make it scrollable
-        profile_tab = self.create_scrollable_tab(self.notebook, "On/Off Profile Management")
+        profile_tab = self.create_scrollable_tab(self.notebook, "MFC and Management")
         # profile_tab = ttk.Frame(self.notebook)
         # profile_tab.pack(fill = 'both', expand = True)
         # self.notebook.add(profile_tab, text = 'On/Off Profile Management')
@@ -2850,7 +2850,7 @@ class AutomatedSystemUI:
     def create_voccalculator_tab(self):
 
         ##Make it scrollable
-        self.voccalc_tab = self.create_scrollable_tab(self.notebook, "VOC Flow Calculator with T = 0")
+        self.voccalc_tab = self.create_scrollable_tab(self.notebook, "ON/OFF Profile")
         # self.voccalc_tab = ttk.Frame(self.notebook)
         # self.notebook.add(self.voccalc_tab, text="VOC Flow Calculator")
 
@@ -3710,7 +3710,7 @@ class AutomatedSystemUI:
 
             self.status_var.set(f"Running profile: {self.diffconc_namevar.get()}")
             self.diffconcprofilemanager.run_profile(
-                temp_ambient=self.ambient_temp,
+                # temp_ambient=self.ambient_temp,
                 update_callback=safe_update
             )
             self.root.after(0, self.diffconcprofile_complete)
@@ -3743,7 +3743,7 @@ class AutomatedSystemUI:
             
             self.diffconc_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
             self.diffconc_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
-            self.diffconc_value_label.config(text=f"{status['concentration']} (ppm), {status['flow mfc1']:.2f}, {status['flow mfc2']:.2f}, {status['valve']}")
+            self.diffconc_value_label.config(text=f"{status['concentration']} (ppm), mfc1: {status['flow mfc1']:.2f}, mfc2: {status['flow mfc2']:.2f}, valve: {status['valve']}")
 
                 
         except tk.TclError:
@@ -3764,7 +3764,7 @@ class AutomatedSystemUI:
                 
                 self.add_step_button.config(state = 'enabled')
             else:
-                f_voc, f_n2 = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
+                f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
                 if f_voc is None or f_n2 is None:
                     messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
                     return

@@ -662,7 +662,8 @@ class DiffConcProfileManager(BaseProfileManager):
         self.valve = UIvalve
     
 
-    def run_profile(self, temp_ambient, update_callback = None):
+    # def run_profile(self, temp_ambient, update_callback = None):
+    def run_profile(self, update_callback = None):
         """Run the current profile with the given device controllers"""
         # Check devices and ambient temp
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
