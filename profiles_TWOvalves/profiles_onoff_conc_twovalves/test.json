@@ -1,0 +1,11 @@
+{
+      "name": "test",
+      "description": "test voc1 mfc2",
+      "selectedmfcindex": 0,
+      "voc": "Nonanal",
+      "concentration": 9.0,
+      "total_flow": 3.0,
+      "on_time": 5.0,
+      "off_time": 5.0,
+      "run_time": 50.0
+}

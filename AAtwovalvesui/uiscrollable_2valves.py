@@ -2507,6 +2507,10 @@ class AutomatedSystemUI:
         self.valveprofilemanager.stop_profile()
         self.status_var.set("All profiles stopped by user")
 
+
+
+
+##### ON OFF GRAPH
     def create_voccalculator_tab(self):
 
         ##Make it scrollable
@@ -2555,55 +2559,64 @@ class AutomatedSystemUI:
 
         delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_onoffconcprofile)
         delete_button.pack(side='left', padx=3, expand=True)
-        
+
+        profile_info_frame = ttk.LabelFrame(edit_frame, text="Profile Information")
+        profile_info_frame.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
+
         # VOC selection
-        ttk.Label(edit_frame, text="Name:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(profile_info_frame, text="Name:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
         self.onoffconc_namevar = tk.StringVar()
-        name_entry = ttk.Entry(edit_frame, textvariable=self.onoffconc_namevar)
+        name_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_namevar)
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         name_entry.config(width=30)
         
-        ttk.Label(edit_frame, text="Description:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(profile_info_frame, text="Description:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
         self.onoffconc_desc_var = tk.StringVar()
-        desc_entry = ttk.Entry(edit_frame, textvariable=self.onoffconc_desc_var)
+        desc_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_desc_var)
         desc_entry.grid(row=1, column=1, padx=10, pady=5)
+        desc_entry.config(width=30)
         
-        ttk.Label(edit_frame, text="Select VOC:").grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(profile_info_frame, text="Select VOC1 (MFC2) or VOC2 (MFC3):").grid(row=3, column=0, padx=10, pady=5)
+        self.onoffconc_voc_mfc_choice = ttk.Combobox(profile_info_frame, values=["VOC1 in MFC 2", "VOC 2 in MFC 3"], state="readonly")
+        self.onoffconc_voc_mfc_choice.grid(row=3, column=1, padx=5, pady=5)
+        self.onoffconc_voc_mfc_choice.current(0)  # default to MFC 2
+
+        ttk.Label(profile_info_frame, text="Select VOC:").grid(row=3, column=2, padx=10, pady=10, sticky='e')
         self.voccalc_voc_var = tk.StringVar()
         self.vocslist = list(self.settings_manager.get_voc_data().keys())
-        self.voc_dropdown_voccalculator = ttk.Combobox(edit_frame, textvariable=self.voccalc_voc_var, values=self.vocslist, state="readonly")
-        self.voc_dropdown_voccalculator.grid(row=2, column=1, padx=10, pady=10)
+        self.voc_dropdown_voccalculator = ttk.Combobox(profile_info_frame, textvariable=self.voccalc_voc_var, values=self.vocslist, state="readonly")
+        self.voc_dropdown_voccalculator.grid(row=3, column=3, padx=10, pady=10)
         self.voc_dropdown_voccalculator.current(0)
 
         # Concentration input
-        ttk.Label(edit_frame, text="Concentration (ppm):").grid(row=3, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(profile_info_frame, text="Concentration (ppm):").grid(row=4, column=0, padx=10, pady=10, sticky='e')
         self.voccalc_concentration_var = tk.DoubleVar()
-        concentration_entry = ttk.Entry(edit_frame, textvariable=self.voccalc_concentration_var)
-        concentration_entry.grid(row=3, column=1, padx=10, pady=10)
+        concentration_entry = ttk.Entry(profile_info_frame, textvariable=self.voccalc_concentration_var)
+        concentration_entry.grid(row=4, column=1, padx=10, pady=10)
 
         # Total Flow Rate input
-        ttk.Label(edit_frame, text="Total Flow Rate (mL/min):").grid(row=4, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(profile_info_frame, text="Total Flow Rate (mL/min):").grid(row=5, column=0, padx=10, pady=10, sticky='e')
         self.voccalc_totalflowrate_var = tk.DoubleVar()
-        totalflow_entry = ttk.Entry(edit_frame, textvariable=self.voccalc_totalflowrate_var)
-        totalflow_entry.grid(row=4, column=1, padx=10, pady=10)
+        totalflow_entry = ttk.Entry(profile_info_frame, textvariable=self.voccalc_totalflowrate_var)
+        totalflow_entry.grid(row=5, column=1, padx=10, pady=10)
 
         # Calculate Button
-        calc_button = ttk.Button(edit_frame, text="Calculate Flow", command=self.calculate_voc_flow)
-        calc_button.grid(row=5, column=0, columnspan=2, pady=10)
+        calc_button = ttk.Button(profile_info_frame, text="Calculate Flow", command=self.calculate_voc_flow)
+        calc_button.grid(row=6, column=0, columnspan=2, pady=10)
 
         # Result labels
-        self.voccalc_flow_label = ttk.Label(edit_frame, text="Required Flow: -")
-        self.voccalc_flow_label.grid(row=6, column=0, columnspan=2, pady=5)
+        self.voccalc_flow_label = ttk.Label(profile_info_frame, text="Required Flow of VOC: -")
+        self.voccalc_flow_label.grid(row=7, column=0, columnspan=2, pady=5)
         
-        self.voccalc_N_label = ttk.Label(edit_frame, text="Required Mass Flow of Nitrogen: -")
-        self.voccalc_N_label.grid(row=7, column=0, columnspan=2, pady=5)
+        self.voccalc_N_label = ttk.Label(profile_info_frame, text="Required Mass Flow of Nitrogen: -")
+        self.voccalc_N_label.grid(row=8, column=0, columnspan=2, pady=5)
 
         # No need
         # self.voccalc_temp_label = ttk.Label(self.voccalc_tab, text="Required Temperature: -")
         # self.voccalc_temp_label.grid(row=6, column=0, columnspan=2, pady=5)
 
-        self.voccalc_ps_label = ttk.Label(edit_frame, text="Saturated Vapor Pressure (Ps): -")
-        self.voccalc_ps_label.grid(row=8, column=0, columnspan=2, pady=5)
+        self.voccalc_ps_label = ttk.Label(profile_info_frame, text="Saturated Vapor Pressure (Ps): -")
+        self.voccalc_ps_label.grid(row=9, column=0, columnspan=2, pady=5)
 
         # self.voccalc_run_button = ttk.Button(self.voccalc_tab, text="Run Continuously", command=self.voccalc_run_cnt)
         # self.voccalc_run_button.grid(row=7, column=0, padx=5, pady=10, sticky="ew")
@@ -2611,34 +2624,34 @@ class AutomatedSystemUI:
         # self.voccalc_stop_button = ttk.Button(self.voccalc_tab, text="Stop", command=self.voccalc_stop_cnt)
         # self.voccalc_stop_button.grid(row=7, column=1, padx=5, pady=10, sticky="ew")
 
-        ttk.Label(edit_frame, text="On Time (s):").grid(row=9, column=0)
-        self.voccalc_on_time_entry = ttk.Entry(edit_frame)
-        self.voccalc_on_time_entry.grid(row=9, column=1)
+        ttk.Label(profile_info_frame, text="On Time (s):").grid(row=10, column=0)
+        self.voccalc_on_time_entry = ttk.Entry(profile_info_frame)
+        self.voccalc_on_time_entry.grid(row=10, column=1)
 
-        ttk.Label(edit_frame, text="Off Time (s):").grid(row=10, column=0)
-        self.voccalc_off_time_entry = ttk.Entry(edit_frame)
-        self.voccalc_off_time_entry.grid(row=10, column=1)
+        ttk.Label(profile_info_frame, text="Off Time (s):").grid(row=11, column=0)
+        self.voccalc_off_time_entry = ttk.Entry(profile_info_frame)
+        self.voccalc_off_time_entry.grid(row=11, column=1)
 
-        ttk.Label(edit_frame, text="Run Time (s):").grid(row=11, column=0)
-        self.voccalc_run_time_entry = ttk.Entry(edit_frame)
-        self.voccalc_run_time_entry.grid(row=11, column=1)
+        ttk.Label(profile_info_frame, text="Run Time (s):").grid(row=12, column=0)
+        self.voccalc_run_time_entry = ttk.Entry(profile_info_frame)
+        self.voccalc_run_time_entry.grid(row=12, column=1)
         
-        self.voccalc_run_button = ttk.Button(edit_frame, state="disabled", text="Run ON/OFF Graph", command=self.voccalculator_run_onoffprofile)
-        self.voccalc_run_button.grid(row=12, column=0, padx=5, pady=10, sticky="ew")
-        
-        self.voccalc_stop_button = ttk.Button(edit_frame, state="disabled", text="Stop ON/OFF Graph", command=self.stop_onoffconc_run)
-        self.voccalc_stop_button.grid(row=12, column=1, padx=5, pady=10, sticky="ew")
+        self.voccalc_run_button = ttk.Button(profile_info_frame, state="disabled", text="Run ON/OFF Graph", command=self.voccalculator_run_onoffprofile)
+        self.voccalc_run_button.grid(row=13, column=0, padx=5, pady=10, sticky="ew")
+ 
+        self.voccalc_plotgraph_button = ttk.Button(profile_info_frame,state="disabled", text="Plot ON/OFF Graph", command=self.plot_expected_vocprofile)
+        self.voccalc_plotgraph_button.grid(row=13, column=1, padx=5, pady=10, sticky="ew")
+               
+        self.voccalc_stop_button = ttk.Button(profile_info_frame, state="disabled", text="Stop ON/OFF Graph", command=self.stop_onoffconc_run)
+        self.voccalc_stop_button.grid(row=13, column=2, padx=5, pady=10, sticky="ew")
                 
-        self.voccalc_plotgraph_button = ttk.Button(edit_frame,state="disabled", text="Plot ON/OFF Graph", command=self.plot_expected_vocprofile)
-        self.voccalc_plotgraph_button.grid(row=13, column=0, padx=5, pady=10, sticky="ew")
-
         self.voccalc_elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
-        self.voccalc_elapsed_time_label = ttk.Label(edit_frame, textvariable=self.voccalc_elapsed_time_var)
+        self.voccalc_elapsed_time_label = ttk.Label(profile_info_frame, textvariable=self.voccalc_elapsed_time_var)
         self.voccalc_elapsed_time_label.grid(row=14, column=0, columnspan=2, sticky='w')
 
         # For the graph
-        self.voccalc_graph_frame = ttk.LabelFrame(edit_frame, text="Setpoint Concentration On/Off Graph")
-        self.voccalc_graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")        
+        self.voccalc_graph_frame = ttk.LabelFrame(profile_info_frame, text="Setpoint Concentration On/Off Graph")
+        self.voccalc_graph_frame.grid(row=0, column=4, rowspan=10, padx=10, pady=10, sticky="ns")        
         
     def update_voc_elapsed_time_display(self, start_timestamp, run_time):
         #when the UI is closed then this won't be "updating" (to debug)
@@ -2665,14 +2678,17 @@ class AutomatedSystemUI:
             on_time = float(self.voccalc_on_time_entry.get())
             off_time = float(self.voccalc_off_time_entry.get())
             run_time = float(self.voccalc_run_time_entry.get())
+            self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
         except ValueError:
             messagebox.showerror("Input Error", "All timing fields must be numbers.")
             return
 
+        voc_mfc = self.mfcs[self.onoffconc_voc_index  + 1] # index 0 = MFC2 , index 1 = MFC3
+        n2_mfc = self.mfcs[0] #nitrogen is always MFC1
         ##Koeling Uitzetten omdat hij het nog niet doet
         # # Cooling OFF
         # if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.cooling.connected or not self.valve.connected:
-        if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.valve.connected:
+        if not voc_mfc.connected or not n2_mfc.connected or not self.valve[0].connected or not self.valve[1].connected:
             messagebox.showerror("Connection Error", "Ensure all devices are connected.")
             return
 
@@ -2680,6 +2696,10 @@ class AutomatedSystemUI:
         #     messagebox.showerror("Error", "Ambient temperature must be set.")
         #     return
         
+        if self.onoffconc_voc_index  not in [0, 1]:
+            messagebox.showerror("MFC Selection Error", "Select either VOC1 (MFC2) or VOC2 (MFC3).")
+            return False
+            
         #Checking whether the temperature has already been set to the filled temperature
         # https://www.pythontutorial.net/tkinter/tkinter-askyesno/
         # print(self.voc_temp)
@@ -2710,39 +2730,90 @@ class AutomatedSystemUI:
             pulse_starttime = time.time()
             self.root.after(0, lambda: self.update_voc_elapsed_time_display(pulse_starttime, run_time))
 
-            while not self.stop_onoff_conc_run:
-                if time.time() - pulse_starttime >= run_time:
-                    break
+                #Overview of valve positions, where valve[0] is the valve connected to VOC 1 and valve[1] is the valve connected to VOC2
+#                 Valve VOC 1, Valve_VOC 2:
+                # POS 1, POS 1 -> VOC2
+                # POS 1, POS 2 -> ONLY NITROGEN
+                # POS 2, POS 1 -> VOC1 with VOC2
+                # POS 2, POS 2 -> VOC1
 
-                # ON state
-                self.mfcs[0].set_massflow(self.voc_flow)
-                self.mfcs[1].set_massflow(self.voc_N)
-                self.valve.switch_position(2)
-                self.status_var.set(f"VOC ON-state | MFC1: {self.voc_flow}, MFC2 (Nitrogen): {self.voc_N}")
-                if not self.sleep_with_stop_check(on_time):
-                    break
+            if self.onoffconc_voc_index  == 0: #VOC1 in MFC 2 
+                while not self.stop_onoff_conc_run:
+                    if time.time() - pulse_starttime >= run_time:
+                        break
 
-                if time.time() - pulse_starttime >= run_time:
-                    break
-                
-                # OFF state
-                self.mfcs[0].set_massflow(0)
-                self.mfcs[1].set_massflow(0) #nitrogen max flow rate
-                self.valve.switch_position(1)
-                self.status_var.set("VOC OFF-state")    
-                if not self.sleep_with_stop_check(off_time):
-                    break
+                    # ON state
+                    voc_mfc.set_massflow(self.voc_flow)
+                    n2_mfc.set_massflow(self.voc_N)
+                    #verschil zit hier
+                    self.valve[0].switch_position(2)
+                    self.valve[1].switch_position(2)
+                    self.status_var.set(f"VOC ON-state | MFC 1 with N2: {self.voc_N} ml/min, MFC {self.onoffconc_voc_index + 2} with VOC: {self.voc_flow}")
+                    if not self.sleep_with_stop_check(on_time):
+                        break
 
-            if not self.stop_onoff_conc_run:
-                # Final reset
-                self.mfcs[0].set_massflow(0)
-                self.mfcs[1].set_massflow(0)
-            ##Koeling Uitzetten omdat hij het nog niet doet
-            # # Cooling OFF
-                # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
-                
-                self.valve.switch_position(1)
-                self.status_var.set("VOC Run complete")
+                    if time.time() - pulse_starttime >= run_time:
+                        break
+                    
+                    # OFF state
+                    voc_mfc.set_massflow(0)
+                    n2_mfc.set_massflow(0) #nitrogen max flow rate
+                    self.valve[0].switch_position(1)
+                    self.valve[1].switch_position(2)
+                    self.status_var.set(f"VOC OFF-state | MFC 1 with N2: 0 ml/min, MFC {self.onoffconc_voc_index  + 2} with VOC: 0, RVM 1: pos 1, RVM2: pos 2")   
+                    if not self.sleep_with_stop_check(off_time):
+                        break
+
+                if not self.stop_onoff_conc_run:
+                    # Final reset
+                    voc_mfc.set_massflow(0)
+                    n2_mfc.set_massflow(0)
+                ##Koeling Uitzetten omdat hij het nog niet doet
+                # # Cooling OFF
+                    # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+                    
+                    self.valve[0].switch_position(1)
+                    self.valve[1].switch_position(2)
+                    self.status_var.set("VOC Run complete")
+                    
+            elif self.onoffconc_voc_index  == 1: #VOC2 in MFC 3
+                while not self.stop_onoff_conc_run:
+                    if time.time() - pulse_starttime >= run_time:
+                        break
+
+                    # ON state
+                    voc_mfc.set_massflow(self.voc_flow)
+                    n2_mfc.set_massflow(self.voc_N)
+                    ##verschil zit hier
+                    self.valve[0].switch_position(1)
+                    self.valve[1].switch_position(1)
+                    self.status_var.set(f"VOC ON-state | MFC 1 with N2: {self.voc_N} ml/min, MFC {self.onoffconc_voc_index  + 2} with VOC: {self.voc_flow}, RVM 1: pos 1, RVM2: pos 1")
+                    if not self.sleep_with_stop_check(on_time):
+                        break
+
+                    if time.time() - pulse_starttime >= run_time:
+                        break
+                    
+                    # OFF state
+                    voc_mfc.set_massflow(0)
+                    n2_mfc.set_massflow(0) #nitrogen max flow rate
+                    self.valve[0].switch_position(1)
+                    self.valve[1].switch_position(2)
+                    self.status_var.set(f"VOC OFF-state | MFC 1 with N2: 0 ml/min, MFC {self.onoffconc_voc_index  + 2} with VOC: 0, RVM 1: pos 1, RVM2: pos 2")
+                    if not self.sleep_with_stop_check(off_time):
+                        break
+
+                if not self.stop_onoff_conc_run:
+                    # Final reset
+                    voc_mfc.set_massflow(0)
+                    n2_mfc.set_massflow(0)
+                ##Koeling Uitzetten omdat hij het nog niet doet
+                # # Cooling OFF
+                    # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+                    
+                    self.valve[0].switch_position(1)
+                    self.valve[1].switch_position(2)
+                    self.status_var.set("VOC Run complete")
 
         threading.Thread(target=run_pulse_cycle, daemon=True).start()
 
@@ -2764,6 +2835,8 @@ class AutomatedSystemUI:
             off_time = float(self.voccalc_off_time_entry.get())
             run_time = float(self.voccalc_run_time_entry.get())
             conc = float(self.voccalc_concentration_var.get())
+            self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
+            voc = self.voccalc_voc_var.get()
         except ValueError:
             messagebox.showerror("Input Error", "Start Delay Time, On time, Off Time, Run Time and Concentrations must be numbers.")
             return
@@ -2810,7 +2883,7 @@ class AutomatedSystemUI:
         ax.plot(time_data, signal_data, color='red', linewidth=2)
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Concentration (ppm)")
-        ax.set_title("Setpoint Concentration On/Off Graph")
+        ax.set_title(f"Setpoint MFC {self.onoffconc_voc_index + 1} with {voc} On/Off Graph")
         ax.set_xlim(0, time_data[-1] * 1.2 )
         ax.set_ylim(0, conc * 1.2)
         ax.grid(True)
@@ -2836,7 +2909,8 @@ class AutomatedSystemUI:
             voc = self.voccalc_voc_var.get()
             concentration = float(self.voccalc_concentration_var.get())
             total_flow = float(self.voccalc_totalflowrate_var.get())
-            print(concentration, total_flow)
+            self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
+            # print(concentration, total_flow)
         except ValueError:
             messagebox.showerror("Invalid input", "Please enter valid numbers for concentration and total flow rate.")
             return
@@ -2849,7 +2923,7 @@ class AutomatedSystemUI:
         # print(self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps)
         
         if self.voc_flow is not None:
-            self.voccalc_flow_label.config(text=f"Required Flow: {self.voc_flow} mL/min")
+            self.voccalc_flow_label.config(text=f"Required Flow of VOC of MFC {self.onoffconc_voc_index + 1} : {self.voc_flow} mL/min")
             self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: {self.voc_N} mL/min")
             # self.voccalc_temp_label.config(text=f"Required Temperature: {self.voc_temp} °C")
             self.voccalc_ps_label.config(text=f"Saturated Vapor Pressure (Ps): {self.voc_Ps} mmHg")
@@ -2951,6 +3025,7 @@ class AutomatedSystemUI:
 
         self.onoffconc_namevar.set("")
         self.onoffconc_desc_var.set("")
+        self.onoffconc_voc_mfc_choice.current(0)  # Reset default to VOC1 in MFC2
         self.voccalc_voc_var.set("")
         self.voccalc_concentration_var.set(0.0)
         self.voccalc_totalflowrate_var.set(0.0)
@@ -2994,18 +3069,22 @@ class AutomatedSystemUI:
             return
 
         description = profile.get("description", "")
+        mfc_index = profile.get("selectedmfcindex", 0)
+
         voc = profile.get("voc", "")
         concentration = profile.get("concentration", 0.0)
         total_flow = profile.get("total_flow", 0.0)
         on_time = profile.get("on_time", "")
         off_time = profile.get("off_time", "")
         run_time = profile.get("run_time", "")
-        
 
-        print(profile_name, profile, description, voc)
+
+        # print(profile_name, profile, description, voc)
         
         self.onoffconc_namevar.set(profile.get("name", profile_name))
         self.onoffconc_desc_var.set(description)
+        self.onoffconc_voc_mfc_choice.current(mfc_index)
+
         self.voccalc_voc_var.set(voc)
         self.voccalc_concentration_var.set(concentration)
         self.voccalc_totalflowrate_var.set(total_flow)
@@ -3027,9 +3106,9 @@ class AutomatedSystemUI:
 
     def save_onoffconcprofile(self):
         """Save current VOC ON/OFF profile to file."""
-        # Fetch all values first (as you requested: first get, then set/save)
-        voc = self.voccalc_voc_var.get()
         try:
+            voc = self.voccalc_voc_var.get()
+            selected_mfc = self.onoffconc_voc_mfc_choice.current()
             concentration = float(self.voccalc_concentration_var.get())
             total_flow = float(self.voccalc_totalflowrate_var.get())
             on_time = float(self.voccalc_on_time_entry.get())
@@ -3045,6 +3124,7 @@ class AutomatedSystemUI:
         profile_data = {
             "name": profile_name,
             "description": description,
+            "selectedmfcindex": selected_mfc,
             "voc": voc,
             "concentration": concentration,
             "total_flow": total_flow,
@@ -3065,9 +3145,11 @@ class AutomatedSystemUI:
         self.stop_onoff_conc_run = True
         self.status_var.set("Stop running the profile.")
         self.voccalc_stop_button.config(state = 'disabled')
-        self.mfcs[0].set_massflow(0)
-        self.mfcs[1].set_massflow(0) #nitrogen max flow rate
-        self.valve.switch_position(1)
+        self.mfcs[self.onoffconc_voc_index + 1].set_massflow(0)
+        self.mfcs[0].set_massflow(0) #nitrogen max flow rate
+        #nitrogen only
+        self.valve[0].switch_position(1)
+        self.valve[1].switch_position(2)
     
 
 ####Tab different concentration

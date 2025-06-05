@@ -754,7 +754,7 @@ class DiffConcProfileManager(BaseProfileManager):
 class OnOffConcProfileManager(BaseProfileManager):
     def __init__(self, UImfcs, UIvalve, profiles_dir):
         standard_profiles = {}
-        super().__init__(profiles_dir,  "profiles_onoff_conc", standard_profiles)
+        super().__init__(profiles_dir,  "profiles_onoff_conc_twovalves", standard_profiles)
 
 
 
