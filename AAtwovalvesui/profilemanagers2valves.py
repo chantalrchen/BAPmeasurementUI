@@ -334,97 +334,6 @@ class RVMProfileManager(BaseProfileManager):
         self.stoprequest = True
 
 
-class TwoRVMProfileManager(BaseProfileManager):
-    def __init__(self, valveport1, valveport2, profiles_dir):
-        standard_profiles = {
-            "Flow_Test VALVE": {
-                "description": "Test valve switching",
-                "steps": [
-                    {"time": 0.0, "valve1": 1, "valve2": 2},
-                    {"time": 10.0, "valve1": 2, "valve2": 1},
-                    {"time": 20.0, "valve1": 1, "valve2": 2},
-                    {"time": 30.0, "valve1": 2, "valve2": 1},
-                    {"time": 40.0, "valve1": 1, "valve2": 2}
-                ]
-            }
-        }
-        
-        # https://www.w3schools.com/python/python_inheritance.asp
-        #inherit all the methods and properties from its parent, baseprofilemanager
-        super().__init__(profiles_dir, "profiles_valve", standard_profiles)
-        self.valve =[RVM(valveport1), RVM(valveport2)]
-        
-    
-    def run_profile(self, update_callback = None):
-        """Run the current profile with the given device controllers"""
-
-        if not (self.valve[0].connected and self.valve[1].connected):
-            messagebox.showerror("Connection Error", "Valve is not connected")
-            return False
-        
-        if not self.current_profile:
-            messagebox.showerror("Error", "No profile loaded")
-            return False
-        
-       # Sort steps by time
-        steps = sorted(self.current_profile.get("steps", []), key=lambda x: x["time"])
-        if not steps:
-            messagebox.showerror("Error", "Profile has no steps")
-            return False
-        
- 
-        self.stoprequest = False
-        start_time = time.time()
-        current_step_index = 0
-        profile_complete = False
-        
-        while not profile_complete and not self.stoprequest:
-            now = time.time()
-            elapsed_time = now - start_time
-
-            # Check if we need to move to next step
-            if current_step_index < len(steps) - 1:
-                next_time = steps[current_step_index + 1]["time"]
-                # Update the current step index when time obtained
-                if elapsed_time >= next_time:
-                    current_step_index += 1
-
-            current_step = steps[current_step_index]
-            
-            self.valve[0].switch_position(current_step["valve1"])
-            self.valve[1].switch_position(current_step["valve2"])
-        
-            #if update_callback is called then we need to update the status with the corresponding data
-            if update_callback:
-                    update_callback({
-                    "elapsed_time": elapsed_time,
-                    "current_step": current_step_index + 1,
-                    "total_steps": len(steps),
-                    "valve1": current_step["valve1"],
-                    "valve2": current_step["valve2"],
-                })
-
-                        # Check whether we have reached last step, if last step we need to consider wait_time
-            if current_step_index < len(steps) - 1:
-                next_time = steps[current_step_index + 1]["time"]
-                # Calculate how much time we need to wait before the next step should start
-                wait_time = max(0, next_time - (time.time() - start_time))
-                # sleep in small steps until finally wait_time has reached, thus until the next time has reached, kinda stukje bij stukje wachten
-                # Minimum 0.1 s to ensure that UI still is reponsive
-                time.sleep(min(wait_time, 0.1))  
-            else:
-                # Last step
-                final_duration = current_step["time"]
-                if elapsed_time >= final_duration:
-                    profile_complete = True
-                else:
-                    time.sleep(0.1)
-
-        return True
-    
-    def stop_profile(self):
-        self.stoprequest = True
-
 # ###WITH COOLING
 # class OnoffProfileManager(BaseProfileManager):
 #     def __init__(self, UImfcs, UIcooling, UIvalve, profiles_dir):
@@ -846,3 +755,212 @@ class OnOffConcProfileManager(BaseProfileManager):
     def __init__(self, UImfcs, UIvalve, profiles_dir):
         standard_profiles = {}
         super().__init__(profiles_dir,  "profiles_onoff_conc", standard_profiles)
+
+
+
+
+####################TWO VALVES
+
+class TwoRVMProfileManager(BaseProfileManager):
+    def __init__(self, valveport1, valveport2, profiles_dir):
+        standard_profiles = {
+            "Flow_Test VALVE": {
+                "description": "Test valve switching",
+                "steps": [
+                    {"time": 0.0, "valve1": 1, "valve2": 2},
+                    {"time": 10.0, "valve1": 2, "valve2": 1},
+                    {"time": 20.0, "valve1": 1, "valve2": 2},
+                    {"time": 30.0, "valve1": 2, "valve2": 1},
+                    {"time": 40.0, "valve1": 1, "valve2": 2}
+                ]
+            }
+        }
+        
+        # https://www.w3schools.com/python/python_inheritance.asp
+        #inherit all the methods and properties from its parent, baseprofilemanager
+        super().__init__(profiles_dir, "profiles_valve", standard_profiles)
+        self.valve =[RVM(valveport1), RVM(valveport2)]
+        
+    
+    def run_profile(self, update_callback = None):
+        """Run the current profile with the given device controllers"""
+
+        if not (self.valve[0].connected and self.valve[1].connected):
+            messagebox.showerror("Connection Error", "Valve is not connected")
+            return False
+        
+        if not self.current_profile:
+            messagebox.showerror("Error", "No profile loaded")
+            return False
+        
+       # Sort steps by time
+        steps = sorted(self.current_profile.get("steps", []), key=lambda x: x["time"])
+        if not steps:
+            messagebox.showerror("Error", "Profile has no steps")
+            return False
+        
+ 
+        self.stoprequest = False
+        start_time = time.time()
+        current_step_index = 0
+        profile_complete = False
+        
+        while not profile_complete and not self.stoprequest:
+            now = time.time()
+            elapsed_time = now - start_time
+
+            # Check if we need to move to next step
+            if current_step_index < len(steps) - 1:
+                next_time = steps[current_step_index + 1]["time"]
+                # Update the current step index when time obtained
+                if elapsed_time >= next_time:
+                    current_step_index += 1
+
+            current_step = steps[current_step_index]
+            
+            self.valve[0].switch_position(current_step["valve1"])
+            self.valve[1].switch_position(current_step["valve2"])
+        
+            #if update_callback is called then we need to update the status with the corresponding data
+            if update_callback:
+                    update_callback({
+                    "elapsed_time": elapsed_time,
+                    "current_step": current_step_index + 1,
+                    "total_steps": len(steps),
+                    "valve1": current_step["valve1"],
+                    "valve2": current_step["valve2"],
+                })
+
+                        # Check whether we have reached last step, if last step we need to consider wait_time
+            if current_step_index < len(steps) - 1:
+                next_time = steps[current_step_index + 1]["time"]
+                # Calculate how much time we need to wait before the next step should start
+                wait_time = max(0, next_time - (time.time() - start_time))
+                # sleep in small steps until finally wait_time has reached, thus until the next time has reached, kinda stukje bij stukje wachten
+                # Minimum 0.1 s to ensure that UI still is reponsive
+                time.sleep(min(wait_time, 0.1))  
+            else:
+                # Last step
+                final_duration = current_step["time"]
+                if elapsed_time >= final_duration:
+                    profile_complete = True
+                else:
+                    time.sleep(0.1)
+
+        return True
+    
+    def stop_profile(self):
+        self.stoprequest = True
+
+
+class TwoRVMOnoffProfileManager(BaseProfileManager):
+    def __init__(self, UImfcs, UIvalve, profiles_dir):
+        standard_profiles = {
+            "Flow_Test": {
+                "description": "Test all devices together",
+                "steps": [
+                    {"time": 0.0, "flow mfc1": 0.5, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 1, "valve2": 2},
+                    {"time": 10.0, "flow mfc1": 1.0, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 2, "valve2": 1},
+                    {"time": 20.0, "flow mfc1": 1.5, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 1, "valve2": 2},
+                    {"time": 30.0, "flow mfc1": 1.0, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 2, "valve2": 1},
+                    {"time": 40.0, "flow mfc1": 0.5, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 1, "valve2": 2},
+                ]
+            }
+        }
+        super().__init__(profiles_dir, "profiles_onoff_nocooling_tworvm", standard_profiles)
+        self.mfcs = UImfcs
+        # self.cooling = UIcooling
+        self.valve = UIvalve
+    
+
+    def run_profile(self, update_callback = None): 
+    # def run_profile(self, temp_ambient, update_callback = None):
+        """Run the current profile with the given device controllers"""
+        # Ensuring that the MFC, cooling and valve are all connected
+        # print(self.mfcs[0].port, self.mfcs[1].port, self.mfcs[2].port)
+        # print(self.mfcs[0].connected , self.mfcs[1].connected , self.mfcs[2].connected , self.cooling.connected , self.valve.connected)
+        
+        # Check devices and ambient temp
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
+            messagebox.showerror("Connection Error", "One or more MFCs not connected.")
+            return
+        # if not self.cooling.connected:
+        #     messagebox.showerror("Connection Error", "Cooling not connected.")
+        #     return
+        if not (self.valve[0].connected and self.valve[1].connected):
+            messagebox.showerror("Connection Error", "Valve not connected.")
+            return
+        # if not isinstance(temp_ambient, (int, float)):
+        #     messagebox.showerror("Error", "Ambient temperature must be set.")
+        #     return
+        
+        if not self.current_profile:
+            messagebox.showerror("Error", "No profile loaded")
+            return False
+        steps = self.current_profile.get("steps", [])
+        if not steps:
+            messagebox.showerror("Error", "Profile has no steps")
+            return False
+        # Sort steps by time
+        steps = sorted(steps, key=lambda x: x["time"])
+        
+        self.stoprequest = False
+        
+        start_time = time.time()
+        current_step_index = 0
+        profile_complete = False
+        
+        while not profile_complete and not self.stoprequest:
+            now = time.time()
+            elapsed_time = now - start_time
+
+            # Check if we need to move to next step
+            if current_step_index < len(steps) - 1:
+                next_time = steps[current_step_index + 1]["time"]
+                # Update the current step index when time obtained
+                if elapsed_time >= next_time:
+                    current_step_index += 1
+
+            current_step = steps[current_step_index]
+            
+            # Set devices to current step values
+            self.mfcs[0].set_massflow(current_step["flow mfc1"])
+            self.mfcs[1].set_massflow(current_step["flow mfc2"])
+            self.mfcs[2].set_massflow(current_step["flow mfc3"])
+            # self.cooling.set_temperature(current_step["temperature"], temp_ambient)
+            self.valve[0].switch_position(current_step["valve1"])
+            self.valve[1].switch_position(current_step["valve2"])
+            
+            # #if update_callback is called then we need to update the status with the corresponding data
+            if update_callback:
+                    update_callback({
+                    "elapsed_time": elapsed_time,
+                    "current_step": current_step_index + 1,
+                    "total_steps": len(steps),
+                    "flow mfc1": current_step["flow mfc1"],
+                    "flow mfc2": current_step["flow mfc2"],
+                    "flow mfc3": current_step["flow mfc3"],
+                    # "temperature": current_step["temperature"],
+                    "valve1": current_step["valve1"],
+                    "valve2": current_step["valve2"]
+                })
+
+            if current_step_index < len(steps) - 1:
+                next_time = steps[current_step_index + 1]["time"]
+                # Calculate how much time we need to wait before the next step should start
+                wait_time = max(0, next_time - (time.time() - start_time))
+                # sleep in small steps until finally wait_time has reached, thus until the next time has reached, kinda stukje bij stukje wachten
+                # Minimum 0.1 s to ensure that UI still is reponsive
+                time.sleep(min(wait_time, 0.1))  
+            else:
+                # Last step
+                final_duration = current_step["time"]
+                if elapsed_time >= final_duration:
+                    profile_complete = True
+                else:
+                    time.sleep(0.1)
+        
+        return True
+    
+    def stop_profile(self):
+        self.stoprequest = True
