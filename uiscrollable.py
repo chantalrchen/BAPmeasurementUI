@@ -5,7 +5,7 @@ import threading
 # # Cooling OFF
 # from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
 
-from profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
+from profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
 from settingsmanagers import SettingsManager
 import pandas as pd
 import time
@@ -58,6 +58,9 @@ class AutomatedSystemUI:
             UImfcs=self.mfcs, UIvalve=self.valve, profiles_dir=settings_path
         )
 
+        self.onoffconcprofilemanager = OnOffConcProfileManager(
+            UImfcs=self.mfcs, UIvalve=self.valve, profiles_dir=settings_path
+        )
         
         # Header frame for connection and status
         header_frame = ttk.Frame(self.root)
@@ -2850,47 +2853,100 @@ class AutomatedSystemUI:
     def create_voccalculator_tab(self):
 
         ##Make it scrollable
-        self.voccalc_tab = self.create_scrollable_tab(self.notebook, "ON/OFF Profile")
+        voccalc_tab = self.create_scrollable_tab(self.notebook, "ON/OFF Profile")
         # self.voccalc_tab = ttk.Frame(self.notebook)
         # self.notebook.add(self.voccalc_tab, text="VOC Flow Calculator")
 
+        ##Make it scrollable
+        # profile_tab = self.create_scrollable_tab(self.notebook, "Different Concentration Profile Management")
+        ## Split into two frames
+        list_frame = ttk.Frame(voccalc_tab)
+        list_frame.pack(side= 'left', fill = 'both', expand=True, padx=5, pady=5)
+        
+        edit_frame = ttk.Frame(voccalc_tab)
+        edit_frame.pack(side= 'right', fill= 'both', expand=True, padx=5, pady=5)
+        
+        ### Left frame / list frame
+        ## Profile listbox with scrollbar
+        # https://www.pythontutorial.net/tkinter/tkinter-listbox/#adding-a-scrollbar-to-the-listbox
+        # Making an empty profile listbox
+        self.onoffconcprofile_listbox = tk.Listbox(list_frame, selectmode = tk.SINGLE)
+        self.onoffconcprofile_listbox.pack(fill= 'both', expand=True, padx=5, pady=5)
+    
+        # Putting all the profiles in the profile listbox
+        self.update_onoffconcprofile_list()
+        
+        #Adding a scrollbar to the profile listbox
+        v_scrollbar = ttk.Scrollbar(list_frame, orient = tk.VERTICAL, command = self.onoffconcprofile_listbox.yview)
+        v_scrollbar.pack(side='right', fill='y')
+        
+        self.onoffconcprofile_listbox['yscrollcommand'] = v_scrollbar.set
+        
+        ##Adding the buttons to the left frame (list frame)
+        # Profile list buttons
+        button_frame = ttk.Frame(list_frame)
+        button_frame.pack(fill='x', padx=5, pady=5)
+        
+        load_button = ttk.Button(button_frame, text="New", command=self.new_onoffconcprofile)
+        load_button.pack(side='left', padx=3, expand=True)
+
+        load_button = ttk.Button(button_frame, text="Load", command=self.load_onoffconcprofile)
+        load_button.pack(side='left', padx=3, expand=True)
+        
+        save_button = ttk.Button(button_frame, text="Save", command=self.save_onoffconcprofile)
+        save_button.pack(side='left', padx=3, expand=True)
+
+        delete_button = ttk.Button(button_frame, text="Delete", command=self.delete_onoffconcprofile)
+        delete_button.pack(side='left', padx=3, expand=True)
+        
         # VOC selection
-        ttk.Label(self.voccalc_tab, text="Select VOC:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(edit_frame, text="Name:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        self.onoffconc_namevar = tk.StringVar()
+        name_entry = ttk.Entry(edit_frame, textvariable=self.onoffconc_namevar)
+        name_entry.grid(row=0, column=1, padx=10, pady=5)
+        name_entry.config(width=30)
+        
+        ttk.Label(edit_frame, text="Description:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        self.onoffconc_desc_var = tk.StringVar()
+        desc_entry = ttk.Entry(edit_frame, textvariable=self.onoffconc_desc_var)
+        desc_entry.grid(row=1, column=1, padx=10, pady=5)
+        
+        ttk.Label(edit_frame, text="Select VOC:").grid(row=2, column=0, padx=10, pady=10, sticky='e')
         self.voccalc_voc_var = tk.StringVar()
         self.vocslist = list(self.settings_manager.get_voc_data().keys())
-        self.voc_dropdown_voccalculator = ttk.Combobox(self.voccalc_tab, textvariable=self.voccalc_voc_var, values=self.vocslist, state="readonly")
-        self.voc_dropdown_voccalculator.grid(row=0, column=1, padx=10, pady=10)
+        self.voc_dropdown_voccalculator = ttk.Combobox(edit_frame, textvariable=self.voccalc_voc_var, values=self.vocslist, state="readonly")
+        self.voc_dropdown_voccalculator.grid(row=2, column=1, padx=10, pady=10)
         self.voc_dropdown_voccalculator.current(0)
 
         # Concentration input
-        ttk.Label(self.voccalc_tab, text="Concentration (ppm):").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(edit_frame, text="Concentration (ppm):").grid(row=3, column=0, padx=10, pady=10, sticky='e')
         self.voccalc_concentration_var = tk.DoubleVar()
-        concentration_entry = ttk.Entry(self.voccalc_tab, textvariable=self.voccalc_concentration_var)
-        concentration_entry.grid(row=1, column=1, padx=10, pady=10)
+        concentration_entry = ttk.Entry(edit_frame, textvariable=self.voccalc_concentration_var)
+        concentration_entry.grid(row=3, column=1, padx=10, pady=10)
 
         # Total Flow Rate input
-        ttk.Label(self.voccalc_tab, text="Total Flow Rate (mL/min):").grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(edit_frame, text="Total Flow Rate (mL/min):").grid(row=4, column=0, padx=10, pady=10, sticky='e')
         self.voccalc_totalflowrate_var = tk.DoubleVar()
-        totalflow_entry = ttk.Entry(self.voccalc_tab, textvariable=self.voccalc_totalflowrate_var)
-        totalflow_entry.grid(row=2, column=1, padx=10, pady=10)
+        totalflow_entry = ttk.Entry(edit_frame, textvariable=self.voccalc_totalflowrate_var)
+        totalflow_entry.grid(row=4, column=1, padx=10, pady=10)
 
         # Calculate Button
-        calc_button = ttk.Button(self.voccalc_tab, text="Calculate Flow", command=self.calculate_voc_flow)
-        calc_button.grid(row=3, column=0, columnspan=2, pady=10)
+        calc_button = ttk.Button(edit_frame, text="Calculate Flow", command=self.calculate_voc_flow)
+        calc_button.grid(row=5, column=0, columnspan=2, pady=10)
 
         # Result labels
-        self.voccalc_flow_label = ttk.Label(self.voccalc_tab, text="Required Flow: -")
-        self.voccalc_flow_label.grid(row=4, column=0, columnspan=2, pady=5)
+        self.voccalc_flow_label = ttk.Label(edit_frame, text="Required Flow: -")
+        self.voccalc_flow_label.grid(row=6, column=0, columnspan=2, pady=5)
         
-        self.voccalc_N_label = ttk.Label(self.voccalc_tab, text="Required Mass Flow of Nitrogen: -")
-        self.voccalc_N_label.grid(row=5, column=0, columnspan=2, pady=5)
+        self.voccalc_N_label = ttk.Label(edit_frame, text="Required Mass Flow of Nitrogen: -")
+        self.voccalc_N_label.grid(row=7, column=0, columnspan=2, pady=5)
 
         # No need
         # self.voccalc_temp_label = ttk.Label(self.voccalc_tab, text="Required Temperature: -")
         # self.voccalc_temp_label.grid(row=6, column=0, columnspan=2, pady=5)
 
-        self.voccalc_ps_label = ttk.Label(self.voccalc_tab, text="Saturated Vapor Pressure (Ps): -")
-        self.voccalc_ps_label.grid(row=7, column=0, columnspan=2, pady=5)
+        self.voccalc_ps_label = ttk.Label(edit_frame, text="Saturated Vapor Pressure (Ps): -")
+        self.voccalc_ps_label.grid(row=8, column=0, columnspan=2, pady=5)
 
         # self.voccalc_run_button = ttk.Button(self.voccalc_tab, text="Run Continuously", command=self.voccalc_run_cnt)
         # self.voccalc_run_button.grid(row=7, column=0, padx=5, pady=10, sticky="ew")
@@ -2898,30 +2954,33 @@ class AutomatedSystemUI:
         # self.voccalc_stop_button = ttk.Button(self.voccalc_tab, text="Stop", command=self.voccalc_stop_cnt)
         # self.voccalc_stop_button.grid(row=7, column=1, padx=5, pady=10, sticky="ew")
 
-        ttk.Label(self.voccalc_tab, text="On Time (s):").grid(row=8, column=0)
-        self.voccalc_on_time_entry = ttk.Entry(self.voccalc_tab)
-        self.voccalc_on_time_entry.grid(row=8, column=1)
+        ttk.Label(edit_frame, text="On Time (s):").grid(row=9, column=0)
+        self.voccalc_on_time_entry = ttk.Entry(edit_frame)
+        self.voccalc_on_time_entry.grid(row=9, column=1)
 
-        ttk.Label(self.voccalc_tab, text="Off Time (s):").grid(row=9, column=0)
-        self.voccalc_off_time_entry = ttk.Entry(self.voccalc_tab)
-        self.voccalc_off_time_entry.grid(row=9, column=1)
+        ttk.Label(edit_frame, text="Off Time (s):").grid(row=10, column=0)
+        self.voccalc_off_time_entry = ttk.Entry(edit_frame)
+        self.voccalc_off_time_entry.grid(row=10, column=1)
 
-        ttk.Label(self.voccalc_tab, text="Run Time (s):").grid(row=10, column=0)
-        self.voccalc_run_time_entry = ttk.Entry(self.voccalc_tab)
-        self.voccalc_run_time_entry.grid(row=10, column=1)
+        ttk.Label(edit_frame, text="Run Time (s):").grid(row=11, column=0)
+        self.voccalc_run_time_entry = ttk.Entry(edit_frame)
+        self.voccalc_run_time_entry.grid(row=11, column=1)
         
-        self.voccalc_run_button = ttk.Button(self.voccalc_tab, state="disabled", text="Run On/Off Graph", command=self.voccalculator_run_onoffprofile)
-        self.voccalc_run_button.grid(row=11, column=0, padx=5, pady=10, sticky="ew")
+        self.voccalc_run_button = ttk.Button(edit_frame, state="disabled", text="Run ON/OFF Graph", command=self.voccalculator_run_onoffprofile)
+        self.voccalc_run_button.grid(row=12, column=0, padx=5, pady=10, sticky="ew")
         
-        self.voccalc_plotgraph_button = ttk.Button(self.voccalc_tab,state="disabled", text="Plot Setpoint Concentration On/Off Graph", command=self.plot_expected_vocprofile)
-        self.voccalc_plotgraph_button.grid(row=11, column=1, padx=5, pady=10, sticky="ew")
+        self.voccalc_stop_button = ttk.Button(edit_frame, state="disabled", text="Stop ON/OFF Graph", command=self.stop_onoffconc_run)
+        self.voccalc_stop_button.grid(row=12, column=1, padx=5, pady=10, sticky="ew")
+                
+        self.voccalc_plotgraph_button = ttk.Button(edit_frame,state="disabled", text="Plot ON/OFF Graph", command=self.plot_expected_vocprofile)
+        self.voccalc_plotgraph_button.grid(row=13, column=0, padx=5, pady=10, sticky="ew")
 
         self.voccalc_elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
-        self.voccalc_elapsed_time_label = ttk.Label(self.voccalc_tab, textvariable=self.voccalc_elapsed_time_var)
-        self.voccalc_elapsed_time_label.grid(row=12, column=0, columnspan=2, sticky='w')
+        self.voccalc_elapsed_time_label = ttk.Label(edit_frame, textvariable=self.voccalc_elapsed_time_var)
+        self.voccalc_elapsed_time_label.grid(row=14, column=0, columnspan=2, sticky='w')
 
         # For the graph
-        self.voccalc_graph_frame = ttk.LabelFrame(self.voccalc_tab, text="Setpoint Concentration On/Off Graph")
+        self.voccalc_graph_frame = ttk.LabelFrame(edit_frame, text="Setpoint Concentration On/Off Graph")
         self.voccalc_graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")        
         
     def update_voc_elapsed_time_display(self, start_timestamp, run_time):
@@ -2929,13 +2988,15 @@ class AutomatedSystemUI:
         try:
             if not self.root.winfo_exists():
                 return
-                
+            
             #elapsed time
             elapsed = time.time() - start_timestamp  
             self.voccalc_elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
 
-            if elapsed < run_time:
+            if elapsed < run_time and not self.stop_onoff_conc_run:
                 self.root.after(100, lambda: self.update_voc_elapsed_time_display(start_timestamp, run_time))
+            elif self.stop_onoff_conc_run:
+                self.voccalc_elapsed_time_var.set(f"Profile Stopped at {elapsed:.1f} s")            
             else:
                 self.voccalc_elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s / {run_time:.1f} s")
         except tk.TclError:
@@ -2981,6 +3042,8 @@ class AutomatedSystemUI:
         if not confirm:
             return  
             
+        self.voccalc_stop_button.config(state = 'enabled')
+        self.stop_onoff_conc_run = False
         def run_pulse_cycle():
             self.update_run_var()
         ##Koeling Uitzetten omdat hij het nog niet doet
@@ -2990,7 +3053,7 @@ class AutomatedSystemUI:
             pulse_starttime = time.time()
             self.root.after(0, lambda: self.update_voc_elapsed_time_display(pulse_starttime, run_time))
 
-            while True:
+            while not self.stop_onoff_conc_run:
                 if time.time() - pulse_starttime >= run_time:
                     break
 
@@ -2999,29 +3062,41 @@ class AutomatedSystemUI:
                 self.mfcs[1].set_massflow(self.voc_N)
                 self.valve.switch_position(2)
                 self.status_var.set(f"VOC ON-state | MFC1: {self.voc_flow}, MFC2 (Nitrogen): {self.voc_N}")
-                time.sleep(on_time)
+                if not self.sleep_with_stop_check(on_time):
+                    break
 
                 if time.time() - pulse_starttime >= run_time:
                     break
-
+                
                 # OFF state
                 self.mfcs[0].set_massflow(0)
                 self.mfcs[1].set_massflow(0) #nitrogen max flow rate
                 self.valve.switch_position(1)
-                self.status_var.set("VOC OFF-state")
-                time.sleep(off_time)
+                self.status_var.set("VOC OFF-state")    
+                if not self.sleep_with_stop_check(off_time):
+                    break
 
-            # Final reset
-            self.mfcs[0].set_massflow(0)
-            self.mfcs[1].set_massflow(0)
-        ##Koeling Uitzetten omdat hij het nog niet doet
-        # # Cooling OFF
-            # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
-            
-            self.valve.switch_position(1)
-            self.status_var.set("VOC Run complete")
+            if not self.stop_onoff_conc_run:
+                # Final reset
+                self.mfcs[0].set_massflow(0)
+                self.mfcs[1].set_massflow(0)
+            ##Koeling Uitzetten omdat hij het nog niet doet
+            # # Cooling OFF
+                # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+                
+                self.valve.switch_position(1)
+                self.status_var.set("VOC Run complete")
 
         threading.Thread(target=run_pulse_cycle, daemon=True).start()
+
+    def sleep_with_stop_check(self, duration):
+        interval = 0.1  # 100 ms
+        end_time = time.time() + duration
+        while time.time() < end_time:
+            if self.stop_onoff_conc_run:
+                return False
+            time.sleep(interval)
+        return True
 
     def plot_expected_vocprofile(self):
         #Expected Graph
@@ -3121,8 +3196,8 @@ class AutomatedSystemUI:
             self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: {self.voc_N} mL/min")
             # self.voccalc_temp_label.config(text=f"Required Temperature: {self.voc_temp} °C")
             self.voccalc_ps_label.config(text=f"Saturated Vapor Pressure (Ps): {self.voc_Ps} mmHg")
-            self.voccalc_plotgraph_button.config(state="normal")
-            self.voccalc_run_button.config(state="normal")
+            self.voccalc_plotgraph_button.config(state="enabled")
+            self.voccalc_run_button.config(state="enabled")
         else:
             self.voccalc_flow_label.config(text="Required Flow: N/A")
             self.voccalc_N_label.config(text=f"Required Flow of Nitrogen: N/A")
@@ -3202,6 +3277,142 @@ class AutomatedSystemUI:
 
         return None, None, None
     
+    #profile
+    def update_onoffconcprofile_list(self):
+        """Refresh the list of available profiles"""
+        #https://youtu.be/Vm0ivVxNaA8
+        
+        #Delete all the items from the listbox
+        self.onoffconcprofile_listbox.delete(0, tk.END)
+        
+        #Add all the profiles to the listbox
+        for profile in self.onoffconcprofilemanager.get_profiles():
+            self.onoffconcprofile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
+
+    def new_onoffconcprofile(self):
+        """Clear fields to create a new ON/OFF concentration profile."""
+
+        self.onoffconc_namevar.set("")
+        self.onoffconc_desc_var.set("")
+        self.voccalc_voc_var.set("")
+        self.voccalc_concentration_var.set(0.0)
+        self.voccalc_totalflowrate_var.set(0.0)
+        self.voccalc_on_time_entry.delete(0, tk.END)
+        self.voccalc_off_time_entry.delete(0, tk.END)
+        self.voccalc_run_time_entry.delete(0, tk.END)
+        self.status_var.set("Creating new ON/OFF profile.")
+  
+        # Clear existing plot from the graph frame
+        for child in self.voccalc_graph_frame.winfo_children():
+            child.destroy()
+
+    def delete_onoffconcprofile(self):
+        """Delete selected ON/OFF profile."""
+        selection = self.onoffconcprofile_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a profile to delete.")
+            return
+
+        profile_name = self.onoffconcprofile_listbox.get(selection[0])
+        if messagebox.askyesno("Confirm Deletion", f"Are you sure you want to delete '{profile_name}'?"):
+            if self.onoffconcprofilemanager.delete_profile(profile_name):
+                self.update_onoffconcprofile_list()
+                self.status_var.set(f"Deleted profile: {profile_name}")
+            else:
+                messagebox.showerror("Error", f"Could not delete profile: {profile_name}")
+
+    def load_onoffconcprofile(self):
+        """Load selected ON/OFF profile into editor, after gathering all values first."""
+        self.stop_onoff_conc_run = False
+        selection = self.onoffconcprofile_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a profile to load.")
+            return
+
+        profile_name = self.onoffconcprofile_listbox.get(selection[0])
+        profile = self.onoffconcprofilemanager.load_profile(profile_name)
+
+        if not profile:
+            messagebox.showerror("Error", "Failed to load the selected profile.")
+            return
+
+        description = profile.get("description", "")
+        voc = profile.get("voc", "")
+        concentration = profile.get("concentration", 0.0)
+        total_flow = profile.get("total_flow", 0.0)
+        on_time = profile.get("on_time", "")
+        off_time = profile.get("off_time", "")
+        run_time = profile.get("run_time", "")
+        
+
+        print(profile_name, profile, description, voc)
+        
+        self.onoffconc_namevar.set(profile.get("name", profile_name))
+        self.onoffconc_desc_var.set(description)
+        self.voccalc_voc_var.set(voc)
+        self.voccalc_concentration_var.set(concentration)
+        self.voccalc_totalflowrate_var.set(total_flow)
+
+        self.voccalc_on_time_entry.delete(0, tk.END)
+        self.voccalc_on_time_entry.insert(0, on_time)
+
+        self.voccalc_off_time_entry.delete(0, tk.END)
+        self.voccalc_off_time_entry.insert(0, off_time)
+
+        self.voccalc_run_time_entry.delete(0, tk.END)
+        self.voccalc_run_time_entry.insert(0, run_time)
+
+        self.status_var.set(f"Loaded profile: {profile_name}")
+        
+        self.calculate_voc_flow()
+        self.plot_expected_vocprofile()
+        
+
+    def save_onoffconcprofile(self):
+        """Save current VOC ON/OFF profile to file."""
+        # Fetch all values first (as you requested: first get, then set/save)
+        voc = self.voccalc_voc_var.get()
+        try:
+            concentration = float(self.voccalc_concentration_var.get())
+            total_flow = float(self.voccalc_totalflowrate_var.get())
+            on_time = float(self.voccalc_on_time_entry.get())
+            off_time = float(self.voccalc_off_time_entry.get())
+            run_time = float(self.voccalc_run_time_entry.get())
+            profile_name = self.onoffconc_namevar.get()
+            description = self.onoffconc_desc_var.get()
+        except ValueError:
+            messagebox.showerror("Input Error", "All numeric fields must be valid numbers.")
+            return
+
+        # Package the data
+        profile_data = {
+            "name": profile_name,
+            "description": description,
+            "voc": voc,
+            "concentration": concentration,
+            "total_flow": total_flow,
+            "on_time": on_time,
+            "off_time": off_time,
+            "run_time": run_time
+        }
+
+        # Save using profile manager
+        success = self.onoffconcprofilemanager.save_profile(profile_name, profile_data)
+        if success:
+            self.update_onoffconcprofile_list()
+            self.status_var.set(f"Saved profile: {profile_name}")
+        else:
+            messagebox.showerror("Save Error", f"Could not save profile '{profile_name}'.")
+    
+    def stop_onoffconc_run(self):
+        self.stop_onoff_conc_run = True
+        self.status_var.set("Stop running the profile.")
+        self.voccalc_stop_button.config(state = 'disabled')
+        self.mfcs[0].set_massflow(0)
+        self.mfcs[1].set_massflow(0) #nitrogen max flow rate
+        self.valve.switch_position(1)
+    
+
 ####Tab different concentration
     def create_diffconc_profile_tab(self):
         # profile_tab = ttk.Frame(self.notebook)

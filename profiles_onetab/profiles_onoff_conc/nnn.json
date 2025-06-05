@@ -1,0 +1,10 @@
+{
+      "name": "nnn",
+      "description": "nn",
+      "voc": "Nonanal",
+      "concentration": 5.0,
+      "total_flow": 2.0,
+      "on_time": 5.0,
+      "off_time": 5.0,
+      "run_time": 80.0
+}
