@@ -675,9 +675,9 @@ class DiffConcProfileManager(BaseProfileManager):
         if not self.valve.connected:
             messagebox.showerror("Connection Error", "Valve not connected.")
             return
-        if not isinstance(temp_ambient, (int, float)):
-            messagebox.showerror("Error", "Ambient temperature must be set.")
-            return
+        # if not isinstance(temp_ambient, (int, float)):
+        #     messagebox.showerror("Error", "Ambient temperature must be set.")
+        #     return
         
         if not self.current_profile:
             messagebox.showerror("Error", "No profile loaded")
