@@ -5,8 +5,8 @@ import threading
 # # Cooling OFF
 # from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
 
-from profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
-from settingsmanagers import SettingsManager
+from profilemanagers2valves import MFCProfileManager, TwoRVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
+from settingsmanagers2valves import SettingsManager
 import pandas as pd
 import time
 import matplotlib.pyplot as plt
@@ -18,6 +18,8 @@ class AutomatedSystemUI:
         self.root.title("Automated System")
         self.root.geometry("1400x800")
         
+        # self.path_pureflowrate = "C:/Users/chant/Downloads/Pure and Mixed flow rates.xlsx"
+                
         self.settings_manager = SettingsManager()
         settings_path = self.settings_manager.get_profiles_path()
         saved_ports = self.settings_manager.get_com_ports()
@@ -28,7 +30,7 @@ class AutomatedSystemUI:
         # # Cooling OFF
         # self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], profiles_dir=settings_path)
 
-        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"], profiles_dir=settings_path)
+        self.valveprofilemanager = TwoRVMProfileManager(saved_ports["valve1"], saved_ports["valve2"], profiles_dir=settings_path)
 
         self.mfcs = self.mfcprofilemanager.mfcs
         
@@ -88,9 +90,13 @@ class AutomatedSystemUI:
         #                                              text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
         # self.connection_cooling_port_label.pack(fill='both', expand=True)
         
-        self.connection_valve_port_label = ttk.Label(connection_frame, 
-                                                  text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
-        self.connection_valve_port_label.pack(fill='both', expand=True)
+        self.connection_valve1_port_label = ttk.Label(connection_frame, 
+                                                  text=f"RVM 1 Port: {self.valve[0].port}, Connected: {self.valve[0].connected}")
+        self.connection_valve1_port_label.pack(fill='both', expand=True)
+        
+        self.connection_valve2_port_label = ttk.Label(connection_frame, 
+                                                  text=f"RVM 2 Port: {self.valve[1].port}, Connected: {self.valve[1].connected}")
+        self.connection_valve2_port_label.pack(fill='both', expand=True)
         
         connect_all_button = ttk.Button(connection_frame, text = "Connect all devices", command = self.connect_all_devices)
         connect_all_button.pack(side='right', fill = 'both', expand = 'true')
@@ -185,6 +191,8 @@ class AutomatedSystemUI:
 
         selectprofiles_frame = ttk.LabelFrame(overview_profile, text="Multiple Profile Runner")
         selectprofiles_frame.pack(side="right")
+
+        # Label row
 
         ttk.Label(selectprofiles_frame, text="Valve Profiles").grid(row=0, column=1)
         
@@ -337,11 +345,21 @@ class AutomatedSystemUI:
             #     temp_str = "-"
             # self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
 
-            if self.valve.connected:
-                pos = self.valve.current_position
-            else:
-                pos = "-"
-            self.current_valve_label.config(text=f"Current position of the valve: {pos}")
+          ##update device tab
+            valveposition = []
+            
+            for i in range(2):
+                if self.valve[i].connected:
+                    
+                ###DIT MOET AAN EN DE REGEL HIEBOVEN MOET UIT OM TE SIMULEREN    
+                    #TO SIMULATE
+                    pos = self.valve[i].get_position()
+
+                else:
+                    pos = "-"
+                valveposition.append(pos)
+                self.current_position_labels[i].config(text=f"Current position of the valve: {pos}")
+
 
             # Summary bar uses same values
             self.running_var_bar.config(
@@ -352,7 +370,8 @@ class AutomatedSystemUI:
                     f"MFC 3 Mass Flow Rate: {massflows[2]} | "
             # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
                     # f"Temperature: {temp_str} | "
-                    f"Valve Position: {pos}"
+                    f"RVM 1 Position: {valveposition[0]} | "
+                    f"RVM 2 Position: {valveposition[1]} | "
                 )
             )
             # Schedule the next update, per 1s
@@ -395,9 +414,17 @@ class AutomatedSystemUI:
         for i in range(len(self.mfcs)):
             self.create_mfc_frame(all_mfc_frame, i)
             
-        coolingandvalve_frame = ttk.LabelFrame(device_tab)
-        coolingandvalve_frame.pack(fill='x', padx=10, pady=5)
+        all_valve_frame = ttk.LabelFrame(device_tab)
+        all_valve_frame.pack(fill='x', padx=10, pady=5)
 
+        self.valve_frames = []
+        self.position_vars = []
+        self.current_position_labels = []
+        self.target_position_labels = []
+        
+        for i in range(len(self.valve)):
+            self.create_valve_frame(all_valve_frame, i)
+            
         ##Koeling Uitzetten omdat hij het nog niet doet
         # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
         ############	COOLING		###########################
@@ -437,31 +464,56 @@ class AutomatedSystemUI:
         # cooling_disconnect_button = tk.Button(cooling_frame, text="Disconnect", command=self.disconnect_cooling)
         # cooling_disconnect_button.grid(row=3, column=1, padx=10, pady=10)
 
-        ############	VALVE		###########################
-        valve_frame = ttk.LabelFrame(coolingandvalve_frame, text='Valve')
-        valve_frame.grid(row=0, column=1, padx=10, pady=5, sticky='n')
+        # ############	VALVE		###########################
+        # valve_frame = ttk.LabelFrame(coolingandvalve_frame, text='Valve')
+        # valve_frame.grid(row=0, column=1, padx=10, pady=5, sticky='n')
                 
-        # Valve position control
-        ttk.Label(valve_frame, text="Valve Position:").grid(row=0, column=0, padx=10, pady=10)
-        self.valve_pos_var = tk.IntVar(value=1)
-        ttk.Combobox(valve_frame, textvariable=self.valve_pos_var, values=[1, 2], width=5).grid(row=0, column=1, padx=10, pady=10)
+        # # Valve position control
+        # ttk.Label(valve_frame, text="Valve Position:").grid(row=0, column=0, padx=10, pady=10)
+        # self.valve_pos_var = tk.IntVar(value=1)
+        # ttk.Combobox(valve_frame, textvariable=self.valve_pos_var, values=[1, 2], width=5).grid(row=0, column=1, padx=10, pady=10)
         
-        # button to set the position of the valve
-        set_valve_button = tk.Button(valve_frame, text="Set valve", command=self.set_valve)
-        set_valve_button.grid(row=1, column=0, padx=10, pady=10)
+        # # button to set the position of the valve
+        # set_valve_button = tk.Button(valve_frame, text="Set valve", command=self.set_valve)
+        # set_valve_button.grid(row=1, column=0, padx=10, pady=10)
         
-        # Label to display the current position of the valve
-        self.current_valve_label = tk.Label(valve_frame, text="Current position of the valve: Not available")
-        self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
+        # # Label to display the current position of the valve
+        # self.current_valve_label = tk.Label(valve_frame, text="Current position of the valve: Not available")
+        # self.current_valve_label.grid(row=2, column=0, padx=10, pady=10)
         
-        # Connect button
-        valve_connect_button = tk.Button(valve_frame, text="Connect", command=self.connect_valve)
-        valve_connect_button.grid(row=3, column=0, padx=5, pady=5)
+        # # Connect button
+        # valve_connect_button = tk.Button(valve_frame, text="Connect", command=self.connect_valve)
+        # valve_connect_button.grid(row=3, column=0, padx=5, pady=5)
         
-        # Disconnect button
-        valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
-        valve_disconnect_button.grid(row=3, column=1, padx=5, pady=5)
+        # # Disconnect button
+        # valve_disconnect_button = tk.Button(valve_frame, text="Disconnect", command=self.disconnect_valve)
+        # valve_disconnect_button.grid(row=3, column=1, padx=5, pady=5)
     
+    def create_valve_frame(self, parent, index):
+        valve = self.valve[index]
+        frame = ttk.LabelFrame(parent, text=f'Valve {index + 1}')
+        frame.grid(row=0, column=index, padx=10, pady=5)
+
+        tk.Label(frame, text="Valve Position").grid(row=0, column=0, padx=10, pady=10)
+        var = tk.IntVar()
+        entry = ttk.Combobox(frame, textvariable=var, values=[1, 2], width=5, state="readonly")
+        entry.grid(row=0, column=1, padx=10, pady=10)
+        self.position_vars.append(var)
+
+        tk.Button(frame, text="Set Valve Position", command=lambda i=index: self.set_valve(i)).grid(
+            row=1, column=0, columnspan=2, pady=10)
+
+        current_label = tk.Label(frame, text="Current valve position: Not available")
+        current_label.grid(row=2, column=0, padx=10, pady=10)
+        self.current_position_labels.append(current_label)
+
+        target_label = tk.Label(frame, text=f"Target valve position: Not available")
+        target_label.grid(row=2, column=1, padx=10, pady=10)
+        self.target_position_labels.append(target_label)
+
+        tk.Button(frame, text="Connect", command=lambda i=index: self.connect_valve(i)).grid(row=3, column=0, padx=10, pady=10)
+        tk.Button(frame, text="Disconnect", command=lambda i=index: self.disconnect_valve(i)).grid(row=3, column=1, padx=10, pady=10)
+        
     def create_mfc_frame(self, parent, index):
         mfc = self.mfcs[index]
         frame = ttk.LabelFrame(parent, text=f'MFC {index + 1}')
@@ -490,6 +542,9 @@ class AutomatedSystemUI:
     def create_onoffprofile_tab(self):
         #Make it scrollable
         profile_tab = self.create_scrollable_tab(self.notebook, "MFC and Management")
+        # profile_tab = ttk.Frame(self.notebook)
+        # profile_tab.pack(fill = 'both', expand = True)
+        # self.notebook.add(profile_tab, text = 'On/Off Profile Management')
         
         ## Split into two frames
         list_frame = ttk.Frame(profile_tab)
@@ -983,15 +1038,17 @@ class AutomatedSystemUI:
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.valvesteps_tree = ttk.Treeview(
             steps_frame, 
-            columns=("time", "valve"), 
+            columns=("time", "valve1", "valve2"), 
             show="headings"
         )
         self.valvesteps_tree.heading("time", text="Time (s)")
-        self.valvesteps_tree.heading("valve", text="Valve Position (1/2)")
+        self.valvesteps_tree.heading("valve1", text="RVM 1 Position (1/2)")
+        self.valvesteps_tree.heading("valve2", text="RVM 2 Position (1/2)")
         
         self.valvesteps_tree.column("time", width=250, anchor=tk.CENTER)
-        self.valvesteps_tree.column("valve", width=250, anchor=tk.CENTER)
-        
+        self.valvesteps_tree.column("valve1", width=250, anchor=tk.CENTER)
+        self.valvesteps_tree.column("valve2", width=250, anchor=tk.CENTER)
+                
         self.valvesteps_tree.pack(fill = 'both' , expand=True)
         
         step_controls_frame = ttk.Frame(edit_frame)
@@ -1002,11 +1059,21 @@ class AutomatedSystemUI:
         step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.valvestep_time_var, width=8)
         step_time_entry.pack(side='left', padx=5)
         
-        self.valveprofile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
-        self.valvestep_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
+        self.valveprofile_valve1_label =  ttk.Label(step_controls_frame, text="Valve 1 Position:").pack(side='left')
+        self.valvestep_valve1_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
         step_valve_combo = ttk.Combobox(
             step_controls_frame, 
-            textvariable=self.valvestep_valve_var, 
+            textvariable=self.valvestep_valve1_var, 
+            values=[1, 2], 
+            width=5
+        )
+        step_valve_combo.pack(side='left', padx=2)
+
+        self.valveprofile_valve2_label =  ttk.Label(step_controls_frame, text="Valve 1 Position:").pack(side='left')
+        self.valvestep_valve2_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
+        step_valve_combo = ttk.Combobox(
+            step_controls_frame, 
+            textvariable=self.valvestep_valve2_var, 
             values=[1, 2], 
             width=5
         )
@@ -1085,8 +1152,8 @@ class AutomatedSystemUI:
     #     self.update_connection_devices()
     #     self.status_var.set(f"Torrey Pines IC20XR Digital Chilling/Heating Dry Baths disconnected")
 
-    def connect_valve(self):  
-        if self.valve.connect():
+    def connect_valve(self, index):  
+        if self.valve[index].connect():
             self.keep_updating_valve = True
             #messagebox.showinfo("Connection", "RVM Industrial Microfluidic Rotary valve is successfully connected.")
             #updating the connection info
@@ -1095,17 +1162,17 @@ class AutomatedSystemUI:
             #initializing the home position of the valve
             self.currentposition = 1
             
-            self.status_var.set(f"RVM Industrial Microfluidic Rotary valve connected and set to home position 1")
+            self.status_var.set(f"RVM {index} connected and set to home position {self.currentposition}")
         else:
             messagebox.showinfo("Connection Failed", "RVM is not connected")
          
-    def disconnect_valve(self):
-        self.valve.disconnect()
+    def disconnect_valve(self, index):
+        self.valve[index].disconnect()
         self.keep_updating_valve = False
         #messagebox.showinfo("Disconnected", "RVM Industrial Microfluidic Rotary valve is disconnected successfully.")
         #updating the connection info
         self.update_connection_devices()
-        self.status_var.set(f"RVM Industrial Microfluidic Rotary valve disconnected")
+        self.status_var.set(f"RVM {index} disconnected")
 
     def connect_all_devices(self):
         self.connect_MFC(index = 0)
@@ -1114,8 +1181,9 @@ class AutomatedSystemUI:
         ##Koeling Uitzetten omdat hij het nog niet doet
         # # Cooling OFF
         # self.connect_cooling()
-        self.connect_valve()
-        self.status_var.set(f"MFC, Torrey Pines IC20XR Digital Chilling/Heating Dry Baths and RVM Industrial Microfluidic Rotary valve connected")
+        self.connect_valve(index = 0)
+        self.connect_valve(index = 1)
+        self.status_var.set(f"MFCs, Torrey Pines IC20XR Digital Chilling/Heating Dry Baths and RVM Industrial Microfluidic Rotary valves connected")
    
     def update_connection_devices(self):
         #Labels at the Header
@@ -1125,7 +1193,8 @@ class AutomatedSystemUI:
         ##Koeling Uitzetten omdat hij het nog niet doet
         # # Cooling OFF
         # self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
-        self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
+        self.connection_valve1_port_label.config(text=f"RVM 1 Port: {self.valve[0].port}, Connected: {self.valve[0].connected}")
+        self.connection_valve2_port_label.config(text=f"RVM 2 Port: {self.valve[1].port}, Connected: {self.valve[1].connected}")
 
     def com_settings(self):
         #Opens een top level window
@@ -1140,17 +1209,17 @@ class AutomatedSystemUI:
         MFC_frame = ttk.LabelFrame(settings_window, text="Bronkhorst MFC")
         MFC_frame.pack(fill="both", padx=10, pady=10)
         
-        ttk.Label(MFC_frame, text="Port:").grid(row=0, column=0, padx=5, pady=5)
+        ttk.Label(MFC_frame, text="MFC 1 Port:").grid(row=0, column=0, padx=5, pady=5)
         self.MFC1_port_var = tk.StringVar(value=self.mfcs[0].port)
         MFC1_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC1_port_var)
         MFC1_port_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        ttk.Label(MFC_frame, text="Port:").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(MFC_frame, text="MFC 2 Port:").grid(row=1, column=0, padx=5, pady=5)
         self.MFC2_port_var = tk.StringVar(value=self.mfcs[1].port)
         MFC2_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC2_port_var)
         MFC2_port_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        ttk.Label(MFC_frame, text="Port:").grid(row=2, column=0, padx=5, pady=5)
+        ttk.Label(MFC_frame, text="MFC 3 Port:").grid(row=2, column=0, padx=5, pady=5)
         self.MFC3_port_var = tk.StringVar(value=self.mfcs[2].port)
         MFC3_port_entry = ttk.Entry(MFC_frame, textvariable=self.MFC3_port_var)
         MFC3_port_entry.grid(row=2, column=1, padx=5, pady=5)
@@ -1170,10 +1239,15 @@ class AutomatedSystemUI:
         valve_frame = ttk.LabelFrame(settings_window, text="RVM Industrial Microfluidic Rotary valve ")
         valve_frame.pack(fill="both", padx=10, pady=10)
         
-        ttk.Label(valve_frame, text="Port:").grid(row=4, column=0, padx=5, pady=5)
-        self.valve_port_var = tk.StringVar(value=self.valve.port)
-        valve_port_entry = ttk.Entry(valve_frame, textvariable=self.valve_port_var)
-        valve_port_entry.grid(row=4, column=1, padx=5, pady=5)
+        ttk.Label(valve_frame, text="RVM 1 Port:").grid(row=4, column=0, padx=5, pady=5)
+        self.valve1_port_var = tk.StringVar(value=self.valve[0].port)
+        valve1_port_entry = ttk.Entry(valve_frame, textvariable=self.valve1_port_var)
+        valve1_port_entry.grid(row=4, column=1, padx=5, pady=5)
+        
+        ttk.Label(valve_frame, text="RVM 2 Port:").grid(row=5, column=0, padx=5, pady=5)
+        self.valve2_port_var = tk.StringVar(value=self.valve[1].port)
+        valve2_port_entry = ttk.Entry(valve_frame, textvariable=self.valve2_port_var)
+        valve2_port_entry.grid(row=5, column=1, padx=5, pady=5)
         
         # Profile path setting
         profile_frame = ttk.LabelFrame(settings_window, text="Settings Path")
@@ -1204,7 +1278,8 @@ class AutomatedSystemUI:
         # # Cooling OFF
             # "cooling": self.cooling_port_var.get(),
             
-            "valve": self.valve_port_var.get()
+            "valve1": self.valve1_port_var.get(),
+            "valve2": self.valve2_port_var.get()
         }
         self.settings_manager.set_com_ports(com_ports)     
         
@@ -1227,9 +1302,11 @@ class AutomatedSystemUI:
         # # Cooling OFF
         # if self.cooling.connected:
         #     self.disconnect_cooling()
-        if self.valve.connected:
-            self.disconnect_valve()
-
+        if self.valve[0].connected:
+            self.disconnect_valve(index = 0)
+        if self.valve[1].connected:
+            self.disconnect_valve(index = 1)
+            
         #Obtain the new assigned comports
         saved_ports = self.settings_manager.get_com_ports()
         new_path = self.settings_path_var.get()
@@ -1241,7 +1318,7 @@ class AutomatedSystemUI:
             ##Koeling Uitzetten omdat hij het nog niet doet
         # # Cooling OFF
         # self.coolingprofilemanager = CoolingProfileManager(saved_ports["cooling"], new_path)
-        self.valveprofilemanager = RVMProfileManager(saved_ports["valve"], new_path)
+        self.valveprofilemanager = TwoRVMProfileManager(saved_ports["valve1"],saved_ports["valve2"], new_path)
 
         # Update the devices
         self.mfcs = self.mfcprofilemanager.mfcs
@@ -1262,13 +1339,14 @@ class AutomatedSystemUI:
         )
 
         # Update the UI labels
-        self.connection_mfc1_port_label.config(text=f"MFC Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
-        self.connection_mfc2_port_label.config(text=f"MFC Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
-        self.connection_mfc3_port_label.config(text=f"MFC Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
+        self.connection_mfc1_port_label.config(text=f"MFC 1 Port: {self.mfcs[0].port}, Connected: {self.mfcs[0].connected}")
+        self.connection_mfc2_port_label.config(text=f"MFC 2 Port: {self.mfcs[1].port}, Connected: {self.mfcs[1].connected}")
+        self.connection_mfc3_port_label.config(text=f"MFC 3 Port: {self.mfcs[2].port}, Connected: {self.mfcs[2].connected}")
         ##Koeling Uitzetten omdat hij het nog niet doet
         # # Cooling OFF
         # self.connection_cooling_port_label.config(text=f"Cooling Port: {self.cooling.port}, Connected: {self.cooling.connected}")
-        self.connection_valve_port_label.config(text=f"RVM Port: {self.valve.port}, Connected: {self.valve.connected}")
+        self.connection_valve1_port_label.config(text=f"RVM 1 Port: {self.valve[0].port}, Connected: {self.valve[0].connected}")
+        self.connection_valve2_port_label.config(text=f"RVM 2 Port: {self.valve[1].port}, Connected: {self.valve[1].connected}")
 
     def set_MFCmassflow(self, index):
         massflowrate = self.massflow_vars[index].get()
@@ -1345,25 +1423,33 @@ class AutomatedSystemUI:
     #     #https://www.geeksforgeeks.org/python-after-method-in-tkinter/
     #     self.root.after(1000, self.update_temperature) 
         
-    def set_valve(self):
-        position = self.valve_pos_var.get()
-        if self.valve.switch_position(position):
-            self.update_valve()
-
-    def update_valve(self):
-        if not self.keep_updating_valve:
-            return
-        target_position = self.valve.get_position()
-        self.update_run_var()
-        if target_position is not None:
-            if self.currentposition != target_position:                
-                self.current_valve_label.config(text=f"Current position of the valve: {target_position}")
-                self.status_var.set(f"The position is set to {target_position}.")
-            else:
-                self.status_var.set(f"The target position is the current position, position {target_position}.")
+    def set_valve(self, index):
+        position = self.position_vars[index].get()
+        if self.valve[index].switch_position(position):
+            self.target_position_labels[index].config(text=f"Target position of the valve: {position}")
+            self.update_valve(index)
         else:
-            self.status_var.set("Failed to read the position of the valve.")
-    
+            self.status_var.set("Valve:  Failed to set the valve position")
+
+    def update_valve(self, index):
+        try:
+            if not self.root.winfo_exists():
+                return
+            
+            if not self.keep_updating_valve:
+                return
+            target_position = self.valve[index].get_position()
+            self.update_run_var()
+            if target_position is not None:
+                if self.currentposition != target_position:                
+                    self.current_position_labels[index].config(text=f"Current position of the valve: {target_position}")
+                    self.status_var.set(f"The position is set to {target_position}.")
+                else:
+                    self.status_var.set(f"The target position is the current position, position {target_position}.")
+            else:
+                self.status_var.set("Failed to read the position of the valve.")
+        except tk.TclError:
+            return
     ####MFC PROFILE
     def update_mfcprofile_list(self):
         """Refresh the list of available profiles"""
@@ -1392,6 +1478,7 @@ class AutomatedSystemUI:
         self.new_mfcprofile_label.config(text = "")
         
         if profile:
+            # self.mfccurrent_loaded_profile = profile_name
             #Update the name of the profile
             self.mfcname_var.set(profile_name)
             #Update the description in the field
@@ -1439,6 +1526,8 @@ class AutomatedSystemUI:
         self.mfcstep_flow1_var.set("0")
         self.mfcstep_flow2_var.set("0")
         self.mfcstep_flow3_var.set("0")
+        # self.mfcstep_temp_var.set("0")
+        # self.mfcstep_valve_var.set("0")
         
         for item in self.mfcsteps_tree.get_children():
             self.mfcsteps_tree.delete(item)
@@ -1452,10 +1541,14 @@ class AutomatedSystemUI:
             flow1_val = float(self.mfcstep_flow1_var.get())
             flow2_val = float(self.mfcstep_flow2_var.get())
             flow3_val = float(self.mfcstep_flow3_var.get())
+            # temp_val = float(self.mfcstep_temp_var.get())
+            # valve_val = int(self.mfcstep_valve_var.get())
             
             if time_val < 0:
                 raise ValueError("Time cannot be negative")
-
+            # if valve_val not in [1, 2]:
+            #     raise ValueError("Position of the valve must be 1 or 2")
+            
             # Check if the time already exists
             for child in self.mfcsteps_tree.get_children():
                 if float(self.mfcsteps_tree.item(child, "values")[0]) == time_val:
@@ -1464,7 +1557,7 @@ class AutomatedSystemUI:
                     self.mfcsteps_tree.delete(child)
                     break
             
-            self.mfcsteps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val)) 
+            self.mfcsteps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val)) #, temp_val, valve_val))
             
         except ValueError as error:
             messagebox.showerror("Error", f"Invalid input: {error}")
@@ -1502,6 +1595,8 @@ class AutomatedSystemUI:
                 "flow mfc1": float(values[1]),
                 "flow mfc2": float(values[2]),
                 "flow mfc3": float(values[3])
+                # "temperature": float(values[4]),
+                # "valve": int(values[5])
             })
         
         # Sort steps by time
@@ -1523,7 +1618,7 @@ class AutomatedSystemUI:
     def run_mfcprofile(self):
         """Run the current profile"""    
             
-        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected): 
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected): #and self.cooling.connected and self.valve.connected):
             messagebox.showwarning("Error", "One or more devices are not connected")
             return False
           
@@ -1560,6 +1655,7 @@ class AutomatedSystemUI:
             # Displaying which profile is running
             self.status_var.set(f"Running profile: {self.mfcname_var.get()}")
             self.mfcprofilemanager.run_profile(update_callback=self.update_mfcprofile_var)
+            # self.root.after(0, lambda: self.update_run_status)
             self.root.after(0, lambda: self.mfcprofile_complete)
 
         except Exception as e:
@@ -1854,6 +1950,7 @@ class AutomatedSystemUI:
         self.new_valveprofile_label.config(text = "")
         
         if profile:
+            # self.valvecurrent_loaded_profile = profile_name
             #Update the name of the profile
             self.valvename_var.set(profile_name)
             #Update the description in the field
@@ -1867,7 +1964,8 @@ class AutomatedSystemUI:
             for step in profile.get("steps", []):
                 self.valvesteps_tree.insert("", tk.END, values=(
                     step["time"],
-                    step["valve"]
+                    step["valve1"],
+                    step["valve2"]
                 ))
             
             self.status_var.set(f"Loaded profile: {profile_name}")
@@ -1896,7 +1994,8 @@ class AutomatedSystemUI:
         self.valvename_var.set("")
         self.valvedesc_var.set("")
         self.valvestep_time_var.set("0")
-        self.valvestep_valve_var.set("0")
+        self.valvestep_valve1_var.set("0")
+        self.valvestep_valve2_var.set("0")
         
         for item in self.valvesteps_tree.get_children():
             self.valvesteps_tree.delete(item)
@@ -1907,14 +2006,15 @@ class AutomatedSystemUI:
         """Add a new step to the current profile"""
         try:
             time_val = float(self.valvestep_time_var.get())
-            valve_val = int(self.valvestep_valve_var.get())
+            valve1_val = int(self.valvestep_valve1_var.get())
+            valve2_val = int(self.valvestep_valve2_var.get())
             
             if time_val < 0:
                 raise ValueError("Time cannot be negative")
             
             
             ###ALS WE OOK POSITIE 3 ERIN GAAN DOEN MOET DIT GEWIJZIGD WORDEN
-            if valve_val not in [1, 2]:
+            if (valve1_val not in [1, 2]) and (valve2_val not in [1, 2]) :
                 raise ValueError("Position of the valve must be 1 or 2")
             
             # Check if the time already exists
@@ -1925,7 +2025,7 @@ class AutomatedSystemUI:
                     self.valvesteps_tree.delete(child)
                     break
             
-            self.valvesteps_tree.insert("", tk.END, values=(time_val, valve_val))
+            self.valvesteps_tree.insert("", tk.END, values=(time_val, valve1_val, valve2_val))
             
         except ValueError as error:
             messagebox.showerror("Error", f"Invalid input: {error}")
@@ -1960,7 +2060,8 @@ class AutomatedSystemUI:
             values = self.valvesteps_tree.item(child, "values")
             steps.append({
                 "time": float(values[0]),
-                "valve": int(values[1])
+                "valve1": int(values[1]),
+                "valve2": int(values[2])
             })
         
         # Sort steps by time
@@ -1982,7 +2083,7 @@ class AutomatedSystemUI:
     def run_valveprofile(self):
         """Run the current profile"""    
             
-        if not self.valve.connected:
+        if not (self.valve[0].connected and self.valve[1].connected):
             messagebox.showwarning("Error", "One or more devices are not connected")
             return False
           
@@ -2050,7 +2151,7 @@ class AutomatedSystemUI:
             
             self.valve_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
             self.valve_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
-            self.valve_value_label.config(text=f"Position {status['valve']}")
+            self.valve_value_label.config(text=f"RVM 1: Position {status['valve1']}, RVM 2: Position {status['valve2']}")
             # Schedule the next update, per 1s
             self.root.after(1000, lambda: self.update_valveprofile_var)
         except tk.TclError:
@@ -2096,7 +2197,7 @@ class AutomatedSystemUI:
         # if not self.cooling.connected:
         #     messagebox.showerror("Connection Error", "Cooling not connected.")
         #     return
-        if not self.valve.connected:
+        if not (self.valve[0].connected and self.valve[1].connected):
             messagebox.showerror("Connection Error", "Valve not connected.")
             return
         # if not isinstance(self.ambient_temp, (int, float)):
@@ -2385,9 +2486,462 @@ class AutomatedSystemUI:
         self.valveprofilemanager.stop_profile()
         self.status_var.set("All profiles stopped by user")
 
-    def create_voccalculator_tab(self):
-        voccalc_tab = self.create_scrollable_tab(self.notebook, "ON/OFF Profile")
 
+###EXCEL SHEET TAB
+# ### Constant Flow Rate Profile
+#     def create_pureflowrate_tab(self):
+#         self.pureflowrate_tab = ttk.Frame(self.notebook)
+#         self.notebook.add(self.pureflowrate_tab, text="Constant Flow Rate Profile")
+
+#         # Read Excel sheet, sheet 1
+#         # skiprows = 4, because the first 4 rows contains the information that we don't want
+#         self.pureflowrate_data = pd.read_excel(self.path_pureflowrate, sheet_name=0, skiprows=4)
+
+#         ##Renaming the columns such that it can be read easilier later 
+#         #https://www.geeksforgeeks.org/how-to-rename-columns-in-pandas-dataframe/
+#         self.pureflowrate_data = self.pureflowrate_data.rename(columns={
+#             self.pureflowrate_data.columns[0]: 'VOC',
+#             self.pureflowrate_data.columns[1]: 'Concentration',
+#             self.pureflowrate_data.columns[2]: 'Temperature',
+#             self.pureflowrate_data.columns[4]: 'Flowrate_liquid',
+#             self.pureflowrate_data.columns[5]: 'Flowrate_N'
+#         })
+        
+#         #Dropping values that have both VOC and Concentration values
+#         #https://www.programiz.com/python-programming/pandas/methods/dropna
+#         self.pureflowrate_data = self.pureflowrate_data.dropna(subset=['VOC', 'Concentration'])
+
+#         ttk.Label(self.pureflowrate_tab, text="Select VOC:").grid(row=0, column=0)
+#         self.pureflowrate_voc_var = tk.StringVar()
+        
+#         # Combobox for the type of VOC
+#         # https://www.pythontutorial.net/tkinter/tkinter-combobox/
+#         self.pureflowrate_voc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_voc_var, state="readonly")
+#         self.pureflowrate_voc_dropdown.grid(row=0, column=1)
+#         # obtain all unique values in the list
+#         voc_list = self.pureflowrate_data['VOC'].unique()
+#         self.pureflowrate_voc_dropdown['values'] = sorted(voc_list)
+        
+#         # the update_concentration_dropdown function will execute when the selected value of the combobox changes.
+#         self.pureflowrate_voc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_update_concentration_dropdown)
+
+#         ttk.Label(self.pureflowrate_tab, text="Select Concentration (ppm):").grid(row=1, column=0)
+#         self.pureflowrate_conc_var = tk.StringVar()
+#         self.pureflowrate_conc_dropdown = ttk.Combobox(self.pureflowrate_tab, textvariable=self.pureflowrate_conc_var, state="readonly")
+#         self.pureflowrate_conc_dropdown.grid(row=1, column=1)
+#         # display excel target function will execute when the selected value of the combobox changes.
+#         self.pureflowrate_conc_dropdown.bind("<<ComboboxSelected>>", self.pureflowrate_sel_targets)
+
+
+#         self.pureflowrate_lbl_selconc_temp = ttk.Label(self.pureflowrate_tab, text="Target Temp: -")
+#         self.pureflowrate_lbl_selconc_temp.grid(row=2, column=0, columnspan=2, sticky='w')
+#         self.pureflowrate_lbl_selconc_flow1 = ttk.Label(self.pureflowrate_tab, text="Target MFC1 (Fluid): -")
+#         self.pureflowrate_lbl_selconc_flow1.grid(row=3, column=0, columnspan=2, sticky='w')
+#         self.pureflowrate_lbl_selconc_flowN = ttk.Label(self.pureflowrate_tab, text="Target MFC2 (Nitrogen): -")
+#         self.pureflowrate_lbl_selconc_flowN.grid(row=4, column=0, columnspan=2, sticky='w')
+
+#         self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run Continuously", command=self.pureflowrate_run_cnt)
+#         self.pureflowrate_run_button.grid(row=5, column=0, padx=5, pady=10, sticky="ew")
+
+#         self.pureflowrate_stop_button = ttk.Button(self.pureflowrate_tab, text="Stop", command=self.pureflowrate_stop_cnt)
+#         self.pureflowrate_stop_button.grid(row=5, column=1, padx=5, pady=10, sticky="ew")
+
+#         # For Graph
+#         # ttk.Label(self.pureflowrate_tab, text="Start Delay Time (s):").grid(row=6, column=0)
+#         # self.start_delay_entry = ttk.Entry(self.pureflowrate_tab)
+#         # self.start_delay_entry.grid(row=6, column=1)
+
+#         ttk.Label(self.pureflowrate_tab, text="On Time (s):").grid(row=7, column=0)
+#         self.on_time_entry = ttk.Entry(self.pureflowrate_tab)
+#         self.on_time_entry.grid(row=7, column=1)
+
+#         ttk.Label(self.pureflowrate_tab, text="Off Time (s):").grid(row=8, column=0)
+#         self.off_time_entry = ttk.Entry(self.pureflowrate_tab)
+#         self.off_time_entry.grid(row=8, column=1)
+
+#         ttk.Label(self.pureflowrate_tab, text="Run Time (s):").grid(row=9, column=0)
+#         self.run_time_entry = ttk.Entry(self.pureflowrate_tab)
+#         self.run_time_entry.grid(row=9, column=1)
+        
+#         self.pureflowrate_run_button = ttk.Button(self.pureflowrate_tab, text="Run On/Off Graph", command=self.pureflowrate_run_onoffprofile)
+#         self.pureflowrate_run_button.grid(row=10, column=0, padx=5, pady=10, sticky="ew")
+        
+#         self.pureflowrate_plotgraph_button = ttk.Button(self.pureflowrate_tab, text="Plot Expected On/Off Graph", command=self.plot_expected_profile)
+#         self.pureflowrate_plotgraph_button.grid(row=10, column=1, padx=5, pady=10, sticky="ew")
+
+#         self.elapsed_time_var = tk.StringVar(value="Elapsed Time: 0.0 s")
+#         self.elapsed_time_label = ttk.Label(self.pureflowrate_tab, textvariable=self.elapsed_time_var)
+#         self.elapsed_time_label.grid(row=11, column=0, columnspan=2, sticky='w')
+
+#         # Graph frame — to the right of all inputs
+#         self.graph_frame = ttk.LabelFrame(self.pureflowrate_tab, text="Expected On/Off Graph")
+#         self.graph_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=10, sticky="ns")
+
+
+#     def pureflowrate_update_concentration_dropdown(self, event):
+#         selected_voc = self.pureflowrate_voc_var.get()
+        
+#         # Obtain the filtered data according to the selected_voc
+#         # https://www.youtube.com/watch?v=xzslFdjO0Ts  
+#         # https://www.geeksforgeeks.org/ways-to-filter-pandas-dataframe-by-column-values/
+        
+#         # rows are kept where voc = selected_voc
+#         filtered = self.pureflowrate_data[self.pureflowrate_data['VOC'] == selected_voc]
+#         #gives the sorted unique concentration values of the rows that are kept
+#         sorted_unique_voc = sorted(filtered['Concentration'].unique())
+#         self.pureflowrate_conc_dropdown['values'] = sorted_unique_voc
+#         self.pureflowrate_conc_var.set('')  
+
+#     def pureflowrate_sel_targets(self, event):
+#         voc = self.pureflowrate_voc_var.get()
+#         conc = float(self.pureflowrate_conc_var.get())
+        
+#         # #https://www.geeksforgeeks.org/difference-between-loc-and-iloc-in-pandas-dataframe/
+#         # using iloc[0] such that only the first one should be selected
+#         selectedrow = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)].iloc[0]
+#         self.pureflowrate_sel_temp = float(selectedrow['Temperature'])
+#         self.pureflowrate_sel_flow1 = float(selectedrow['Flowrate_liquid'])
+#         self.pureflowrate_sel_flow2 = float(selectedrow['Flowrate_N'])
+        
+#         # row = self.pureflowrate_data.loc[(self.pureflowrate_data['VOC'] == voc) & (self.pureflowrate_data['Concentration'] == conc)]
+
+#         self.pureflowrate_lbl_selconc_temp.config(text=f"Target Temp: {self.pureflowrate_sel_temp} °C")
+#         self.pureflowrate_lbl_selconc_flow1.config(text=f"Target MFC1: {self.pureflowrate_sel_flow1} mL/min")
+#         self.pureflowrate_lbl_selconc_flowN.config(text=f"Target MFC2: {self.pureflowrate_sel_flow2} mL/min")
+
+#     def pureflowrate_run_cnt(self):
+        
+#         # check whether ambient temp is set
+#         if not isinstance(self.ambient_temp, (int, float)):
+#             messagebox.showerror("Error", "Ambient temperature must be set.")
+#             return False
+    
+#         if not self.mfcs[0].connected:
+#             messagebox.showerror("Connection Error", "MFC 1 is not connected.")
+#             return False
+#         if not self.mfcs[1].connected:
+#             messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
+#             return False
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # if not self.cooling.connected:
+#         #     messagebox.showerror("Connection Error", "Cooling is not connected.")
+#         #     return False
+#         if not self.valve.connected:
+#             messagebox.showerror("Connection Error", "Valve is not connected.")            
+#             return False
+        
+#         #switch position valve to open
+#         self.valve.switch_position(2)
+
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # threading.Thread(
+#         #     target=lambda: self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp),
+#         #     daemon=True
+#         # ).start()
+
+#         threading.Thread(
+#             target=lambda: self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1),
+#             daemon=True
+#         ).start()
+
+#         threading.Thread(
+#             target=lambda: self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2),
+#             daemon=True
+#         ).start()
+        
+#         self.status_var.set(f"Running Constant Flow Rate for Concentration {self.pureflowrate_conc_var.get()} ppm | MFC1: {self.pureflowrate_sel_flow1} mL/min | MFC2 (Nitrogen): {self.pureflowrate_sel_flow2} mL/min | Temp: {self.pureflowrate_sel_temp} °C, | Valve set to position 1 ")
+        
+#         self.update_run_var()
+    
+#     def pureflowrate_stop_cnt(self):
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+#         self.mfcs[0].set_massflow(0)
+#         self.mfcs[1].set_massflow(0)
+#         self.valve.switch_position(2)
+
+#         self.status_var.set(f"Stopping Constant Flow Rate Profile | MFC1 set to 0 mL/min, | MFC2 (Nitrogen) set to 0 mL/min | Temperature set to Ambient temperature: {self.ambient_temp} °C, | Valve set to position 2")
+        
+#     # ###with start time but:     ##elapsed time do not align with the run profile elapsed time
+#     # def update_elapsed_time_display(self, start_timestamp, run_time):
+#     #     elapsed = time.time() - start_timestamp
+#     #     self.elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
+
+#     #     if elapsed < run_time:
+#     #         self.root.after(1, lambda: self.update_elapsed_time_display(start_timestamp, run_time))
+#     #     else:
+#     #         self.elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s")
+            
+#     # def pureflowrate_run_onoffprofile(self):
+#         self.plot_expected_profile()
+#         try:
+#             start_time = float(self.start_delay_entry.get())
+#             on_time = float(self.on_time_entry.get())
+#             off_time = float(self.off_time_entry.get())
+#             run_time = float(self.run_time_entry.get())
+#         except ValueError:
+#             messagebox.showerror("Input Error", "All timing fields must be numbers.")
+#             return
+
+#         if not self.mfcs[0].connected:
+#             messagebox.showerror("Connection Error", "MFC 1 is not connected.")
+#             return False
+#         if not self.mfcs[1].connected:
+#             messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
+#             return False
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#         # if not self.cooling.connected:
+#         #     messagebox.showerror("Connection Error", "Cooling is not connected.")
+#         #     return False
+#         if not self.valve.connected:
+#             messagebox.showerror("Connection Error", "Valve is not connected.")            
+#             return False
+
+#         # check whether ambient temp is set
+#         if not isinstance(self.ambient_temp, (int, float)):
+#             messagebox.showerror("Error", "Ambient temperature must be set.")
+#             return False
+    
+
+#         def run_pulse_cycle():
+#             self.update_run_var()
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # # Cooling OFF
+#         #     self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp)
+#             ###Ik weet nou niet of we eerst moeten wachten totdat deze temp is bereikt of niet tho..
+#             pulse_starttime = time.time()
+            
+#             self.root.after(0, lambda: self.update_elapsed_time_display(pulse_starttime, run_time))
+#             self.status_var.set(f" Start Delay Time of {start_time}")
+#             time.sleep(start_time)
+#             elapsed = time.time() + start_time
+#             while elapsed < run_time:
+#                 # ON state
+#                 self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1)
+#                 self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2)
+#                 self.valve.switch_position(2)
+#                 self.status_var.set(f" ON-state | MFC1 set to {self.pureflowrate_sel_flow1} mL/min | MFC2 (Nitrogen) set to {self.pureflowrate_sel_flow2} mL/min | Temp set to {self.pureflowrate_sel_temp} °C, | Valve set to Position 2")
+#                 time.sleep(on_time)
+#                 elapsed += on_time
+
+#                 if elapsed >= run_time:
+#                     break
+#                 # OFF state
+#                 self.mfcs[0].set_massflow(0)
+#                 self.mfcs[1].set_massflow(2)
+#                 self.valve.switch_position(1)
+#                 self.status_var.set(f" OFF-state | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | Temp set to {self.pureflowrate_sel_temp} °C | Valve set to Position 1")
+#                 time.sleep(off_time)
+#                 elapsed += off_time
+
+
+#             # Final
+#             self.mfcs[0].set_massflow(0)
+#             self.mfcs[1].set_massflow(0)
+#             self.valve.switch_position(1)
+#             ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#             # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+#             self.status_var.set(f" Final Stop | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | Temp set to {self.ambient_temp} °C | Valve set to Position 1")
+
+#         threading.Thread(target=run_pulse_cycle, daemon=True).start()
+            
+#     ##Without start time
+#     def update_elapsed_time_display(self, start_timestamp, run_time):
+#         #when the UI is closed then this won't be "updating" (to debug)
+#         if not self.root.winfo_exists():
+#             return
+                
+#         #elapsed time
+#         elapsed = time.time() - start_timestamp  
+#         self.elapsed_time_var.set(f"Elapsed Time: {elapsed:.1f} s / {run_time:.1f} s")
+
+#         if elapsed < run_time:
+#             self.root.after(100, lambda: self.update_elapsed_time_display(start_timestamp, run_time))
+#         else:
+#             self.elapsed_time_var.set(f"Done: Elapsed Time: {run_time:.1f} s / {run_time:.1f} s")
+
+#     def pureflowrate_run_onoffprofile(self):
+#         self.plot_expected_profile()
+#         try:
+#             on_time = float(self.on_time_entry.get())
+#             off_time = float(self.off_time_entry.get())
+#             run_time = float(self.run_time_entry.get())
+#         except ValueError:
+#             messagebox.showerror("Input Error", "All timing fields must be numbers.")
+#             return
+
+#         if not self.mfcs[0].connected:
+#             messagebox.showerror("Connection Error", "MFC 1 is not connected.")
+#             return False
+#         if not self.mfcs[1].connected:
+#             messagebox.showerror("Connection Error", "MFC 2 is not connected.")            
+#             return False
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+
+#         # if not self.cooling.connected:
+#         #     messagebox.showerror("Connection Error", "Cooling is not connected.")
+#         #     return False
+#         if not self.valve.connected:
+#             messagebox.showerror("Connection Error", "Valve is not connected.")            
+#             return False
+
+#         # check whether ambient temp is set
+#         if not isinstance(self.ambient_temp, (int, float)):
+#             messagebox.showerror("Error", "Ambient temperature must be set.")
+#             return False
+    
+
+#         def run_pulse_cycle():
+#             self.update_run_var()
+
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+#             # self.cooling.set_temperature(self.pureflowrate_sel_temp, self.ambient_temp)
+
+#             # Obtain the time that the code is start with running
+#             pulse_starttime = time.time()
+#             self.root.after(0, lambda: self.update_elapsed_time_display(pulse_starttime, run_time))
+
+#             while True:
+#                 # Check of tijd op is
+#                 if time.time() - pulse_starttime >= run_time:
+#                     break
+
+#                 # ON state
+#                 self.mfcs[0].set_massflow(self.pureflowrate_sel_flow1)
+#                 self.mfcs[1].set_massflow(self.pureflowrate_sel_flow2)
+#                 self.valve.switch_position(2)
+#                 self.status_var.set(
+#                     f" ON-state | MFC1 set to {self.pureflowrate_sel_flow1} mL/min | "
+#                     f"MFC2 (Nitrogen) set to {self.pureflowrate_sel_flow2} mL/min | "
+#                     f"Temp set to {self.pureflowrate_sel_temp} °C, | Valve set to Position 2"
+#                 )
+#                 on_start = time.time()
+
+#                 while time.time() - on_start < on_time:
+#                     if time.time() - pulse_starttime >= run_time:
+#                         break
+#                     time.sleep(0.05)
+                    
+#                 ##When it ends within the on-time
+#                 if time.time() - pulse_starttime >= run_time:
+#                     break
+
+#                 # OFF state
+#                 self.mfcs[0].set_massflow(0)
+#                 self.mfcs[1].set_massflow(2)
+#                 self.valve.switch_position(1)
+#                 self.status_var.set(
+#                     f" OFF-state | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | "
+#                     f"Temp set to {self.pureflowrate_sel_temp} °C | Valve set to Position 1"
+#                 )
+
+#                 off_start = time.time()
+#                 while time.time() - off_start < off_time:
+#                     if time.time() - pulse_starttime >= run_time:
+#                         break
+#                     time.sleep(0.05)
+
+#             # Final state after run_time is reached
+#             self.mfcs[0].set_massflow(0)
+#             self.mfcs[1].set_massflow(0)
+#             self.valve.switch_position(1)
+#         ##Koeling Uitzetten omdat hij het nog niet doet
+#         # # Cooling OFF
+
+#             # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+#             self.status_var.set(
+#                 f" Final Stop | MFC1 set to 0 mL/min | MFC2 (Nitrogen) set to 0 mL/min | "
+#                 f"Temp set to {self.ambient_temp} °C | Valve set to Position 1"
+#             )
+
+#         threading.Thread(target=run_pulse_cycle, daemon=True).start()
+            
+#     def plot_expected_profile(self):
+#         #Expected Graph
+#         try:
+#             # Obtaining time fields
+#             # start_time = float(self.start_delay_entry.get())
+#             on_time = float(self.on_time_entry.get())
+#             off_time = float(self.off_time_entry.get())
+#             run_time = float(self.run_time_entry.get())
+#             conc = float(self.pureflowrate_conc_var.get())
+#         except ValueError:
+#             messagebox.showerror("Input Error", "Start Delay Time, On time, Off Time, Run Time and Concentrations must be numbers.")
+#             return
+
+#         time_data = []
+#         signal_data = []
+#         total_time = 0
+
+#         # # Generating the start delay time 
+#         # # Keep adding concentration 0 until the start time has reached
+#         # for time in range(int(start_time)):
+#         #     time_data.append(total_time)
+#         #     signal_data.append(0)
+#         #     total_time += 1
+
+#         # Generating the on and off pattern
+#         while total_time < run_time:
+#             for time in range(int(on_time)):
+#                 # on pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "ON" moet staan
+#                 if total_time >= run_time:
+#                     break
+#                 time_data.append(total_time)
+#                 signal_data.append(conc)
+#                 total_time += 1
+#                 # off pattern: voeg concentration toe aan een lijst voor de tijd dat hij op "OFF" moet staan
+#             for time in range(int(off_time)):
+#                 if total_time >= run_time:
+#                     break
+#                 time_data.append(total_time)
+#                 signal_data.append(0)
+#                 total_time += 1
+
+#         # Clear previous canvas if exists
+#         # https://stackoverflow.com/questions/65544881/clearing-and-plotting-mathplot-figure-on-tkinter
+#         for child in self.graph_frame.winfo_children():
+#             child.destroy()
+
+#         # Create plot
+#         fig, ax = plt.subplots(figsize=(6, 4))
+#         ax.plot(time_data, signal_data, linewidth=2)
+#         ax.set_xlabel("Time (s)")
+#         ax.set_ylabel("Concentration (ppm)")
+#         ax.set_title("Expected On/Off Graph")
+#         ax.set_xlim(0, time_data[-1] * 1.2 )
+#         ax.set_ylim(0, conc * 1.2)
+#         ax.grid(True)
+#         fig.tight_layout()  
+
+#        # Embed in Tkinter
+#         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
+#         canvas.draw()
+
+#         canvas_widget = canvas.get_tk_widget()
+#         # Graph size 400 x 300
+#         canvas_widget.config(width=500, height=300) 
+#         # Prevent Frame Shrinking
+#         # https://youtu.be/onIEw70Uw-4
+#         canvas_widget.pack_propagate(False)  # prevent auto-resizing
+#         canvas_widget.pack(fill='none', expand=False)
+
+###MATLABCODE 
+    def create_voccalculator_tab(self):
+
+        ##Make it scrollable
+        voccalc_tab = self.create_scrollable_tab(self.notebook, "ON/OFF Profile")
+        # self.voccalc_tab = ttk.Frame(self.notebook)
+        # self.notebook.add(self.voccalc_tab, text="VOC Flow Calculator")
+
+        ##Make it scrollable
+        # profile_tab = self.create_scrollable_tab(self.notebook, "Different Concentration Profile Management")
         ## Split into two frames
         list_frame = ttk.Frame(voccalc_tab)
         list_frame.pack(side= 'left', fill = 'both', expand=True, padx=5, pady=5)
@@ -2476,6 +3030,12 @@ class AutomatedSystemUI:
 
         self.voccalc_ps_label = ttk.Label(edit_frame, text="Saturated Vapor Pressure (Ps): -")
         self.voccalc_ps_label.grid(row=8, column=0, columnspan=2, pady=5)
+
+        # self.voccalc_run_button = ttk.Button(self.voccalc_tab, text="Run Continuously", command=self.voccalc_run_cnt)
+        # self.voccalc_run_button.grid(row=7, column=0, padx=5, pady=10, sticky="ew")
+
+        # self.voccalc_stop_button = ttk.Button(self.voccalc_tab, text="Stop", command=self.voccalc_stop_cnt)
+        # self.voccalc_stop_button.grid(row=7, column=1, padx=5, pady=10, sticky="ew")
 
         ttk.Label(edit_frame, text="On Time (s):").grid(row=9, column=0)
         self.voccalc_on_time_entry = ttk.Entry(edit_frame)
@@ -2638,6 +3198,13 @@ class AutomatedSystemUI:
         signal_data = []
         total_time = 0
 
+        # # Generating the start delay time 
+        # # Keep adding concentration 0 until the start time has reached
+        # for time in range(int(start_time)):
+        #     time_data.append(total_time)
+        #     signal_data.append(0)
+        #     total_time += 1
+        
         step_time = 1e-2
         on_time_steps = on_time / step_time
         off_time_steps = off_time / step_time
@@ -2702,6 +3269,10 @@ class AutomatedSystemUI:
 
         ### Standard temperature of 0 degree
         self.voc_flow, self.voc_N, self.voc_Ps = self.calculate_required_flow_0degrees(voc, concentration, total_flow)
+        
+        # ## Variating temp
+        # self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps = self.calculate_required_flow(voc, concentration, total_flow)
+        # print(self.voc_flow, self.voc_N, self.voc_temp, self.voc_Ps)
         
         if self.voc_flow is not None:
             self.voccalc_flow_label.config(text=f"Required Flow: {self.voc_flow} mL/min")
@@ -2927,6 +3498,11 @@ class AutomatedSystemUI:
 
 ####Tab different concentration
     def create_diffconc_profile_tab(self):
+        # profile_tab = ttk.Frame(self.notebook)
+        # profile_tab.pack(fill = 'both', expand = True)
+        # self.notebook.add(profile_tab, text = 'Different Concentration Profile Management')
+        
+                
         ##Make it scrollable
         profile_tab = self.create_scrollable_tab(self.notebook, "Different Concentration Profile Management")
         ## Split into two frames
@@ -3476,22 +4052,16 @@ class AutomatedSystemUI:
             valve_position = int(self.diffconc_valve_var.get())
             print(valve_position)
 
-            if valve_position == 2:
-                self.diffconc_flow1_var.set(0)
-                self.diffconc_flow2_var.set(0)
-                
-                self.add_step_button.config(state = 'enabled')
-            else:
-                f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
-                if f_voc is None or f_n2 is None:
-                    messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
-                    return
+            f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
+            if f_voc is None or f_n2 is None:
+                messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
+                return
 
-                ## Set the values to the corresponding labels
-                self.diffconc_flow1_var.set(f_voc)
-                self.diffconc_flow2_var.set(f_n2)
+            ## Set the values to the corresponding labels
+            self.diffconc_flow1_var.set(f_voc)
+            self.diffconc_flow2_var.set(f_n2)
 
-                self.add_step_button.config(state = 'enabled')
+            self.add_step_button.config(state = 'enabled')
 
         except ValueError as e:
             messagebox.showerror("Error", f"Invalid input: {e}")
@@ -3513,7 +4083,7 @@ class AutomatedSystemUI:
                 conc = step.get("concentration", 0)
                 valve = step.get("valve", 1)
                 times.append(time)
-                concs.append(0 if valve == 2 else conc)
+                concs.append(conc)
 
             self.diffconc_ax.clear()
             self.diffconc_ax.step(times, concs, where='post', linestyle='-', marker='o', markersize = 3, linewidth=2, color='red' )
