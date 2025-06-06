@@ -2679,6 +2679,7 @@ class AutomatedSystemUI:
             off_time = float(self.voccalc_off_time_entry.get())
             run_time = float(self.voccalc_run_time_entry.get())
             self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
+            tot_flow = self.voccalc_totalflowrate_var.get()
         except ValueError:
             messagebox.showerror("Input Error", "All timing fields must be numbers.")
             return
@@ -2757,7 +2758,7 @@ class AutomatedSystemUI:
                     
                     # OFF state
                     voc_mfc.set_massflow(0)
-                    n2_mfc.set_massflow(0) #nitrogen max flow rate
+                    n2_mfc.set_massflow(tot_flow) #nitrogen max flow rate
                     self.valve[0].switch_position(1)
                     self.valve[1].switch_position(2)
                     self.status_var.set(f"VOC OFF-state | MFC 1 with N2: 0 ml/min, MFC {self.onoffconc_voc_index  + 2} with VOC: 0, RVM 1: pos 1, RVM2: pos 2")   
@@ -2767,7 +2768,7 @@ class AutomatedSystemUI:
                 if not self.stop_onoff_conc_run:
                     # Final reset
                     voc_mfc.set_massflow(0)
-                    n2_mfc.set_massflow(0)
+                    n2_mfc.set_massflow(tot_flow)
                 ##Koeling Uitzetten omdat hij het nog niet doet
                 # # Cooling OFF
                     # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
