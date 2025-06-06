@@ -1,0 +1,29 @@
+{
+      "description": "aaa",
+      "mfcchoice": "VOC2 (MFC3)",
+      "voc": "Nonanal",
+      "total_flow": 6.0,
+      "steps": [
+            {
+                  "time": 0.0,
+                  "gas_inlet": "VOC",
+                  "concentration": 1.0,
+                  "flow mfc1": 0.1161800370370029,
+                  "flow mfc2": 5.883819962962997
+            },
+            {
+                  "time": 10.0,
+                  "gas_inlet": "N2",
+                  "concentration": 4.0,
+                  "flow mfc1": 0.4647201481480116,
+                  "flow mfc2": 5.535279851851988
+            },
+            {
+                  "time": 50.0,
+                  "gas_inlet": "VOC",
+                  "concentration": 6.0,
+                  "flow mfc1": 0.6970802222220175,
+                  "flow mfc2": 5.302919777777983
+            }
+      ]
+}

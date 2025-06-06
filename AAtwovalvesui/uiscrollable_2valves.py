@@ -5,7 +5,7 @@ import threading
 # # Cooling OFF
 # from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
 
-from profilemanagers2valves import MFCProfileManager, TwoRVMProfileManager, TwoRVMOnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
+from profilemanagers2valves import MFCProfileManager, TwoRVMProfileManager, TwoRVMOnoffProfileManager, TwoRVMDiffConcProfileManager, OnOffConcProfileManager
 from settingsmanagers2valves import SettingsManager
 import pandas as pd
 import time
@@ -54,7 +54,7 @@ class AutomatedSystemUI:
             UImfcs=self.mfcs, UIvalve=self.valve, profiles_dir=settings_path
         )
         
-        self.diffconcprofilemanager = DiffConcProfileManager(
+        self.diffconcprofilemanager = TwoRVMDiffConcProfileManager(
             UImfcs=self.mfcs, UIvalve=self.valve, profiles_dir=settings_path
         )
 
@@ -365,7 +365,7 @@ class AutomatedSystemUI:
             self.running_var_bar.config(
                 text=(
                     f"Reading Values   : "
-                    f"MFC 1 Mass Flow Rate: {massflows[0]} | "
+                    f"MFC 1 (N2) Mass Flow Rate: {massflows[0]} | "
                     f"MFC 2 Mass Flow Rate: {massflows[1]} | "
                     f"MFC 3 Mass Flow Rate: {massflows[2]} | "
             # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
@@ -614,7 +614,7 @@ class AutomatedSystemUI:
             show="headings"
         )
         self.onoffsteps_tree.heading("time", text="Time (s)")
-        self.onoffsteps_tree.heading("flow mfc1", text="Flow MFC 1 (mL/min)")
+        self.onoffsteps_tree.heading("flow mfc1", text="Flow N2 (mL/min)")
         self.onoffsteps_tree.heading("flow mfc2", text="Flow MFC 2 (mL/min)")
         self.onoffsteps_tree.heading("flow mfc3", text="Flow MFC 3 (mL/min)")
         # # Cooling OFF // Koeling Uitzetten omdat hij het nog niet doet
@@ -641,7 +641,7 @@ class AutomatedSystemUI:
         step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.onoffstep_time_var, width=8)
         step_time_entry.pack(side='left', padx=2)
         
-        self.onoffprofile_mfc1_label = ttk.Label(step_controls_frame, text="Flow MFC 1 (mL/min):").pack(side='left')
+        self.onoffprofile_mfc1_label = ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
         self.onoffstep_flow1_var = tk.DoubleVar()
         step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.onoffstep_flow1_var, width=8)
         step_flow1_entry.pack(side='left', padx=2)
@@ -668,7 +668,8 @@ class AutomatedSystemUI:
             step_controls_frame, 
             textvariable=self.onoffstep_valve1_var, 
             values=[1, 2], 
-            width=5
+            width=5,
+            state="readonly"
         )
         step_onoff_combo.pack(side='left', padx=2)
         
@@ -679,7 +680,8 @@ class AutomatedSystemUI:
             step_controls_frame, 
             textvariable=self.onoffstep_valve2_var, 
             values=[1, 2], 
-            width=5
+            width=5,
+            state="readonly"
         )
         step_onoff_combo.pack(side='left', padx=2)
         
@@ -790,7 +792,7 @@ class AutomatedSystemUI:
             show="headings"
         )
         self.mfcsteps_tree.heading("time", text="Time (s)")
-        self.mfcsteps_tree.heading("flow mfc1", text="Flow MFC 1 (mL/min)")
+        self.mfcsteps_tree.heading("flow mfc1", text="Flow N2 (mL/min)")
         self.mfcsteps_tree.heading("flow mfc2", text="Flow MFC 2 (mL/min)")
         self.mfcsteps_tree.heading("flow mfc3", text="Flow MFC 3 (mL/min)")
         
@@ -809,7 +811,7 @@ class AutomatedSystemUI:
         step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_time_var, width=8)
         step_time_entry.pack(side='left', padx=5)
         
-        self.mfcprofile_mfc1_label = ttk.Label(step_controls_frame, text="Flow MFC 1 (mL/min):").pack(side='left')
+        self.mfcprofile_mfc1_label = ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
         self.mfcstep_flow1_var = tk.DoubleVar()
         step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_flow1_var, width=8)
         step_flow1_entry.pack(side='left', padx=5)
@@ -1078,7 +1080,8 @@ class AutomatedSystemUI:
             step_controls_frame, 
             textvariable=self.valvestep_valve1_var, 
             values=[1, 2], 
-            width=5
+            width=5,
+            state="readonly"
         )
         step_valve_combo.pack(side='left', padx=2)
 
@@ -1088,7 +1091,8 @@ class AutomatedSystemUI:
             step_controls_frame, 
             textvariable=self.valvestep_valve2_var, 
             values=[1, 2], 
-            width=5
+            width=5,
+            state="readonly"
         )
         step_valve_combo.pack(side='left', padx=2)
         
@@ -2679,7 +2683,7 @@ class AutomatedSystemUI:
             off_time = float(self.voccalc_off_time_entry.get())
             run_time = float(self.voccalc_run_time_entry.get())
             self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
-            tot_flow = self.voccalc_totalflowrate_var.get()
+            self.tot_flow = self.voccalc_totalflowrate_var.get()
         except ValueError:
             messagebox.showerror("Input Error", "All timing fields must be numbers.")
             return
@@ -2758,7 +2762,7 @@ class AutomatedSystemUI:
                     
                     # OFF state
                     voc_mfc.set_massflow(0)
-                    n2_mfc.set_massflow(tot_flow) #nitrogen max flow rate
+                    n2_mfc.set_massflow(self.tot_flow) #nitrogen max flow rate
                     self.valve[0].switch_position(1)
                     self.valve[1].switch_position(2)
                     self.status_var.set(f"VOC OFF-state | MFC 1 with N2: 0 ml/min, MFC {self.onoffconc_voc_index  + 2} with VOC: 0, RVM 1: pos 1, RVM2: pos 2")   
@@ -2768,7 +2772,7 @@ class AutomatedSystemUI:
                 if not self.stop_onoff_conc_run:
                     # Final reset
                     voc_mfc.set_massflow(0)
-                    n2_mfc.set_massflow(tot_flow)
+                    n2_mfc.set_massflow(self.tot_flow)
                 ##Koeling Uitzetten omdat hij het nog niet doet
                 # # Cooling OFF
                     # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
@@ -2884,7 +2888,7 @@ class AutomatedSystemUI:
         ax.plot(time_data, signal_data, color='red', linewidth=2)
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Concentration (ppm)")
-        ax.set_title(f"Setpoint MFC {self.onoffconc_voc_index + 1} with {voc} On/Off Graph")
+        ax.set_title(f"Setpoint MFC {self.onoffconc_voc_index + 2} with {voc} On/Off Graph")
         ax.set_xlim(0, time_data[-1] * 1.2 )
         ax.set_ylim(0, conc * 1.2)
         ax.grid(True)
@@ -3147,7 +3151,8 @@ class AutomatedSystemUI:
         self.status_var.set("Stop running the profile.")
         self.voccalc_stop_button.config(state = 'disabled')
         self.mfcs[self.onoffconc_voc_index + 1].set_massflow(0)
-        self.mfcs[0].set_massflow(0) #nitrogen max flow rate
+        print("Total flow", self.tot_flow)
+        self.mfcs[0].set_massflow(self.tot_flow) #nitrogen max flow rate
         #nitrogen only
         self.valve[0].switch_position(1)
         self.valve[1].switch_position(2)
@@ -3241,9 +3246,14 @@ class AutomatedSystemUI:
         
         secondrow_frame = ttk.Frame(info_frame)
         secondrow_frame.pack(fill='x', pady=2)
+
+        ttk.Label(secondrow_frame, text="Select VOC1 (MFC2) or VOC2 (MFC3):").pack(side='left', padx=5)
+        self.diffconc_voc_mfc_choice = ttk.Combobox(secondrow_frame, values=["VOC1 (MFC2)", "VOC2 (MFC3)"], state="readonly")
+        self.diffconc_voc_mfc_choice.pack(side='left', padx=5)
+        self.diffconc_voc_mfc_choice.current(0)  # default to MFC 2
         
         # VOC selection
-        ttk.Label(secondrow_frame, text="Select VOC:").pack(side='left', padx=5)
+        ttk.Label(secondrow_frame, text="Select VOC type:").pack(side='left', padx=5)
         self.diffconc_voc_var = tk.StringVar()
         self.vocslist = list(self.settings_manager.get_voc_data().keys())
         self.voc_dropdown_diffconcprofile = ttk.Combobox(secondrow_frame, textvariable=self.diffconc_voc_var, values=self.vocslist, state="readonly")
@@ -3278,18 +3288,18 @@ class AutomatedSystemUI:
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.diffconc_steps_tree = ttk.Treeview(
             steps_frame, 
-            columns=("time", "valve", "concentration", "flow mfc1", "flow mfc2"), 
+            columns=("time", "gas_inlet", "concentration", "flow mfc1", "flow mfc2"), 
             show="headings"
         )
         self.diffconc_steps_tree.heading("time", text="Time (s)")
-        self.diffconc_steps_tree.heading("valve", text="Valve Position (1 or 2)")
+        self.diffconc_steps_tree.heading("gas_inlet", text="Gas Inlet (VOC/N2)")
         self.diffconc_steps_tree.heading("concentration", text="Concentration (ppm)")
-        self.diffconc_steps_tree.heading("flow mfc1", text="Flow MFC 1 (mL/min)")
+        self.diffconc_steps_tree.heading("flow mfc1", text="Flow N2 (mL/min)")
         self.diffconc_steps_tree.heading("flow mfc2", text="Flow MFC 2 (mL/min)")
 
         
         self.diffconc_steps_tree.column("time", width=80, anchor=tk.CENTER)
-        self.diffconc_steps_tree.column("valve", width=80, anchor=tk.CENTER)
+        self.diffconc_steps_tree.column("gas_inlet", width=80, anchor=tk.CENTER)
         self.diffconc_steps_tree.column("concentration", width=100, anchor=tk.CENTER)
         self.diffconc_steps_tree.column("flow mfc1", width=100, anchor=tk.CENTER)
         self.diffconc_steps_tree.column("flow mfc2", width=100, anchor=tk.CENTER)
@@ -3306,16 +3316,19 @@ class AutomatedSystemUI:
         self.step_time_entry.pack(side='left', padx=2)
         self.step_time_entry.config(state ='disabled')
 
-        self.diffconc_profile_valve_label =  ttk.Label(step_controls_frame, text="Valve Position:").pack(side='left')
-        self.diffconc_valve_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
+        self.diffconc_profile_valve_label =  ttk.Label(step_controls_frame, text="Gas Inlet:").pack(side='left')
+        self.diffconc_valve_var = tk.StringVar() #integer variable, since the valve should be position on 1/2
         self.step_valve_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.diffconc_valve_var, 
-            values=[1, 2], 
-            width=5
+            values=["VOC", "N2"], 
+            width=5,
+            state="readonly"
         )
+        self.step_valve_combo.bind("<<ComboboxSelected>>", self.diffconc_gas_inlet_selected)
         self.step_valve_combo.pack(side='left', padx=2)
         self.step_valve_combo.config(state ='disabled')
+
         
         self.diffconc_profile_conc_label = ttk.Label(step_controls_frame, text="Concentration (ppm):").pack(side='left')
         self.diffconc_step_conc_var = tk.DoubleVar()
@@ -3324,15 +3337,15 @@ class AutomatedSystemUI:
         self.step_conc_entry.config(state ='disabled')
 
         
-        self.diffconc_profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow MFC 1 (mL/min):").pack(side='left')
-        self.diffconc_flow1_var = tk.DoubleVar()
-        self.step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flow1_var, width=25)
+        self.diffconc_profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
+        self.diffconc_flowN2_var = tk.DoubleVar()
+        self.step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowN2_var, width=25)
         self.step_flow1_entry.pack(side='left', padx=2)
         self.step_flow1_entry.config(state ='disabled')
 
-        self.diffconc_mfc2_label = ttk.Label(step_controls_frame, text="Flow MFC 2 (mL/min):").pack(side='left')
-        self.diffconc_flow2_var = tk.DoubleVar()
-        self.step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flow2_var, width=25)
+        self.diffconc_mfc2_label = ttk.Label(step_controls_frame, text="Flow VOC (mL/min):").pack(side='left')
+        self.diffconc_flowVOC_var = tk.DoubleVar()
+        self.step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowVOC_var, width=25)
         self.step_flow2_entry.pack(side='left', padx=2)
         self.step_flow2_entry.config(state ='disabled')
         
@@ -3452,6 +3465,7 @@ class AutomatedSystemUI:
             # self.diffconc_temp_var.set(profile.get("temperature", ""))
             self.diffconc_voc_var.set(profile.get("voc", "")) 
             self.diffconc_totalflowrate_var.set(profile.get("total_flow", 0)) 
+            self.diffconc_voc_mfc_choice.set(profile.get("mfcchoice", ""))
             
             # Clear the existing steps
             for item in self.diffconc_steps_tree.get_children():
@@ -3461,7 +3475,7 @@ class AutomatedSystemUI:
             for step in profile.get("steps", []):
                 self.diffconc_steps_tree.insert("", tk.END, values=(
                     step["time"],
-                    step["valve"],
+                    step["gas_inlet"],
                     step["concentration"],
                     step["flow mfc1"],
                     step["flow mfc2"]
@@ -3471,7 +3485,27 @@ class AutomatedSystemUI:
             self.status_var.set(f"Loaded profile: {profile_name}")
             
         self.enabling_select_diffconcprofile()
+
+    def diffconc_gas_inlet_selected(self, event=None):
+        gas_inlet = self.diffconc_valve_var.get()
         
+        if gas_inlet == "N2":
+            try:
+                total_flow = float(self.diffconc_totalflowrate_var.get())
+            except ValueError:
+                messagebox.showerror("Input Error", "Please enter a valid total flow rate first.")
+                return
+
+            # Automatisch invullen
+            self.diffconc_step_conc_var.set(0.0)  # Concentration to 0 ppm
+            self.diffconc_flowN2_var.set(total_flow)  # All to N2
+            self.diffconc_flowVOC_var.set(0.0)  # VOC flow to 0
+        else:
+            # Bij terugschakelen naar VOC: reset flows
+            self.diffconc_step_conc_var.set("")
+            self.diffconc_flowN2_var.set("")
+            self.diffconc_flowVOC_var.set("")
+
     def delete_diffconcprofile(self):
         """Delete the selected profile"""
         #https://pythonassets.com/posts/listbox-in-tk-tkinter/
@@ -3497,16 +3531,24 @@ class AutomatedSystemUI:
         self.diffconc_desc_var.set("")
         self.diffconc_voc_var.set("")
         self.diffconc_totalflowrate_var.set("") 
-    
+        self.diffconc_voc_mfc_choice.set("")
         self.diffconc_step_time_var.set("")
         self.diffconc_step_conc_var.set("")
-        self.diffconc_flow1_var.set("")
-        self.diffconc_flow2_var.set("")
+        self.diffconc_flowN2_var.set("")
+        self.diffconc_flowVOC_var.set("")
         # self.diffconc_temp_var.set("")
         self.diffconc_valve_var.set("")
         
         for item in self.diffconc_steps_tree.get_children():
             self.diffconc_steps_tree.delete(item)
+        
+        # Clear the graph as well
+        self.diffconc_ax.clear()
+        self.diffconc_ax.set_title("Setpoint Concentration vs Time Graph")
+        self.diffconc_ax.set_xlabel("Time (s)")
+        self.diffconc_ax.set_ylabel("Concentration (ppm)")
+        self.diffconc_ax.grid(True)
+        self.diffconc_canvas.draw()
         
         self.new_diffconcprofile_label.config(text = "New profile", foreground = "green")
         self.disabling_select_diffconcprofile()
@@ -3517,14 +3559,14 @@ class AutomatedSystemUI:
             #Obtain the values
             time_val = float(self.diffconc_step_time_var.get())
             concentration_val = float(self.diffconc_step_conc_var.get())
-            f_voc = self.diffconc_flow1_var.get()
-            f_n2 = self.diffconc_flow2_var.get()
-            valve_val = int(self.diffconc_valve_var.get())
+            f_n2 = self.diffconc_flowN2_var.get()
+            f_voc = self.diffconc_flowVOC_var.get()
+            gas_inlet_vocn2 = self.diffconc_valve_var.get()
 
             if time_val < 0:
                 raise ValueError("Time cannot be negative")
-            if valve_val not in [1, 2]:
-                raise ValueError("Valve position must be 1 or 2")
+            if gas_inlet_vocn2 not in ["VOC", "N2"]:
+                raise ValueError("Gas Inlet should be VOC or N2")
 
             for child in self.diffconc_steps_tree.get_children():
                 if float(self.diffconc_steps_tree.item(child, "values")[0]) == time_val:
@@ -3534,7 +3576,7 @@ class AutomatedSystemUI:
                     break
 
             # Insert met automatisch berekende flows
-            self.diffconc_steps_tree.insert("", tk.END, values=(time_val, valve_val, concentration_val, f_voc, f_n2))
+            self.diffconc_steps_tree.insert("", tk.END, values=(time_val, gas_inlet_vocn2, concentration_val, f_voc, f_n2))
             
             self.calculate_step_button.config(state = 'enabled')
             self.add_step_button.config(state = 'disabled')
@@ -3572,7 +3614,7 @@ class AutomatedSystemUI:
             values = self.diffconc_steps_tree.item(child, "values")
             steps.append({
                 "time": float(values[0]),
-                "valve": int(values[1]),
+                "gas_inlet": values[1],
                 "concentration": float(values[2]),
                 "flow mfc1": float(values[3]),
                 "flow mfc2": float(values[4])
@@ -3588,6 +3630,7 @@ class AutomatedSystemUI:
         # Create the profile data
         profile_data = {
             "description": self.diffconc_desc_var.get(),
+            "mfcchoice": self.diffconc_voc_mfc_choice.get(),
             # "temperature": float(self.diffconc_temp_var.get()),
             "voc": self.diffconc_voc_var.get(),  
             "total_flow": float(self.diffconc_totalflowrate_var.get()), 
@@ -3607,7 +3650,7 @@ class AutomatedSystemUI:
         # # Cooling OFF
         # if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
 
-        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.valve.connected):
+        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.valve[0].connected and self.valve[1].connected):
             messagebox.showwarning("Error", "One or more devices are not connected")
             return False
           
@@ -3667,7 +3710,8 @@ class AutomatedSystemUI:
             self.root.after(0, self.diffconcprofile_complete)
 
         except Exception as e:
-            self.root.after(0, lambda: self.diffconcprofile_error(e))
+            self.root.after(0, lambda e=e: self.diffconcprofile_error(e))
+
     
     def diffconcprofile_complete(self):
         """Called when profile completes successfully"""
@@ -3694,8 +3738,7 @@ class AutomatedSystemUI:
             
             self.diffconc_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
             self.diffconc_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
-            self.diffconc_value_label.config(text=f"{status['concentration']} (ppm), mfc1: {status['flow mfc1']:.2f}, mfc2: {status['flow mfc2']:.2f}, valve: {status['valve']}")
-
+            self.diffconc_value_label.config(text=f"Concentration: {status['concentration']} (ppm), Gas Inlet: {status['gas_inlet']}, MFC N2: {status['flow mfc1']:.2f}, MFC VOC: {status['flow mfc2']:.2f}")
                 
         except tk.TclError:
             return
@@ -3706,8 +3749,6 @@ class AutomatedSystemUI:
             concentration_val = float(self.diffconc_step_conc_var.get())
             total_flow = float(self.diffconc_totalflowrate_var.get())
             voc = self.diffconc_voc_var.get()
-            valve_position = int(self.diffconc_valve_var.get())
-            print(valve_position)
 
             f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
             if f_voc is None or f_n2 is None:
@@ -3715,8 +3756,9 @@ class AutomatedSystemUI:
                 return
 
             ## Set the values to the corresponding labels
-            self.diffconc_flow1_var.set(f_voc)
-            self.diffconc_flow2_var.set(f_n2)
+            self.diffconc_flowN2_var.set(f_n2)
+            self.diffconc_flowVOC_var.set(f_voc)
+
 
             self.add_step_button.config(state = 'enabled')
 
@@ -3738,7 +3780,7 @@ class AutomatedSystemUI:
             for step in steps:
                 time = step.get("time", 0)
                 conc = step.get("concentration", 0)
-                valve = step.get("valve", 1)
+                # gasinlet = step.get("gas_inlet", 0)
                 times.append(time)
                 concs.append(conc)
 
