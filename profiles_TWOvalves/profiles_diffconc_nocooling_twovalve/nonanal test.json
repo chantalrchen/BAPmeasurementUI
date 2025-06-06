@@ -1,0 +1,92 @@
+{
+      "description": "nonanal test",
+      "mfcchoice": "VOC1 (MFC2)",
+      "voc": "Nonanal",
+      "total_flow": 5.0,
+      "steps": [
+            {
+                  "time": 0.0,
+                  "gas_inlet": "N2",
+                  "concentration": 0.0,
+                  "flow mfc1": 0.0,
+                  "flow mfc2": 0.0
+            },
+            {
+                  "time": 10.0,
+                  "gas_inlet": "VOC",
+                  "concentration": 5.0,
+                  "flow mfc1": 0.4840834876541788,
+                  "flow mfc2": 4.515916512345822
+            },
+            {
+                  "time": 20.0,
+                  "gas_inlet": "N2",
+                  "concentration": 0.0,
+                  "flow mfc1": 0.0,
+                  "flow mfc2": 5.0
+            },
+            {
+                  "time": 30.0,
+                  "gas_inlet": "VOC",
+                  "concentration": 10.0,
+                  "flow mfc1": 0.9681669753083576,
+                  "flow mfc2": 4.031833024691642
+            },
+            {
+                  "time": 40.0,
+                  "gas_inlet": "N2",
+                  "concentration": 0.0,
+                  "flow mfc1": 0.0,
+                  "flow mfc2": 5.0
+            },
+            {
+                  "time": 50.0,
+                  "gas_inlet": "VOC",
+                  "concentration": 15.0,
+                  "flow mfc1": 1.4522504629625363,
+                  "flow mfc2": 3.547749537037464
+            },
+            {
+                  "time": 60.0,
+                  "gas_inlet": "N2",
+                  "concentration": 0.0,
+                  "flow mfc1": 0.0,
+                  "flow mfc2": 5.0
+            },
+            {
+                  "time": 70.0,
+                  "gas_inlet": "VOC",
+                  "concentration": 10.0,
+                  "flow mfc1": 0.9681669753083576,
+                  "flow mfc2": 4.031833024691642
+            },
+            {
+                  "time": 80.0,
+                  "gas_inlet": "N2",
+                  "concentration": 0.0,
+                  "flow mfc1": 0.0,
+                  "flow mfc2": 5.0
+            },
+            {
+                  "time": 90.0,
+                  "gas_inlet": "VOC",
+                  "concentration": 5.0,
+                  "flow mfc1": 0.4840834876541788,
+                  "flow mfc2": 4.515916512345822
+            },
+            {
+                  "time": 100.0,
+                  "gas_inlet": "N2",
+                  "concentration": 0.0,
+                  "flow mfc1": 0.0,
+                  "flow mfc2": 5.0
+            },
+            {
+                  "time": 110.0,
+                  "gas_inlet": "N2",
+                  "concentration": 0.0,
+                  "flow mfc1": 0.0,
+                  "flow mfc2": 0.0
+            }
+      ]
+}

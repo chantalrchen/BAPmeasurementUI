@@ -125,7 +125,7 @@ class AutomatedSystemUI:
         self.valve_value_label.grid(row=3, column=3, padx=5, sticky="w")
 
         # On/Off profile
-        ttk.Label(self.profile_status_frame, text="Pure Gas On/Off Running Profile").grid(row=4, column=0, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Pure Gas ON/OFF Profile Management").grid(row=4, column=0, padx=5, sticky="w")
         self.onoff_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.onoff_elapsed_label.grid(row=4, column=1, padx=5, sticky="w")
         self.onoff_step_label = ttk.Label(self.profile_status_frame, text="-")
@@ -135,7 +135,7 @@ class AutomatedSystemUI:
         
 
         # Different Concentration profile
-        ttk.Label(self.profile_status_frame, text="Different Pure Gas Concentration Profile").grid(row=5, column=0, padx=5, sticky="w")
+        ttk.Label(self.profile_status_frame, text="Pure Gas Different Concentration Profile Management").grid(row=5, column=0, padx=5, sticky="w")
         self.diffconc_elapsed_label = ttk.Label(self.profile_status_frame, text="-")
         self.diffconc_elapsed_label.grid(row=5, column=1, padx=5, sticky="w")
         self.diffconc_step_label = ttk.Label(self.profile_status_frame, text="-")
@@ -281,13 +281,11 @@ class AutomatedSystemUI:
         
         # Settings menu
         settings_menu = tk.Menu(menu, tearoff=0)
-        settings_menu.add_command(label="Connection Settings", command=self.com_settings)
+        settings_menu.add_command(label="Configuration Settings", command=self.com_settings)
+        settings_menu.add_command(label="VOC settings", command=self.voc_settings)
         
-        voc_menu = tk.Menu(menu, tearoff=0)
-        voc_menu.add_command(label="Add VOCSs", command=self.voc_settings)
         menu.add_cascade(label="Settings", menu=settings_menu)
-        menu.add_cascade(label="VOC Settings", menu=voc_menu)
-        
+
         self.root.config(menu=menu)
     
     def create_device_tab(self):
@@ -2676,13 +2674,16 @@ class AutomatedSystemUI:
 
             # Automatisch invullen
             self.diffconc_step_conc_var.set(0.0)  # Concentration to 0 ppm
+            print(total_flow)
             self.diffconc_flowN2_var.set(total_flow)  # All to N2
             self.diffconc_flowVOC_var.set(0.0)  # VOC flow to 0
+            self.add_step_button.config(state='enabled')
         else:
             # Bij terugschakelen naar VOC: reset flows
             self.diffconc_step_conc_var.set("")
             self.diffconc_flowN2_var.set("")
             self.diffconc_flowVOC_var.set("")
+            self.add_step_button.config(state='disabled')
 
     def delete_diffconcprofile(self):
         """Delete the selected profile"""
@@ -2923,11 +2924,15 @@ class AutomatedSystemUI:
             concentration_val = float(self.diffconc_step_conc_var.get())
             total_flow = float(self.diffconc_totalflowrate_var.get())
             voc = self.diffconc_voc_var.get()
-
-            f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
-            if f_voc is None or f_n2 is None:
-                messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
-                return
+            
+            if concentration_val == 0:
+                f_voc = 0
+                f_n2 = total_flow
+            else:
+                f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
+                if f_voc is None or f_n2 is None:
+                    messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
+                    return
 
             ## Set the values to the corresponding labels
             self.diffconc_flowN2_var.set(f_n2)

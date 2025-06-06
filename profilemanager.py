@@ -418,10 +418,10 @@ class DiffConcProfileManager(BaseProfileManager):
         
             gas_inlet = current_step["gas_inlet"]
             
-            # Zet juiste MFC aan met flow mfc1
+            # Zet juiste valve aan
+            self.mfcs[0].set_massflow(current_step["flow mfc1"]) #N2
+            self.vocmfc.set_massflow(current_step["flow mfc2"]) #VOC1
             if gas_inlet == "VOC" :  
-                self.mfcs[0].set_massflow(current_step["flow mfc1"]) #N2
-                self.vocmfc.set_massflow(current_step["flow mfc2"]) #VOC1
                 if self.vocmfcindex == 1: # vocmfc = 1 means VOC1 in MFC 2, vocmfc 2 means VOC2 in MFC3
                     self.valve[0].switch_position(2)
                     self.valve[1].switch_position(2)
@@ -429,8 +429,6 @@ class DiffConcProfileManager(BaseProfileManager):
                     self.valve[0].switch_position(1)
                     self.valve[1].switch_position(1)
             elif gas_inlet == "N2":  
-                self.mfcs[0].set_massflow(total_flow) #N2
-                self.vocmfc.set_massflow(0) #VOC2
                 self.valve[0].switch_position(1)
                 self.valve[1].switch_position(2)
 
