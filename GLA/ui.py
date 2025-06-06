@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import threading
-from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager
-from settingsmanagers import ConfigManager
+from A_ONE_VALVE_UI.profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager
+from A_ONE_VALVE_UI.settingsmanagers import ConfigManager
 import pandas as pd
 import time
 import matplotlib.pyplot as plt

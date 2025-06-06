@@ -3,8 +3,8 @@ from tkinter import messagebox, ttk
 import time 
 import json
 import os
-# from devices import BronkhorstMFC, Koelingsblok, RVM
-from simulate_devices import BronkhorstMFC, Koelingsblok, RVM
+# from devices import BronkhorstMFC, RVM
+from simulate_devices import BronkhorstMFC, RVM
 
 class BaseProfileManager:
     def __init__(self, base_dir, profiles_dir, standard_profiles):
@@ -153,11 +153,6 @@ class MFCProfileManager(BaseProfileManager):
     def stop_profile(self):
         self.stoprequest = True
 
-class OnOffConcProfileManager(BaseProfileManager):
-    def __init__(self, UImfcs, UIvalve, profiles_dir):
-        standard_profiles = {}
-        super().__init__(profiles_dir,  "profiles_onoff_conc_twovalves", standard_profiles)
-
 class RVMProfileManager(BaseProfileManager):
     def __init__(self, valveport1, valveport2, profiles_dir):
         standard_profiles = {
@@ -249,7 +244,6 @@ class RVMProfileManager(BaseProfileManager):
     def stop_profile(self):
         self.stoprequest = True
 
-
 class OnoffProfileManager(BaseProfileManager):
     def __init__(self, UImfcs, UIvalve, profiles_dir):
         standard_profiles = {
@@ -273,23 +267,14 @@ class OnoffProfileManager(BaseProfileManager):
     def run_profile(self, update_callback = None): 
     # def run_profile(self, temp_ambient, update_callback = None):
         """Run the current profile with the given device controllers"""
-        # Ensuring that the MFC, cooling and valve are all connected
-        # print(self.mfcs[0].port, self.mfcs[1].port, self.mfcs[2].port)
-        # print(self.mfcs[0].connected , self.mfcs[1].connected , self.mfcs[2].connected , self.cooling.connected , self.valve.connected)
-        
-        # Check devices and ambient temp
+        # Ensuring that the MFC and valve are all connected
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
             messagebox.showerror("Connection Error", "One or more MFCs not connected.")
             return
-        # if not self.cooling.connected:
-        #     messagebox.showerror("Connection Error", "Cooling not connected.")
-        #     return
+
         if not (self.valve[0].connected and self.valve[1].connected):
             messagebox.showerror("Connection Error", "Valve not connected.")
             return
-        # if not isinstance(temp_ambient, (int, float)):
-        #     messagebox.showerror("Error", "Ambient temperature must be set.")
-        #     return
         
         if not self.current_profile:
             messagebox.showerror("Error", "No profile loaded")
@@ -362,6 +347,11 @@ class OnoffProfileManager(BaseProfileManager):
     def stop_profile(self):
         self.stoprequest = True
 
+class OnOffConcProfileManager(BaseProfileManager):
+    def __init__(self, UImfcs, UIvalve, profiles_dir):
+        standard_profiles = {}
+        super().__init__(profiles_dir,  "profiles_onoff_conc_twovalves", standard_profiles)
+
 class DiffConcProfileManager(BaseProfileManager):
     def __init__(self, UImfcs, UIvalve, profiles_dir):
         standard_profiles = {}
@@ -378,15 +368,10 @@ class DiffConcProfileManager(BaseProfileManager):
         if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
             messagebox.showerror("Connection Error", "One or more MFCs not connected.")
             return
-        # if not self.cooling.connected:
-        #     messagebox.showerror("Connection Error", "Cooling not connected.")
-        #     return
+        
         if not (self.valve[0].connected and self.valve[1].connected):
             messagebox.showerror("Connection Error", "Valve not connected.")
             return
-        # if not isinstance(temp_ambient, (int, float)):
-        #     messagebox.showerror("Error", "Ambient temperature must be set.")
-        #     return
         
         if not self.current_profile:
             messagebox.showerror("Error", "No profile loaded")
@@ -408,11 +393,6 @@ class DiffConcProfileManager(BaseProfileManager):
         current_step_index = 0
         profile_complete = False
         
-        ###Als temperature no value then temperature set to '1'
-        # profile_temperature = self.current_profile.get("temperature", 1.0)
-        # print("temperature set by the diffconcprofilemanager", profile_temperature)
-        # self.cooling.set_temperature(profile_temperature, temp_ambient)
-
         while not profile_complete and not self.stoprequest:
             now = time.time()
             elapsed_time = now - start_time
@@ -435,10 +415,7 @@ class DiffConcProfileManager(BaseProfileManager):
                 return False
             
             self.vocmfc = self.mfcs[self.vocmfcindex] 
-                
-            # mfcchoice_index = current_step["mfcchoice"]  # 0=N2, 1=VOC1, 2=VOC2
-            # print("mfc choice index", mfcchoice_index)
-            # self.vocmfc = self.mfcs[mfcchoice_index + 1]
+        
             gas_inlet = current_step["gas_inlet"]
             
             # Zet juiste MFC aan met flow mfc1

@@ -1,6 +1,6 @@
 import tkinter as tk
-# from uiscrollable import AutomatedSystemUI
-from uiscrollable_2valves import AutomatedSystemUI
+from A_ONE_VALVE_UI.uiscrollable import AutomatedSystemUI
+# from uiscrollable_2valves import AutomatedSystemUI
 if __name__ == "__main__":
     root = tk.Tk()
     

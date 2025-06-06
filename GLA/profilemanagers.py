@@ -4,7 +4,7 @@ import time
 import json
 import os
 # from devices import BronkhorstMFC, Koelingsblok, RVM
-from simulate_devices import BronkhorstMFC, Koelingsblok, RVM
+from A_ONE_VALVE_UI.simulate_devices import BronkhorstMFC, Koelingsblok, RVM
 
 class BaseProfileManager:
     def __init__(self, base_dir, profiles_dir, standard_profiles):

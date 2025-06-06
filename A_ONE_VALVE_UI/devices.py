@@ -102,6 +102,124 @@ class BronkhorstMFC:
             messagebox.showerror("Error", "The Bronkhorst MFCs is not connected.")
             return False  
 
+class Koelingsblok:
+    #### ALL COMMANDS
+    MODEL_VERSION = 'v'
+    SERIAL_NUMBER = 'V'
+    SET_POINT_TEMPERATURE = 's'
+    SET_STORE_NEW_SET_POINT_TEMPERATURE = 'n'
+    SET_IDLE_MODE = 'i'
+    CLEAR_IDLE_MODE = 'I'
+    CURRENT_PLATE_TEMPERATURE = 'p'
+    CURRENT_LOG_FILE = 'l'
+    CLEAR_LOG_FILE = 'lc'
+    START_LOGGING = 'ls'
+    STOP_PAUSE_LOGGING = 'lp'
+    SET_LOGGING_PERIOD_TO_1S ='le'
+    SET_LOGGING_PERIOD_TO_1MIN = 'lm'
+    SET_LOGGING_PERIOD_TO_5MIN= 'l5'
+    RESET_UNIT_TO_DEFAULT_CONFIGURATION = '#Z'
+    CF ='\r'
+    LF ='\n'
+
+    def __init__(self, port='COM7', baudrate=9600, timeout=1):
+        self.port = port
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.connected = False
+        self.instrument = None
+        self.targettemperature = 0
+
+    def connect(self):
+        try:
+            self.instrument = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.timeout)
+            self.connected = True
+            return True
+        except serial.SerialException as err:
+            messagebox.showerror("Error",
+                    f"An error occurred while connecting the cooling system: {err}") 
+            self.connected = False
+            return False
+
+    def disconnect(self):
+        try:
+            if self.connected:
+                self.instrument.close()
+                self.connected = False
+                print("Cooling system is disconnected")
+                return True
+        except serial.SerialException as err:
+            messagebox.showerror("Error",
+                    f"An error occurred while disconnecting the cooling system: {err}") 
+            self.connected = False      
+            return False
+
+    def send_command(self, command):
+        if not self.connected:
+            print("Cooling system is not connected")
+            return False
+        
+        try:
+            self.instrument.write(f"{command}{self.CF}".encode('ascii'))  #-> self.CF = \r'
+            # 100ms delay after each command sent (after \r)
+            time.sleep(0.1)
+            response = self.instrument.readline().decode('ascii').strip() #-> readline will read till <LF> = \n and then stops
+            return response
+        except Exception as e:
+            print(f"Error sending command '{command}': {e}")
+            return False
+    
+    def get_temperature(self):
+        if not self.connected:
+            print("Cooling system is not connected")
+            return False
+        
+        try:
+            response = self.send_command(self.CURRENT_PLATE_TEMPERATURE)
+            
+            print(self.send_command(self.CLEAR_IDLE_MODE))
+            raw = self.instrument.readline()
+            print(f"Raw response bytes: {raw}")
+            
+            if response:
+                print(f"Current plate temperature is {response}")
+                return response
+            else:
+                print("No respond received to get the temperature")
+                return False
+        except Exception as e:
+            print(f"Error getting temperature: {e}")
+            return False
+
+    def set_temperature(self, temperature, ambient_temp):
+        if self.connected:
+            try:
+                min_temp = ambient_temp - 30
+                if temperature < min_temp:
+                    messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {temperature:.2f}. The temperature may not exceed {min_temp:.2f} °C. Please enter another temperature.")
+                    return False
+                else:
+                    response = self.send_command(f"{self.SET_STORE_NEW_SET_POINT_TEMPERATURE}{temperature}")
+                    raw = self.instrument.readline()
+                    self.targettemperature = temperature
+                    print(f"Raw response bytes: {raw}")
+
+                    if response.lower() == "ok":
+                        print(f"Temperature successfully set to {temperature}°C")
+                        return True
+                    else:
+                        print(f"Failed to set temperature: {response}")
+                        return False
+            
+            except Exception as err:
+                messagebox.showerror("Error",
+                    f"An error occurred while setting the temperature: {err}"
+                )
+                return False  # Operation failed
+        else:
+            messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
+            return False #Operation failed
+  
 class RVM:
     #### ALL COMMANDS
     START_COMMAND = '/'
@@ -352,123 +470,3 @@ class ValveError(Exception):
         Attributes:
           message -- explanation of the error
     '''
-
-
-# class Koelingsblok:
-#     #### ALL COMMANDS
-#     MODEL_VERSION = 'v'
-#     SERIAL_NUMBER = 'V'
-#     SET_POINT_TEMPERATURE = 's'
-#     SET_STORE_NEW_SET_POINT_TEMPERATURE = 'n'
-#     SET_IDLE_MODE = 'i'
-#     CLEAR_IDLE_MODE = 'I'
-#     CURRENT_PLATE_TEMPERATURE = 'p'
-#     CURRENT_LOG_FILE = 'l'
-#     CLEAR_LOG_FILE = 'lc'
-#     START_LOGGING = 'ls'
-#     STOP_PAUSE_LOGGING = 'lp'
-#     SET_LOGGING_PERIOD_TO_1S ='le'
-#     SET_LOGGING_PERIOD_TO_1MIN = 'lm'
-#     SET_LOGGING_PERIOD_TO_5MIN= 'l5'
-#     RESET_UNIT_TO_DEFAULT_CONFIGURATION = '#Z'
-#     CF ='\r'
-#     LF ='\n'
-
-#     def __init__(self, port='COM7', baudrate=9600, timeout=1):
-#         self.port = port
-#         self.baudrate = baudrate
-#         self.timeout = timeout
-#         self.connected = False
-#         self.instrument = None
-#         self.targettemperature = 0
-
-#     def connect(self):
-#         try:
-#             self.instrument = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.timeout)
-#             self.connected = True
-#             return True
-#         except serial.SerialException as err:
-#             messagebox.showerror("Error",
-#                     f"An error occurred while connecting the cooling system: {err}") 
-#             self.connected = False
-#             return False
-
-#     def disconnect(self):
-#         try:
-#             if self.connected:
-#                 self.instrument.close()
-#                 self.connected = False
-#                 print("Cooling system is disconnected")
-#                 return True
-#         except serial.SerialException as err:
-#             messagebox.showerror("Error",
-#                     f"An error occurred while disconnecting the cooling system: {err}") 
-#             self.connected = False      
-#             return False
-
-#     def send_command(self, command):
-#         if not self.connected:
-#             print("Cooling system is not connected")
-#             return False
-        
-#         try:
-#             self.instrument.write(f"{command}{self.CF}".encode('ascii'))  #-> self.CF = \r'
-#             # 100ms delay after each command sent (after \r)
-#             time.sleep(0.1)
-#             response = self.instrument.readline().decode('ascii').strip() #-> readline will read till <LF> = \n and then stops
-#             return response
-#         except Exception as e:
-#             print(f"Error sending command '{command}': {e}")
-#             return False
-    
-#     def get_temperature(self):
-#         if not self.connected:
-#             print("Cooling system is not connected")
-#             return False
-        
-#         try:
-#             response = self.send_command(self.CURRENT_PLATE_TEMPERATURE)
-            
-#             print(self.send_command(self.CLEAR_IDLE_MODE))
-#             raw = self.instrument.readline()
-#             print(f"Raw response bytes: {raw}")
-            
-#             if response:
-#                 print(f"Current plate temperature is {response}")
-#                 return response
-#             else:
-#                 print("No respond received to get the temperature")
-#                 return False
-#         except Exception as e:
-#             print(f"Error getting temperature: {e}")
-#             return False
-
-#     def set_temperature(self, temperature, ambient_temp):
-#         if self.connected:
-#             try:
-#                 min_temp = ambient_temp - 30
-#                 if temperature < min_temp:
-#                     messagebox.showwarning("Value exceeds the minimum temperature", f"The ambient temperature is {temperature:.2f}. The temperature may not exceed {min_temp:.2f} °C. Please enter another temperature.")
-#                     return False
-#                 else:
-#                     response = self.send_command(f"{self.SET_STORE_NEW_SET_POINT_TEMPERATURE}{temperature}")
-#                     raw = self.instrument.readline()
-#                     self.targettemperature = temperature
-#                     print(f"Raw response bytes: {raw}")
-
-#                     if response.lower() == "ok":
-#                         print(f"Temperature successfully set to {temperature}°C")
-#                         return True
-#                     else:
-#                         print(f"Failed to set temperature: {response}")
-#                         return False
-            
-#             except Exception as err:
-#                 messagebox.showerror("Error",
-#                     f"An error occurred while setting the temperature: {err}"
-#                 )
-#                 return False  # Operation failed
-#         else:
-#             messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
-#             return False #Operation failed
-  

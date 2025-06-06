@@ -5,8 +5,8 @@ import threading
 # # Cooling OFF
 # from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
 
-from profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
-from settingsmanagers import SettingsManager
+from A_ONE_VALVE_UI.profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
+from A_ONE_VALVE_UI.settingsmanagers import SettingsManager
 import pandas as pd
 import time
 import matplotlib.pyplot as plt
