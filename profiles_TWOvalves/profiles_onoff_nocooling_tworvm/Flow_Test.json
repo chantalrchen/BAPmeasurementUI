@@ -56,6 +56,14 @@
                   "flow mfc3": 1.0,
                   "valve1": 2,
                   "valve2": 1
+            },
+            {
+                  "time": 55.0,
+                  "flow mfc1": 1.0,
+                  "flow mfc2": 2.0,
+                  "flow mfc3": 3.0,
+                  "valve1": 2,
+                  "valve2": 2
             }
       ]
 }
