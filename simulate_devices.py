@@ -8,6 +8,11 @@ class BronkhorstMFC:
     """To simulate the control and monitor the Bronkhorst Mass Flow Controller - Flexi Flow
     """
     def __init__(self, port = "COM3"):
+        """Initialize the simualted BronkhorstMFC
+
+        Args:
+            port (str, optional): COM port to which MFC is connected. Defaults to "COM3".
+        """
         # Initalization of the COM-port at which the device is connected
         self.port = port
         
@@ -103,6 +108,14 @@ class RVM:
     """
 
     def __init__(self, port='COM8', valve_ports=4, mode=0, address=1):
+        """Initialize the simulated AMF Rotary Valve
+
+        Args:
+            port (str, optional): COM port of the RVM. Defaults to 'COM8'.
+            valve_ports (int, optional): Number of ports on the RVM. Defaults to 4.
+            mode (int, optional): Communication mode. Defaults to 0.
+            address (int, optional): _descripDevice adress for serial communication. Defaults to 1.
+        """
         self.port = port
         self.valve_port = valve_ports
         self.mode = mode #the answer mode for mode = 0 the valve will response immediately 

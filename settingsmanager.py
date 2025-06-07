@@ -8,6 +8,12 @@ class SettingsManager:
     Reads from and writes to a JSON configuration file.
     """
     def __init__(self, base_dir = "SettingsManager", filename="settings.json"):
+        """Initialize the SettingsManager
+
+        Args:
+            base_dir (str, optional): Directory path for the settings file. Defaults to "SettingsManager".
+            filename (str, optional): Name of the settingsfile. Defaults to "settings.json".
+        """
         ## Initialize settings manager with default paths and data ##
         self.setting = {}
         self.profilepath = base_dir
