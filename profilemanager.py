@@ -134,11 +134,11 @@ class MFCProfileManager(BaseProfileManager):
             "Flow_Test MFC": {
                 "description": "Test flow rate changes",
                 "steps": [
-                    {"time": 0.0, "flow mfc1": 0.5, "flow mfc2": 0.5, "flow mfc3": 0.5},
+                    {"time": 0.0, "flow mfc1": 0.5, "flow mfc2": 1.0, "flow mfc3": 0.5},
                     {"time": 10.0, "flow mfc1": 1.0, "flow mfc2": 0.5, "flow mfc3": 0.5},
-                    {"time": 20.0, "flow mfc1": 1.5, "flow mfc2": 0.5, "flow mfc3": 0.5},
+                    {"time": 20.0, "flow mfc1": 1.5, "flow mfc2": 0.0, "flow mfc3": 0.5},
                     {"time": 30.0, "flow mfc1": 1.0, "flow mfc2": 0.5, "flow mfc3": 0.5},
-                    {"time": 40.0, "flow mfc1": 0.5, "flow mfc2": 0.5, "flow mfc3": 0.5}
+                    {"time": 40.0, "flow mfc1": 0.5, "flow mfc2": 0.5, "flow mfc3": 1.0}
                 ]
             }
         }
@@ -405,11 +405,11 @@ class MFCandRVMProfileManager(BaseProfileManager):
             "Flow_Test": {
                 "description": "Test all devices together",
                 "steps": [
-                    {"time": 0.0, "flow mfc1": 0.5, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 1, "valve2": 2},
+                    {"time": 0.0, "flow mfc1": 0.5, "flow mfc2": 1.0, "flow mfc3": 0.5, "valve1": 1, "valve2": 1},
                     {"time": 10.0, "flow mfc1": 1.0, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 2, "valve2": 1},
-                    {"time": 20.0, "flow mfc1": 1.5, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 1, "valve2": 2},
+                    {"time": 20.0, "flow mfc1": 1.5, "flow mfc2": 0.5, "flow mfc3": 0.0, "valve1": 2, "valve2": 2},
                     {"time": 30.0, "flow mfc1": 1.0, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 2, "valve2": 1},
-                    {"time": 40.0, "flow mfc1": 0.5, "flow mfc2": 0.5, "flow mfc3": 0.5, "valve1": 1, "valve2": 2},
+                    {"time": 40.0, "flow mfc1": 0.5, "flow mfc2": 1.0, "flow mfc3": 0.5, "valve1": 1, "valve2": 2},
                 ]
             }
         }
