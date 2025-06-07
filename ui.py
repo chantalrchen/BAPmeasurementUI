@@ -679,11 +679,12 @@ class AutomatedSystemUI:
         # Button to add a new profile
         new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_mfcprofile)
         new_profile_btn.pack(side='right', padx=3, expand=True)
-        
-        # Tree to show steps in the right frame
+
+        # Frame to show the steps
         steps_frame = ttk.Frame(edit_frame)
         steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
-        
+
+        # Tree to show steps in the right frame
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.mfcsteps_tree = ttk.Treeview(
             steps_frame, 
@@ -1190,11 +1191,12 @@ class AutomatedSystemUI:
         # Button to add a new profile
         new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_valveprofile)
         new_profile_btn.pack(side='right', padx=3, expand=True)
-        
-        # Tree to show steps in the right frame
+
+        # Frame to show the steps
         steps_frame = ttk.Frame(edit_frame)
         steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
-        
+
+        # Tree to show steps in the right frame        
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.valvesteps_tree = ttk.Treeview(
             steps_frame, 
@@ -1769,11 +1771,12 @@ class AutomatedSystemUI:
         # Button to add a new profile
         new_profile_btn = ttk.Button(info_frame, text = 'New Profile', command = self.create_new_mfcandvalveprofile)
         new_profile_btn.pack(side='right', padx=3, expand=True)
-        
-        # Tree to show steps in the right frame
+
+        # Frame to show the steps
         steps_frame = ttk.Frame(edit_frame)
         steps_frame.pack(fill = 'both' , expand=True, padx=5, pady=5)
-        
+
+        # Tree to show steps in the right frame
         #https://tk-tutorial.readthedocs.io/en/latest/tree/tree.html
         self.mfcandvalveprofile_steps_tree = ttk.Treeview(
             steps_frame, 
