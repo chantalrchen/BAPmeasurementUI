@@ -361,8 +361,7 @@ class AutomatedSystemUI:
         target_label.grid(row=2, column=1, padx=10, pady=10)
         self.target_massflow_labels.append(target_label)
 
-        tk.Button(frame, text="Connect", command=lambda i=index: self.connect_MFC(i)).grid(row=3, column=0, padx=10, pady=10)
-        tk.Button(frame, text="Disconnect", command=lambda i=index: self.disconnect_MFC(i)).grid(row=3, column=1, padx=10, pady=10)
+        tk.Button(frame, text="Connect", command=lambda i=index: self.connect_MFC(i)).grid(row=3, column=0, columnspan=2, pady=10)
         
     def create_onoffprofile_tab(self):
         #Make it scrollable
@@ -802,17 +801,6 @@ class AutomatedSystemUI:
         else:
             messagebox.showinfo("Connection Failed", f"MFC {index + 1} is not connected")
 
-    def disconnect_MFC(self, index):
-        self.mfcs[index].disconnect()
-        self.keep_updating_mfc = False
-        #messagebox.showinfo("Disconnected", "MFC disconnected successfully.")
-        #updating the connection info
-        self.update_connection_devices()
-        self.status_var.set(f"MFC {index + 1} disconnected")
-    
-        ##Koeling Uitzetten omdat hij het nog niet doet
-        # # Cooling OFF
-
     def connect_valve(self, index):  
         if self.valve[index].connect():
             self.keep_updating_valve = True
@@ -931,21 +919,10 @@ class AutomatedSystemUI:
         
         self.reload_all_devices()   
         self.status_var.set("The settings are updated.")
+        messagebox.showwarning("Restart", "Please restart the GUI")
+        return
 
-    def reload_all_devices(self):
-        # Disconnect all devices if they're connected
-        if self.mfcs[0].connected:
-            self.disconnect_MFC(0)
-        if self.mfcs[1].connected:
-            self.disconnect_MFC(1)
-        if self.mfcs[2].connected:
-            self.disconnect_MFC(2)
-            
-        if self.valve[0].connected:
-            self.disconnect_valve(index = 0)
-        if self.valve[1].connected:
-            self.disconnect_valve(index = 1)
-            
+    def reload_all_devices(self):           
         #Obtain the new assigned comports
         saved_ports = self.settings_manager.get_com_ports()
         new_path = self.settings_path_var.get()

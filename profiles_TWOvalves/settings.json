@@ -3,11 +3,10 @@
             "mfc1": "COM6",
             "mfc2": "COM5",
             "mfc3": "COM3",
-            "cooling": "COM7",
             "valve1": "COM4",
             "valve2": "COM5"
       },
-      "profiles_path": "profiles_onetab",
+      "profiles_path": "profiles_TWOvalves",
       "voc_data": {
             "2-Nonanol": [
                   7.87942,

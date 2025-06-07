@@ -1,6 +1,6 @@
 {
       "com_ports": {
-            "mfc1": "COM6",
+            "mfc1": "COM61",
             "mfc2": "COM5",
             "mfc3": "COM3",
             "valve1": "COM4",
