@@ -1,0 +1,11 @@
+{
+      "name": "Experiment_1",
+      "description": "Description Experiment_1",
+      "selectedmfcindex": 1,
+      "voc": "Nonanal",
+      "concentration": 10.0,
+      "total_flow": 4.0,
+      "on_time": 5.0,
+      "off_time": 5.0,
+      "run_time": 55.0
+}

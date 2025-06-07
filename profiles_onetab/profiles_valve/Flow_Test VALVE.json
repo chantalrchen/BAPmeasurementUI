@@ -1,0 +1,30 @@
+{
+      "description": "Test valve switching",
+      "steps": [
+            {
+                  "time": 0.0,
+                  "valve1": 1,
+                  "valve2": 2
+            },
+            {
+                  "time": 10.0,
+                  "valve1": 2,
+                  "valve2": 1
+            },
+            {
+                  "time": 20.0,
+                  "valve1": 1,
+                  "valve2": 2
+            },
+            {
+                  "time": 30.0,
+                  "valve1": 2,
+                  "valve2": 1
+            },
+            {
+                  "time": 40.0,
+                  "valve1": 1,
+                  "valve2": 2
+            }
+      ]
+}

@@ -1,0 +1,61 @@
+{
+      "description": "Test all devices together",
+      "steps": [
+            {
+                  "time": 0.0,
+                  "flow mfc1": 0.5,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "valve1": 1,
+                  "valve2": 2
+            },
+            {
+                  "time": 10.0,
+                  "flow mfc1": 1.0,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "valve1": 2,
+                  "valve2": 1
+            },
+            {
+                  "time": 20.0,
+                  "flow mfc1": 1.5,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "valve1": 1,
+                  "valve2": 2
+            },
+            {
+                  "time": 30.0,
+                  "flow mfc1": 1.0,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "valve1": 2,
+                  "valve2": 1
+            },
+            {
+                  "time": 40.0,
+                  "flow mfc1": 0.5,
+                  "flow mfc2": 0.5,
+                  "flow mfc3": 0.5,
+                  "valve1": 1,
+                  "valve2": 2
+            },
+            {
+                  "time": 45.0,
+                  "flow mfc1": 1.0,
+                  "flow mfc2": 2.0,
+                  "flow mfc3": 3.0,
+                  "valve1": 1,
+                  "valve2": 2
+            },
+            {
+                  "time": 50.0,
+                  "flow mfc1": 1.0,
+                  "flow mfc2": 2.0,
+                  "flow mfc3": 3.0,
+                  "valve1": 2,
+                  "valve2": 1
+            }
+      ]
+}
