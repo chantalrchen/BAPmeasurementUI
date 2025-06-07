@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
 import threading
-from profilemanager import MFCProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
+from profilemanager import MFCProfileManager, RVMProfileManager, MFCandRVMProfileManager, DiffConcProfileManager, OnOffConcProfileManager
 from settingsmanager import SettingsManager
 import pandas as pd
 import time
@@ -28,7 +28,7 @@ class AutomatedSystemUI:
 
         self.valve = self.valveprofilemanager.valve
 
-        self.onoffprofilemanager = OnoffProfileManager(
+        self.mfcandrvmprofilemanager = MFCandRVMProfileManager(
             UImfcs=self.mfcs, UIvalve=self.valve, profiles_dir=settings_path
         )
         
@@ -933,8 +933,8 @@ class AutomatedSystemUI:
         self.mfcs = self.mfcprofilemanager.mfcs
         self.valve = self.valveprofilemanager.valve
 
-        # Update the OnOffProfileManager
-        self.onoffprofilemanager = OnoffProfileManager(
+        # Update the mfcandrvmprofilemanager
+        self.mfcandrvmprofilemanager = MFCandRVMProfileManager(
             UImfcs=self.mfcs, 
             UIvalve=self.valve,
             profiles_dir= new_path
@@ -1528,7 +1528,7 @@ class AutomatedSystemUI:
         self.onoffprofile_listbox.delete(0, tk.END)
         
         #Add all the profiles to the listbox
-        for profile in self.onoffprofilemanager.get_profiles():
+        for profile in self.mfcandrvmprofilemanager.get_profiles():
             self.onoffprofile_listbox.insert(tk.END, profile)  #listbox.insert(index, element)
 
     def load_onoffprofile(self):
@@ -1541,7 +1541,7 @@ class AutomatedSystemUI:
         
         #To ensure that you only select the first selected
         profile_name = self.onoffprofile_listbox.get(selection[0])
-        profile = self.onoffprofilemanager.load_profile(profile_name)
+        profile = self.mfcandrvmprofilemanager.load_profile(profile_name)
         
         self.new_onoffprofile_label.config(text = "")
         
@@ -1580,7 +1580,7 @@ class AutomatedSystemUI:
         profile_name = self.onoffprofile_listbox.get(selection[0]) #To ensure that you only select the first selected
         
         if messagebox.askyesno("Confirm", f"Delete profile '{profile_name}'?"):
-            if self.onoffprofilemanager.delete_profile(profile_name):
+            if self.mfcandrvmprofilemanager.delete_profile(profile_name):
                 #Updating the new profile list
                 self.update_onoffprofile_list() 
                 #Changing the status
@@ -1682,7 +1682,7 @@ class AutomatedSystemUI:
             "steps": steps
         }
         
-        if self.onoffprofilemanager.save_profile(name, profile_data):
+        if self.mfcandrvmprofilemanager.save_profile(name, profile_data):
             self.update_onoffprofile_list()
             self.status_var.set(f"Saved profile: {name}")
         else:
@@ -1705,7 +1705,7 @@ class AutomatedSystemUI:
             return
 
         # Load the profile that needs to be runned
-        profile = self.onoffprofilemanager.load_profile(name)
+        profile = self.mfcandrvmprofilemanager.load_profile(name)
         if not profile:
             messagebox.showerror("Error", f"Failed to load profile: '{name}'")
             return
@@ -1729,7 +1729,7 @@ class AutomatedSystemUI:
                 self.root.after(0, lambda: self.update_onoffprofile_var(status))
 
             self.status_var.set(f"Running profile: {self.onoffname_var.get()}")
-            self.onoffprofilemanager.run_profile(
+            self.mfcandrvmprofilemanager.run_profile(
                 # temp_ambient=self.ambient_temp,
                 update_callback=safe_update
             )
@@ -1752,7 +1752,7 @@ class AutomatedSystemUI:
     
     def stop_onoffprofile(self):
         """Stop the currently running profile"""
-        self.onoffprofilemanager.stop_profile()
+        self.mfcandrvmprofilemanager.stop_profile()
         self.onoffstop_button.config(state=tk.DISABLED)
         self.status_var.set("Profile run stopped by user")
     
@@ -2418,7 +2418,6 @@ class AutomatedSystemUI:
         self.voc_dropdown_diffconcprofile = ttk.Combobox(secondrow_frame, textvariable=self.diffconc_voc_var, values=self.vocslist, state="readonly")
         self.voc_dropdown_diffconcprofile.pack(side='left', padx=5)
         self.voc_dropdown_diffconcprofile.current(0)
-        self.voc_dropdown_diffconcprofile.config(state = 'enabled')
         
         # Total flow rate
         ttk.Label(secondrow_frame, text="Total Flow Rate (mL/min):").pack(side='left', padx=5)
@@ -2471,16 +2470,16 @@ class AutomatedSystemUI:
 
         self.diffconc_profile_valve_label =  ttk.Label(step_controls_frame, text="Gas Inlet:").pack(side='left')
         self.diffconc_valve_var = tk.StringVar() #integer variable, since the valve should be position on 1/2
-        self.step_valve_combo = ttk.Combobox(
+        self.diffconc_step_valve_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.diffconc_valve_var, 
             values=["VOC", "N2"], 
             width=5,
             state="readonly"
         )
-        self.step_valve_combo.bind("<<ComboboxSelected>>", self.diffconc_gas_inlet_selected)
-        self.step_valve_combo.pack(side='left', padx=2)
-        self.step_valve_combo.config(state ='disabled')
+        self.diffconc_step_valve_combo.bind("<<ComboboxSelected>>", self.diffconc_gas_inlet_selected)
+        self.diffconc_step_valve_combo.pack(side='left', padx=2)
+        self.diffconc_step_valve_combo.config(state ='disabled')
 
         
         self.diffconc_profile_conc_label = ttk.Label(step_controls_frame, text="Concentration (ppm):").pack(side='left')
@@ -2492,15 +2491,15 @@ class AutomatedSystemUI:
         
         self.diffconc_profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
         self.diffconc_flowN2_var = tk.DoubleVar()
-        self.step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowN2_var, width=25)
-        self.step_flow1_entry.pack(side='left', padx=2)
-        self.step_flow1_entry.config(state ='disabled')
+        self.diffconc_step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowN2_var, width=25)
+        self.diffconc_step_flow1_entry.pack(side='left', padx=2)
+        self.diffconc_step_flow1_entry.config(state ='disabled')
 
         self.diffconc_mfc2_label = ttk.Label(step_controls_frame, text="Flow VOC (mL/min):").pack(side='left')
         self.diffconc_flowVOC_var = tk.DoubleVar()
-        self.step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowVOC_var, width=25)
-        self.step_flow2_entry.pack(side='left', padx=2)
-        self.step_flow2_entry.config(state ='disabled')
+        self.diffconc_step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowVOC_var, width=25)
+        self.diffconc_step_flow2_entry.pack(side='left', padx=2)
+        self.diffconc_step_flow2_entry.config(state ='disabled')
         
         self.calculate_step_button = ttk.Button(step_controls_frame, text="Calculate Flow Rates", command=self.diffconc_calc_step)
         self.calculate_step_button.pack(side='left', padx=2)
@@ -2542,34 +2541,42 @@ class AutomatedSystemUI:
         self.current_loaded_diffconc_profile = None
     
     def enabling_select_diffconcprofile(self):
-        ## Lock the VOC dropdown, total flow and temperature entry
-        self.voc_dropdown_diffconcprofile.config(state = 'disabled')
-        self.totalflow_entry.config(state = 'disabled')
-        # self.temp_entry.config(state = 'disabled')
-        
-        # Enabling all input fields
-        self.step_time_entry.config(state ='enabled')
-        self.step_conc_entry.config(state ='enabled')
-        self.step_valve_combo.config(state = 'enabled')
+        try:
+            # Try to convert the value to float
+            total_flow = float(self.totalflow_entry.get())
+            
+            ## Lock the VOC dropdown, total flow and temperature entry
+            self.voc_dropdown_diffconcprofile.config(state = 'disabled')
+            self.totalflow_entry.config(state = 'disabled')
+            # self.temp_entry.config(state = 'disabled')
+            
+            # Enabling all input fields
+            self.step_time_entry.config(state ='enabled')
+            self.step_conc_entry.config(state ='enabled')
+            self.diffconc_step_valve_combo.config(state='readonly')
+            
+            # Enabling all buttons
+            self.calculate_step_button.config(state = 'enabled')
+            self.remove_step_button.config(state = 'enabled')
+            self.clear_steps_button.config(state = 'enabled')
+            self.save_button.config(state = 'enabled')
+            self.run_button.config(state = 'enabled')
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Please enter a valid number for total flow.")
+            return
 
-        # Enabling all buttons
-        self.calculate_step_button.config(state = 'enabled')
-        self.remove_step_button.config(state = 'enabled')
-        self.clear_steps_button.config(state = 'enabled')
-        self.save_button.config(state = 'enabled')
-        self.run_button.config(state = 'enabled')
     
     def disabling_select_diffconcprofile(self):
         ## Lock the VOC dropdown, total flow and temperature entry
-        self.voc_dropdown_diffconcprofile.config(state = 'enabled')
+        self.voc_dropdown_diffconcprofile.config(state = 'readonly')
         self.totalflow_entry.config(state = 'enabled')
         
         # Enabling all input fields
         self.step_time_entry.config(state ='disabled')
         self.step_conc_entry.config(state ='disabled')
-        self.step_flow1_entry.config(state ='disabled')
-        self.step_flow2_entry.config(state ='disabled')
-        self.step_valve_combo.config(state = 'disabled')
+        self.diffconc_step_flow1_entry.config(state ='disabled')
+        self.diffconc_step_flow2_entry.config(state ='disabled')
+        self.diffconc_step_valve_combo.config(state = 'disabled')
 
         # Enabling all buttons
         self.calculate_step_button.config(state = 'disabled')
@@ -2904,7 +2911,7 @@ class AutomatedSystemUI:
             else:
                 f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
                 if f_voc is None or f_n2 is None:
-                    messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration.")
+                    messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration. Please enter another concentration.")
                     return
 
             ## Set the values to the corresponding labels
