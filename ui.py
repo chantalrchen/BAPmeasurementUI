@@ -201,11 +201,12 @@ class AutomatedSystemUI:
         # Add all tabs
         self.create_menu()
         self.create_device_tab()
+        self.create_puregas_onoff_profile()
+        self.create_diffconc_profile_tab()
         self.create_mfcandvalveprofile_tab()
         self.create_mfcprofile_tab()
         self.create_valveprofile_tab()
-        self.create_puregas_onoff_profile()
-        self.create_diffconc_profile_tab()
+
 
     def create_scrollable_tab(self, notebook, tab_name):
         """Create a scrollable tab
@@ -3526,7 +3527,7 @@ class AutomatedSystemUI:
             # Update the status of the running Diff Conc profile in the UI  
             self.diffconc_elapsed_label.config(text=f"{status['elapsed_time']:.1f}s")
             self.diffconc_step_label.config(text=f"{status['current_step']}/{status['total_steps']}")
-            self.diffconc_value_label.config(text=f"Concentration: {status['concentration']} (ppm), Gas Inlet of Chamber: {status['gas_inlet']}, MFC N2: {status['flow mfc1']:.2f}, MFC VOC: {status['flow mfc2']:.2f}")
+            self.diffconc_value_label.config(text=f"Concentration: {status['concentration']} (ppm), Gas Inlet of Chamber: {status['gas_inlet']}, MFC N2: {status['flow mfc1']:.2f} ml/min, MFC VOC: {status['flow mfc2']:.2f} ml/min")
                 
         except tk.TclError:
             return
@@ -3566,7 +3567,8 @@ class AutomatedSystemUI:
             #when the UI is closed then this won't be "updating" (to debug)
             if not self.root.winfo_exists():
                 return
-
+            
+            voc = self.diffconc_voc_var.get()
 
             # Initialize lists to store time and concentration for the graph
             times = []
@@ -3584,8 +3586,8 @@ class AutomatedSystemUI:
 
             self.diffconc_ax.clear()
             self.diffconc_ax.step(times, concs, where='post', linestyle='-', marker='o', markersize = 3, linewidth=2, color='red' )
-            self.diffconc_ax.set_title("Setpoint Concentration Graph")
-            self.diffconc_ax.set_xlim(0, max(times))
+            self.diffconc_ax.set_title(f"Setpoint Concentration Graph of {voc}")
+            self.diffconc_ax.set_xlim(0, max(times) * 1.2)
             self.diffconc_ax.set_ylim(0, max(concs) * 1.5)
             self.diffconc_ax.set_xlabel("Time (s)")
             self.diffconc_ax.set_ylabel("Concentration (ppm)")
