@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
-import time 
+from tkinter import messagebox
 
 # This file is purely used to simulate the devices
 

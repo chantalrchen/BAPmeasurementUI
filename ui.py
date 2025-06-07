@@ -3,7 +3,6 @@ from tkinter import messagebox, ttk, filedialog
 import threading
 from profilemanager import MFCProfileManager, RVMProfileManager, MFCandRVMProfileManager, DiffConcProfileManager, OnOffConcProfileManager
 from settingsmanager import SettingsManager
-import pandas as pd
 import time
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
