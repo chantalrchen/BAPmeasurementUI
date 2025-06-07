@@ -12,6 +12,7 @@ class BronkhorstMFC:
     def __init__(self, port = "COM3"):
         # Initalization of the COM-port at which the device is connected
         self.port = port
+        
         # Initializiation of the flag whether the device is connected or not
         self.connected = False
         self.instrument = None

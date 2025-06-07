@@ -809,7 +809,7 @@ class AutomatedSystemUI:
             #initializing the home position of the valve
             self.currentposition = 1
             
-            self.status_var.set(f"RVM {index} connected and set to home position {self.currentposition}")
+            self.status_var.set(f"RVM {index + 1} connected and set to home position {self.currentposition}")
         else:
             messagebox.showinfo("Connection Failed", "RVM is not connected")
          
@@ -905,10 +905,6 @@ class AutomatedSystemUI:
             "mfc1": self.MFC1_port_var.get(),
             "mfc2": self.MFC2_port_var.get(),
             "mfc3": self.MFC3_port_var.get(),
-        ##Koeling Uitzetten omdat hij het nog niet doet
-        # # Cooling OFF
-            # "cooling": self.cooling_port_var.get(),
-            
             "valve1": self.valve1_port_var.get(),
             "valve2": self.valve2_port_var.get()
         }
