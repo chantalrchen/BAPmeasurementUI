@@ -1,9 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-import propar   # Bronkhorst MFC
-import serial   # Cooling and Valve
 import time 
 
+##To simulate the devices
 
 class BronkhorstMFC:
     def __init__(self, port = "COM3"):
@@ -35,22 +34,6 @@ class BronkhorstMFC:
         ##FOR SIMULATION
         self.connected = True
         return self.connected
-    
-    def disconnect(self):
-        # reset the value, fsetpoint = 0 
-        # try:
-        #     param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
-        #     self.instrument.write_parameters(param) #Fsetpoint
-            
-        # except Exception as err:
-        #     messagebox.showerror("Error",
-        #      f"An error occurred while disconnecting the Bronkhorst MFC: {err}")
-        
-        # reset the value, fsetpoint = 0 
-        self.set_massflow(0)  
-        self.connected = False   
-        self.instrument = None
-        return True
     
     def initialize(self):
         # try:
