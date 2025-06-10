@@ -4,6 +4,134 @@ import propar   # Bronkhorst MFC
 import serial   # Cooling and Valve
 import time 
 
+
+# # class BronkhorstMFC:
+#     def __init__(self, port = "COM3"):
+#         self.port = port
+#         self.connected = False
+#         self.instrument = None
+#         # self.channel = channel
+#         self.massflow = 0
+#         self.targetmassflow = 0
+#         # self.maxmassflow = 4.0
+        
+#     def connect(self):
+#         try:
+#             self.instrument = propar.instrument(self.port) # channel = self.channel)
+#             # print("I am in the MFC connecting function. My port is ", self.port)
+            
+#             ##toegevoegd om te checken whether it is really connected, nog niet getest tho
+#             if self.get_massflow() is not False:
+#                 self.connected = True
+#                 self.initialize()
+#                 return self.connected
+#         except Exception as err:
+#             messagebox.showerror("Error",
+#                 f"An error occurred while connecting the Bronkhorst MFC with port {self.port}: {err}"
+#             )
+#         return False  
+
+
+#         ##FOR SIMULATION
+#         # self.connected = True
+#         # return self.connected
+    
+
+#     def disconnect(self):
+#     # reset the value, fsetpoint = 0 
+#         try:
+#             param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
+#             self.instrument.write_parameters(param) #Fsetpoint
+            
+#         except Exception as err:
+#             messagebox.showerror("Error",
+#              f"An error occurred while disconnecting the Bronkhorst MFC: {err}")
+     
+#         # self.connected = False
+#         # self.instrument = None
+        
+    
+#     def initialize(self):
+#         try:
+#             # controlfunction, the instrument works as a flow controller or a pressure controller; manual flexi-flow
+#             param = [{'proc_nr':115 , 'parm_nr': 10, 'parm_type': propar.PP_TYPE_INT8, 'data': 0}]
+#             # print("HI I AM IN MFC INITIALIZE FUNCTION MY CONNECTION IS", self.connected )
+#             self.instrument.write_parameters(param)
+#             return True
+
+
+#         except Exception as err:
+#             messagebox.showerror("Error",
+#                 f"An error occurred while initializing the Bronkhorst MFC with channel"# {self.channel}: {err}"
+#             )
+#         return False  
+    
+#         # #FOR SIMULATION
+#         # return True
+  
+#     def get_massflow(self):
+#         ##the following should be connected when connected with Bronkhorst MFC
+#         if self.connected and self.instrument is not None:  # device is connected and assigned
+#             try:
+#                 param = [{'proc_nr':  33, 'parm_nr': 0, 'parm_type': propar.PP_TYPE_FLOAT}] #Fmeasure
+#                 self.massflow = self.instrument.read_parameters(param)
+#                 return self.massflow  
+#             except Exception as err:
+#                 messagebox.showerror("Error",
+#                     f"An error occurred while reading the mass flow rate: {err}"
+#                 )
+#                 return False  
+#         else:
+#             messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
+#             return False  
+
+#         # ##FOR SIMULATION
+#         # if self.connected:
+#         #     try:
+#         #         self.massflow += (self.targetmassflow - self.massflow) * 0.1
+#         #         if abs(self.massflow - self.targetmassflow) < 0.001:
+#         #             self.massflow = self.targetmassflow
+#         #         return self.massflow
+#         #     except Exception as err:
+#         #         messagebox.showerror("Error",
+#         #             f"An error occurred while reading the mass flow rate: {err}"
+#         #         )
+#         #         return False
+#         # else:
+#         #     messagebox.showerror("Error","The Bronkhorst MFC is not connected.")
+#         #     return False 
+
+#     def set_massflow(self, value: float):
+#         # ##the following should be connected when connected with Bronkhorst MFC
+#         if self.connected and self.instrument is not None:  # device is connected and assigned
+#         # if self.connected:
+#             try:
+#                 # print("HI I AM IN THE SET_MASSFLOW LOOP AND SELF.CONNECTED IS", self.connected)
+#                 # print(value, self.targetmassflow, self.maxmassflow)
+#                 if value < 0:
+#                     messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
+#                     return False             
+#                 else:
+#                     self.targetmassflow = value
+                    
+#                     #####
+#                     ###the following should be connected when connected with Bronkhorst MFC
+#                     param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
+#                     self.instrument.write_parameters(param1) #Fsetpoint
+#                     # print("HI IM NOW SETTING A MASSFLOW TO ", value)
+#                     ###
+                    
+#                     return True  
+#             except Exception as err:
+#                 messagebox.showerror("Error",
+#                     f"An error occurred while setting the mass flow rate: {err}"
+#                 )
+#                 return False  
+#         else:
+#             messagebox.showerror("Error", "The Bronkhorst MFCs is not connected.")
+#             return False  
+#         ##
+
 class BronkhorstMFC:
     def __init__(self, port = "COM3"):
         self.port = port
@@ -26,9 +154,14 @@ class BronkhorstMFC:
                 f"An error occurred while connecting the Bronkhorst MFC with port {self.port}: {err}"
             )
         return False  
+
+
+        ##FOR SIMULATION
+        # self.connected = True
+        # return self.connected
     
-    def disconnect(self):
     #reset the value, fsetpoint = 0 
+    def disconnect(self):
         try:
             param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': 0}]
             self.instrument.write_parameters(param) #Fsetpoint
@@ -36,6 +169,12 @@ class BronkhorstMFC:
         except Exception as err:
             messagebox.showerror("Error",
              f"An error occurred while disconnecting the Bronkhorst MFC: {err}")
+     
+
+
+    #     self.connected = False
+    #     self.instrument = None
+        
     
     def initialize(self):
         try:
@@ -50,7 +189,10 @@ class BronkhorstMFC:
                 f"An error occurred while initializing the Bronkhorst MFC with channel"# {self.channel}: {err}"
             )
         return False  
-
+    
+        #FOR SIMULATION
+        #  return True
+  
     def get_massflow(self):
         ##the following should be connected when connected with Bronkhorst MFC
         if self.connected and self.instrument is not None:  # device is connected and assigned
@@ -67,26 +209,49 @@ class BronkhorstMFC:
             messagebox.showerror("Error", "The Bronkhorst MFC is not connected.")
             return False  
 
+        ##FOR SIMULATION
+        # if self.connected:
+        #     try:
+        #         self.massflow += (self.targetmassflow - self.massflow) * 0.1
+        #         if abs(self.massflow - self.targetmassflow) < 0.001:
+        #             self.massflow = self.targetmassflow
+        #         return self.massflow
+        #     except Exception as err:
+        #         messagebox.showerror("Error",
+        #             f"An error occurred while reading the mass flow rate: {err}"
+        #         )
+        #         return False
+        # else:
+        #     messagebox.showerror("Error","The Bronkhorst MFC is not connected.")
+        #     return False 
+
     def set_massflow(self, value: float):
         ##the following should be connected when connected with Bronkhorst MFC
         if self.connected and self.instrument is not None:  # device is connected and assigned
+        # if self.connected:
             try:
                 print("HI I AM IN THE SET_MASSFLOW LOOP AND SELF.CONNECTED IS", self.connected)
-                print(value, self.targetmassflow, self.maxmassflow)
+                # print(value, self.targetmassflow, self.maxmassflow)
                 if value < 0:
                     messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
                     return False             
-                elif value > self.maxmassflow:
-                    messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow:.2f} mL/min. The mass flow rate will be set to {self.maxmassflow:.2f} mL/min.")
-                    self.targetmassflow = self.maxmassflow
-                    param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
-                    self.instrument.write_parameters(param)
-                    print("HI IM NOW SETTING A MASSFLOW TO ", self.maxmassflow)
-                    # ###
+                # elif value > self.maxmassflow:
+                #     messagebox.showwarning("Value exceeds the maximum mass flow rate", f"The mass flow rate may not exceed {self.maxmassflow:.2f} mL/min. The mass flow rate will be set to {self.maxmassflow:.2f} mL/min.")
+                #     self.targetmassflow = self.maxmassflow
                     
-                    return True
+                #     # ####
+                #     # ##the following should be connected when connected with Bronkhorst MFC
+                #     param = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': self.maxmassflow}]
+                #     self.instrument.write_parameters(param)
+                #     print("HI IM NOW SETTING A MASSFLOW TO ", self.maxmassflow)
+                #     # ###
+                    
+                #     return True
                 else:
                     self.targetmassflow = value
+                    
+                    #####
+                    ###the following should be connected when connected with Bronkhorst MFC
                     param1 = [{'proc_nr':33 , 'parm_nr': 3, 'parm_type': propar.PP_TYPE_FLOAT, 'data': value}]
                     self.instrument.write_parameters(param1) #Fsetpoint
                     print("HI IM NOW SETTING A MASSFLOW TO ", value)
@@ -101,6 +266,7 @@ class BronkhorstMFC:
         else:
             messagebox.showerror("Error", "The Bronkhorst MFCs is not connected.")
             return False  
+        ##
 
 class Koelingsblok:
     #### ALL COMMANDS
@@ -219,12 +385,15 @@ class Koelingsblok:
         else:
             messagebox.showerror("Error", "The Torrey Pines IC20XR Digital Chilling/Heating Dry Baths is not connected.")
             return False #Operation failed
+        
+        #To simulate
+        # self.targettemperature = temperature
   
 class RVM:
     #### ALL COMMANDS
     START_COMMAND = '/'
     END_COMMAND = '\r'
-    POLLING_PERIOD = 0.05 ## time for repeated status check
+    POLLING_PERIOD = 0.1 ## time for repeated status check
     ADDRESS = '1' #unit 1 -> command = f"/1Z\r" (check manual)
     ROTATION_DELAY = 0.4  # 400 ms rotatietijd for Fast Mode
 
@@ -365,7 +534,7 @@ class RVM:
 
     def connect(self):
         try:
-            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
+            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=10)
             self.connected = True
             print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
 
@@ -384,6 +553,10 @@ class RVM:
                     f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}") 
             self.connected = False
             return False
+        
+        # ##TO simulate
+        # self.connected = True
+        # return True
 
     def disconnect(self):
         if self.connected:
@@ -393,6 +566,10 @@ class RVM:
             return True
         else:
             return False
+        
+        ##To simulate
+        # self.connected = False
+        # return False
 
     def home(self):
         print("Homing RVM Industrial Microfluidic Rotary Valve...")
@@ -400,68 +577,208 @@ class RVM:
         time.sleep(self.ROTATION_DELAY)
         self.check_status()
         print("RVM Industrial Microfluidic Rotary Valve homed")        
+                
+        # ##For simulation
+        # self.currentposition = 1
 
-    def switch_position(self, position: int):
+    # def switch_position(self, position: int):
+    #     if position not in [1, 2]:
+    #         raise ValueError("The position of the valve can only be 1 or 2")
+
+    #     if self.current_position != position:
+    #         print(f"Switching RVM Industrial Microfluidic Rotary Valve to position {position}")
+    #         self.send_command(self.SWITCH_SHORTEST, position)
+    #         time.sleep(self.ROTATION_DELAY)
+    #         self.check_status()
+    #         self.current_position = position
+    #         print(f"RVM Industrial Microfluidic Rotary Valve is in positie {position}.")
+            
+    #     # ##For simulation
+    #     # self.current_position = position
+    #     # return True
+        
+    def switch_position(self, position: str, direction='ANY', force=False):
+        if direction not in ['ANY', 'CW', 'CCW']:
+            raise ValueError('Direction parameter must be one of: "ANY","CW","CCW"]')
+
         if position not in [1, 2]:
             raise ValueError("The position of the valve can only be 1 or 2")
+        print(position)
+        command_switch = {'ANY': 'SWITCH_SHORTEST',
+                          'CW': 'SWITCH_CLOCKWISE',
+                          'CCW': 'SWITCH_COUNTERCLOCKWISE'}
+        cmd = command_switch.get(direction)
 
-        print(f"Switching RVM Industrial Microfluidic Rotary Valve to position {position}")
-        self.send_command(self.SWITCH_SHORTEST, position)
+        if force:
+            cmd += '_FORCE'
+
+        self.send_command(eval(f'self.{cmd}'), position)
         time.sleep(self.ROTATION_DELAY)
         self.check_status()
         self.current_position = position
         print(f"RVM Industrial Microfluidic Rotary Valve is in positie {position}.")
-    
+        print(f'Valve in position {position}')
+
     def get_position(self):
-        pos = self.send_command(self.GET_VALVE_POSITION)
-        self.current_position = int(pos)
+        # pos_raw = self.send_command(self.GET_VALVE_POSITION)
+        # # pos_clean = pos_raw.strip().replace('\x03', '').replace('\r', '').replace('\n', '')
+
+        # self.current_position = int(pos_raw)
+        self.current_position = int(self.send_command(self.GET_VALVE_POSITION))
         print(f"The current position of RVM Industrial Microfluidic Rotary Valve is {self.current_position}")
         return self.current_position
+        
+        # ##For simulation
+    #     # return self.current_position    
+    
+    # def check_status(self):
+    #     while True:
+    #         status = self.send_command(self.GET_STATUS_DETAILS)
+    #         if status == '0':
+    #             break
+    #         elif status == '255':
+    #             time.sleep(self.POLLING_PERIOD)
+    #         else:
+    #             raise ValveError(f"invalid status: {status}")
 
-    def check_status(self):
-        while True:
-            status = self.send_command(self.GET_STATUS_DETAILS)
-            if status == '0':
-                break
-            elif status == '255':
-                time.sleep(self.POLLING_PERIOD)
-            else:
-                raise ValveError(f"invalid status: {status}")
+    # def build_command(self, command, parameter=None):
+    #     cmd = f"{self.START_COMMAND}{self.ADDRESS}{command}"
+    #     if parameter is not None:
+    #         cmd += str(parameter)
+    #     if command[0] not in self.NO_R_REQUIRED:
+    #         cmd += self.EXECUTE
+    #     cmd += self.END_COMMAND
+    #     return cmd
 
-    def build_command(self, command, parameter=None):
-        cmd = f"{self.START_COMMAND}{self.ADDRESS}{command}"
-        if parameter is not None:
-            cmd += str(parameter)
-        if command[0] not in self.NO_R_REQUIRED:
-            cmd += self.EXECUTE
-        cmd += self.END_COMMAND
-        return cmd
+    # def send_command(self, command, parameter=None):
+    #     if not self.connected:
+    #         raise ValveError("RVM Industrial Microfluidic Rotary Valve is not connected")
+        
+    #     print(parameter, command)
+    #     full_cmd = self.build_command(command, parameter)
+    #     print("SEND COMMAND", full_cmd)
+    #     self.instrument.reset_input_buffer()
+    #     self.instrument.write(full_cmd.encode())
+    #     time.sleep(0.1)
+    #     error, data = self.read_response()
+    #     self.check_error(error)
+    #     return data
 
-    def send_command(self, command, parameter=None):
+
+    def send_command(self, command: str, parameter: str = None) -> str:
+        """Send a command, get a response back and return the response. (No Status check)"""
         if not self.connected:
-            raise ValveError("RVM Industrial Microfluidic Rotary Valve is not connected")
+            raise ValveError('No AMF valve is connected.')
 
-        full_cmd = self.build_command(command, parameter)
-        self.instrument.reset_input_buffer()
-        self.instrument.write(full_cmd.encode())
+        original_command = command
+          
+        command = self.START_COMMAND + str(self.address) + original_command
+
+        # format the command if it has some parameter
+        if parameter is not None:
+            command = command + str(parameter)
+
+        if original_command[0] not in self.NO_R_REQUIRED:
+            command = command + self.EXECUTE
+
+        command = command + self.END_COMMAND
+
+        self.instrument.write(data=command.encode())
+        time.sleep(0.2)
         error, data = self.read_response()
         self.check_error(error)
+
         return data
 
-    def read_response(self):
-        response = self.instrument.read_until(self.END_ANSWER.encode()).decode('utf-8').strip()
-        if not response.startswith('/'):
-            raise ValveError(f"invalid response: {response}")
+    # def read_response(self):
+    #     response = self.instrument.read_until(self.END_ANSWER.encode()).decode('utf-8').strip()
+    #     print("This is the read response", response, " end response")
 
-        response = response[2:]  # Verwijder '/' en adres
-        error_code = response[0]
-        data = response[1:].replace(self.END_ANSWER.strip(), '')
-        error = {'@': [0, 'No error'], '`': [0, 'No error']}.get(error_code, [999, 'Invalid error'])
+    #     if not response.startswith('/'):
+    #         raise ValveError(f"invalid response: {response}, end invalid response")
+
+    #     response = response[2:]  # Verwijder '/' en adres
+    #     error_code = response[0]
+    #     data = response[1:].replace(self.END_ANSWER.strip(), '')
+    #     error = {'@': [0, 'No error'], '`': [0, 'No error']}.get(error_code, [999, 'Invalid error'])
+    #     return error, data
+
+    def check_status(self):
+        busy = True
+        status = '255'
+        while busy:
+            if status == '0':
+                busy = False
+            else:
+                time.sleep(self.POLLING_PERIOD)
+            
+            self.instrument.reset_input_buffer()
+            status = self.send_command(self.GET_STATUS_DETAILS)
+            print (f'status = {status}')
+            if status not in ['0', '1', '255', '', None]:
+                raise ValveError(f'Bad Status: {self.STATUS_CODES.get(status)}')
+                
+                
+    # def send_command(self, command: str, parameter: str = None) -> str:
+    #     """Send a command, get a response back and return the response. (No Status check)"""
+    #     if not self.connected:
+    #         raise ValveError('No AMF valve is connected.')
+
+    #     original_command = command
+          
+    #     command = self.START_COMMAND + str(self.address) + original_command
+
+    #     # format the command if it has some parameter
+    #     if parameter is not None:
+    #         command = command + str(parameter)
+
+    #     if original_command[0] not in self.NO_R_REQUIRED:
+    #         command = command + self.EXECUTE
+
+    #     command = command + self.END_COMMAND
+    #     print("This is the send command", command)
+    #     self.instrument.write(data=command.encode())
+    #     error, data = self.read_response()
+    #     self.check_error(error)
+
+    #     return data
+
+    def read_response(self):
+        response = self.instrument.read_until(self.END_ANSWER.encode()).decode('utf-8')
+        print(" This is the response", response, "end response")
+        if self.mode == 2 and response[2] == '`' and len(response) > 2:
+            if response[3] != 0:
+                if response[-len(self.END_ANSWER):] == self.END_ANSWER:
+                    response = response[:-len(self.END_ANSWER)]
+                        
+                error = self.ERROR_CODES[response[2].upper()]
+                self.counter = response[3:]
+                data = '0'
+                return error, data
+            else:
+                response = response[2:]
+        else: 
+            response = response[2:]
+
+        if response[-len(self.END_ANSWER):] == self.END_ANSWER:
+            response = response[:-len(self.END_ANSWER)]
+
+        error = self.ERROR_CODES[response[0].upper()]
+        data = response[1:]
+
         return error, data
 
     def check_error(self, error):
-        if error[0] != 0:
-            raise ValveError(f"error {error[0]}: {error[1]}")
+        code = error[0]
+
+        if code == 0:
+            return True
+        raise ValveError(f'{error[0]}: {error[1]}')
+        
+        
+    # def check_error(self, error):
+    #     if error[0] != 0:
+    #         raise ValveError(f"error {error[0]}: {error[1]}")
         
 #for rvm
 class ValveError(Exception):

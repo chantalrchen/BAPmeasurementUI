@@ -5,8 +5,8 @@ import threading
 # # Cooling OFF
 # from profilemanagers import MFCProfileManager, CoolingProfileManager, RVMProfileManager, OnoffProfileManager, DiffConcProfileManager
 
-from A_ONE_VALVE_UI.profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
-from A_ONE_VALVE_UI.settingsmanagers import SettingsManager
+from profilemanagers import MFCProfileManager,RVMProfileManager, OnoffProfileManager, DiffConcProfileManager, OnOffConcProfileManager
+from settingsmanagers import SettingsManager
 import pandas as pd
 import time
 import matplotlib.pyplot as plt
@@ -342,6 +342,7 @@ class AutomatedSystemUI:
             # self.current_temperature_label.config(text=f"Current temperature: {temp_str}")
 
             if self.valve.connected:
+                # pos = self.currentposition
                 pos = self.valve.get_position()
             else:
                 pos = "-"
@@ -1366,6 +1367,7 @@ class AutomatedSystemUI:
             if self.currentposition != target_position:                
                 self.current_valve_label.config(text=f"Current position of the valve: {target_position}")
                 self.status_var.set(f"The position is set to {target_position}.")
+                self.currentposition = target_position
             else:
                 self.status_var.set(f"The target position is the current position, position {target_position}.")
         else:
@@ -2037,11 +2039,11 @@ class AutomatedSystemUI:
             # Displaying which profile is running
             self.status_var.set(f"Running profile: {self.valvename_var.get()}")
             self.valveprofilemanager.run_profile(update_callback=self.update_valveprofile_var)
-            # self.root.after(0, lambda: self.update_run_status)
             self.root.after(0, lambda: self.valveprofile_complete)
 
         except Exception as e:
-            self.root.after(0, lambda: self.valveprofile_error(e))
+            print("HELLOO", e)
+            self.root.after(0, lambda e=e: self.valveprofile_error(e))
     
     def valveprofile_complete(self):
         """Called when profile completes successfully"""
@@ -3002,6 +3004,93 @@ class AutomatedSystemUI:
         except tk.TclError:
             return
 
+    # def voccalculator_run_onoffprofile(self):
+    #     self.plot_expected_vocprofile()
+    #     try:
+    #         on_time = float(self.voccalc_on_time_entry.get())
+    #         off_time = float(self.voccalc_off_time_entry.get())
+    #         run_time = float(self.voccalc_run_time_entry.get())
+    #     except ValueError:
+    #         messagebox.showerror("Input Error", "All timing fields must be numbers.")
+    #         return
+
+    #     ##Koeling Uitzetten omdat hij het nog niet doet
+    #     # # Cooling OFF
+    #     # if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.cooling.connected or not self.valve.connected:
+    #     # if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.valve.connected:
+    #     #     messagebox.showerror("Connection Error", "Ensure all devices are connected.")
+    #     #     return
+
+    #     # if not isinstance(self.ambient_temp, (int, float)):
+    #     #     messagebox.showerror("Error", "Ambient temperature must be set.")
+    #     #     return
+        
+    #     #Checking whether the temperature has already been set to the filled temperature
+    #     # https://www.pythontutorial.net/tkinter/tkinter-askyesno/
+    #     # print(self.voc_temp)
+    #     # if self.voc_temp is not None:
+    #     #     confirm = messagebox.askyesno(
+    #     #         "Cooling Plate Temperature",
+    #     #         f"Did you set the cooling plate temperature to {self.voc_temp:.1f} °C?"
+    #     #     )
+    #     #     if not confirm:
+    #     #         return  
+
+    #     # T = 0
+    #     confirm = messagebox.askyesno(
+    #         "Cooling Plate Temperature",
+    #         f"Did you set the cooling plate temperature to 0 °C?"
+    #     )
+    #     if not confirm:
+    #         return  
+            
+    #     self.voccalc_stop_button.config(state = 'enabled')
+    #     self.stop_onoff_conc_run = False
+    #     def run_pulse_cycle():
+    #         self.update_run_var()
+    #     ##Koeling Uitzetten omdat hij het nog niet doet
+    #     # # Cooling OFF
+    #         # self.cooling.set_temperature(self.voc_temp, self.ambient_temp)
+            
+    #         pulse_starttime = time.time()
+    #         self.root.after(0, lambda: self.update_voc_elapsed_time_display(pulse_starttime, run_time))
+
+    #         while not self.stop_onoff_conc_run:
+    #             if time.time() - pulse_starttime >= run_time:
+    #                 break
+
+    #             # ON state
+    #             # self.mfcs[0].set_massflow(self.voc_flow)
+    #             # self.mfcs[1].set_massflow(self.voc_N)
+    #             self.valve.switch_position(2)
+    #             self.status_var.set(f"VOC ON-state | MFC1: {self.voc_flow}, MFC2 (Nitrogen): {self.voc_N}")
+    #             if not self.sleep_with_stop_check(on_time):
+    #                 break
+
+    #             if time.time() - pulse_starttime >= run_time:
+    #                 break
+                
+    #             # OFF state
+    #             # self.mfcs[0].set_massflow(0)
+    #             # self.mfcs[1].set_massflow(0) #nitrogen max flow rate
+    #             self.valve.switch_position(1)
+    #             self.status_var.set("VOC OFF-state")    
+    #             if not self.sleep_with_stop_check(off_time):
+    #                 break
+
+    #         if not self.stop_onoff_conc_run:
+    #             # Final reset
+    #             self.mfcs[0].set_massflow(0)
+    #             self.mfcs[1].set_massflow(0)
+    #         ##Koeling Uitzetten omdat hij het nog niet doet
+    #         # # Cooling OFF
+    #             # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
+                
+    #             self.valve.switch_position(1)
+    #             self.status_var.set("VOC Run complete")
+
+    #     threading.Thread(target=run_pulse_cycle, daemon=True).start()
+
     def voccalculator_run_onoffprofile(self):
         self.plot_expected_vocprofile()
         try:
@@ -3012,67 +3101,44 @@ class AutomatedSystemUI:
             messagebox.showerror("Input Error", "All timing fields must be numbers.")
             return
 
-        ##Koeling Uitzetten omdat hij het nog niet doet
-        # # Cooling OFF
-        # if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.cooling.connected or not self.valve.connected:
-        if not self.mfcs[0].connected or not self.mfcs[1].connected or not self.valve.connected:
-            messagebox.showerror("Connection Error", "Ensure all devices are connected.")
-            return
-
-        # if not isinstance(self.ambient_temp, (int, float)):
-        #     messagebox.showerror("Error", "Ambient temperature must be set.")
-        #     return
-        
-        #Checking whether the temperature has already been set to the filled temperature
-        # https://www.pythontutorial.net/tkinter/tkinter-askyesno/
-        # print(self.voc_temp)
-        # if self.voc_temp is not None:
-        #     confirm = messagebox.askyesno(
-        #         "Cooling Plate Temperature",
-        #         f"Did you set the cooling plate temperature to {self.voc_temp:.1f} °C?"
-        #     )
-        #     if not confirm:
-        #         return  
-
-        # T = 0
         confirm = messagebox.askyesno(
             "Cooling Plate Temperature",
             f"Did you set the cooling plate temperature to 0 °C?"
         )
         if not confirm:
             return  
-            
-        self.voccalc_stop_button.config(state = 'enabled')
+
+        self.voccalc_stop_button.config(state='enabled')
         self.stop_onoff_conc_run = False
+
         def run_pulse_cycle():
-            self.update_run_var()
-        ##Koeling Uitzetten omdat hij het nog niet doet
-        # # Cooling OFF
-            # self.cooling.set_temperature(self.voc_temp, self.ambient_temp)
-            
             pulse_starttime = time.time()
             self.root.after(0, lambda: self.update_voc_elapsed_time_display(pulse_starttime, run_time))
 
+            self.update_run_var()
             while not self.stop_onoff_conc_run:
-                if time.time() - pulse_starttime >= run_time:
+                elapsed = time.time() - pulse_starttime
+                if elapsed >= run_time:
                     break
 
-                # ON state
-                self.mfcs[0].set_massflow(self.voc_flow)
-                self.mfcs[1].set_massflow(self.voc_N)
+                # ON-state
                 self.valve.switch_position(2)
+                self.currentposition = 2
                 self.status_var.set(f"VOC ON-state | MFC1: {self.voc_flow}, MFC2 (Nitrogen): {self.voc_N}")
                 if not self.sleep_with_stop_check(on_time):
+                    print("nope nog niet done", time.time()-pulse_starttime)
                     break
 
-                if time.time() - pulse_starttime >= run_time:
+                # Check opnieuw ná ON-time
+                elapsed = time.time() - pulse_starttime
+                print("on time", elapsed)
+                if elapsed >= run_time:
                     break
-                
-                # OFF state
-                self.mfcs[0].set_massflow(0)
-                self.mfcs[1].set_massflow(0) #nitrogen max flow rate
+
+                # OFF-state
                 self.valve.switch_position(1)
-                self.status_var.set("VOC OFF-state")    
+                self.currentposition = 1
+                self.status_var.set("VOC OFF-state")
                 if not self.sleep_with_stop_check(off_time):
                     break
 
@@ -3080,11 +3146,8 @@ class AutomatedSystemUI:
                 # Final reset
                 self.mfcs[0].set_massflow(0)
                 self.mfcs[1].set_massflow(0)
-            ##Koeling Uitzetten omdat hij het nog niet doet
-            # # Cooling OFF
-                # self.cooling.set_temperature(self.ambient_temp, self.ambient_temp)
-                
                 self.valve.switch_position(1)
+                self.currentposition = 1
                 self.status_var.set("VOC Run complete")
 
         threading.Thread(target=run_pulse_cycle, daemon=True).start()
@@ -3093,6 +3156,7 @@ class AutomatedSystemUI:
         interval = 0.1  # 100 ms
         end_time = time.time() + duration
         while time.time() < end_time:
+            # print(time.time())
             if self.stop_onoff_conc_run:
                 return False
             time.sleep(interval)
@@ -3867,9 +3931,9 @@ class AutomatedSystemUI:
         # # Cooling OFF
         # if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.cooling.connected and self.valve.connected):
 
-        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.valve.connected):
-            messagebox.showwarning("Error", "One or more devices are not connected")
-            return False
+        # if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected and self.valve.connected):
+        #     messagebox.showwarning("Error", "One or more devices are not connected")
+        #     return False
           
         #Get the name of the profile without spaces, such that the .json file can be loaded later
         name = self.diffconc_namevar.get().strip()

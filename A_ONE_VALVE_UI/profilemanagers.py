@@ -3,8 +3,8 @@ from tkinter import messagebox, ttk
 import time 
 import json
 import os
-# from devices import BronkhorstMFC, Koelingsblok, RVM
-from A_ONE_VALVE_UI.simulate_devices import BronkhorstMFC, Koelingsblok, RVM
+from devices import BronkhorstMFC, Koelingsblok, RVM
+# from simulate_devices import BronkhorstMFC, Koelingsblok, RVM
 
 class BaseProfileManager:
     def __init__(self, base_dir, profiles_dir, standard_profiles):
@@ -665,12 +665,12 @@ class DiffConcProfileManager(BaseProfileManager):
     # def run_profile(self, temp_ambient, update_callback = None):
     def run_profile(self, update_callback = None):
         """Run the current profile with the given device controllers"""
-        # Check devices and ambient temp
-        if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
-            messagebox.showerror("Connection Error", "One or more MFCs not connected.")
-            return
-        # if not self.cooling.connected:
-        #     messagebox.showerror("Connection Error", "Cooling not connected.")
+        # # Check devices and ambient temp
+        # if not (self.mfcs[0].connected and self.mfcs[1].connected and self.mfcs[2].connected):
+        #     messagebox.showerror("Connection Error", "One or more MFCs not connected.")
+        #     return
+        # # if not self.cooling.connected:
+        # #     messagebox.showerror("Connection Error", "Cooling not connected.")
         #     return
         if not self.valve.connected:
             messagebox.showerror("Connection Error", "Valve not connected.")
@@ -715,8 +715,8 @@ class DiffConcProfileManager(BaseProfileManager):
             current_step = steps[current_step_index]
             
             # Set devices to current step values
-            self.mfcs[0].set_massflow(current_step["flow mfc1"])
-            self.mfcs[1].set_massflow(current_step["flow mfc2"])
+            # self.mfcs[0].set_massflow(current_step["flow mfc1"])
+            # self.mfcs[1].set_massflow(current_step["flow mfc2"])
             self.valve.switch_position(current_step["valve"])
         
             # #if update_callback is called then we need to update the status with the corresponding data
