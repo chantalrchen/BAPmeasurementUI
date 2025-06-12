@@ -2469,7 +2469,9 @@ class AutomatedSystemUI:
         self.onoffconc_totflowrate_var = tk.StringVar(value=self.default_totflowrate)
         totalflow_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_totflowrate_var)
         totalflow_entry.grid(row=5, column=1, padx=10, pady=10)
-
+        totalflow_entry.bind("<FocusOut>", self.update_concentration_range_onofflabel)
+        totalflow_entry.bind("<Return>", self.update_concentration_range_onofflabel)
+        
         # Button to calculate the flow
         calc_button = ttk.Button(profile_info_frame, text="Calculate Flow", command=self.calculate_voc_flow)
         calc_button.grid(row=6, column=0, columnspan=2, pady=10)
@@ -3015,7 +3017,8 @@ class AutomatedSystemUI:
         voc_data = self.settings_manager.get_voc_data()
         
         min_ppm, max_ppm = self.get_concentration_range_fixeddegrees(voc_name, total_flow_get, min_f, voc_data)
-        print(min_ppm, max_ppm)
+        
+        # print(total_flow_get)
         if min_ppm is not None and max_ppm is not None:
             self.onoff_valid_conc_range_label.config(
                 text=f"Valid range: {min_ppm} – {max_ppm} ppm"
@@ -3058,6 +3061,8 @@ class AutomatedSystemUI:
         self.calculate_voc_flow()
         
         self.plot_expected_vocprofile()
+        
+        self.update_concentration_range_onofflabel()
         
     def delete_onoffconcprofile(self):
         """Delete selected Pure Gas ON/OFF profile."""
@@ -3141,6 +3146,9 @@ class AutomatedSystemUI:
         
         # Plot the expected concenration graph based on the loaded profile
         self.plot_expected_vocprofile()
+        
+        #Update concentration range
+        self.update_concentration_range_onofflabel()
         
     def save_onoffconcprofile(self):
         """Save current VOC ON/OFF profile"""
@@ -3337,6 +3345,8 @@ class AutomatedSystemUI:
         self.totalflow_entry = ttk.Entry(secondrow_frame, textvariable=self.diffconc_totalflowrate_var)
         self.totalflow_entry.pack(side='left', padx=5)
         self.totalflow_entry.config(state = 'enabled')
+        self.totalflow_entry.bind("<FocusOut>", self.update_concentration_range_difflabel)
+        self.totalflow_entry.bind("<Return>", self.update_concentration_range_difflabel)
         
         # Select Button to activate step input fields and deactivate the selected MFC which contains the VOC, the VOC type, total flow rate
         ttk.Button(secondrow_frame, text="Select", command=self.enabling_select_diffconcprofile).pack(side='left', padx=5)
@@ -3473,7 +3483,7 @@ class AutomatedSystemUI:
         voc_data = self.settings_manager.get_voc_data()
         
         min_ppm, max_ppm = self.get_concentration_range_fixeddegrees(voc_name, total_flow_get, min_f, voc_data)
-        print(min_ppm, max_ppm)
+        # print(min_ppm, max_ppm)
         if min_ppm is not None and max_ppm is not None:
             self.diffconc_valid_conc_range_label.config(
                 text=f"Valid range: {min_ppm} – {max_ppm} ppm"
@@ -3599,7 +3609,10 @@ class AutomatedSystemUI:
         
         # Enable all input fields and buttons needed to define the steps and lock the selection of type VOC, total flow and dropdown of the selection of the VOC MFC
         self.enabling_select_diffconcprofile()
-
+        
+        # Updating the concentration range
+        self.update_concentration_range_difflabel()
+        
     def diffconc_gas_inlet_selected(self, event=None):
         """Function that is triggered when a gas inlet option is selected (N2 or VOC)
         It fills and clears the flow and concentration fields dependent on the selected gas inlet option 
