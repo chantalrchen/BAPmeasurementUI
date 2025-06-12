@@ -2450,7 +2450,7 @@ class AutomatedSystemUI:
 
         canvas_widget = self.onoff_canvas.get_tk_widget()
         # Graph size 400 x 300
-        canvas_widget.config(width=500, height=300) 
+        canvas_widget.config(width=500, height=400) 
         # Prevent Frame Shrinking
         # https://youtu.be/onIEw70Uw-4
         canvas_widget.pack_propagate(False)  # prevent auto-resizing
@@ -2774,7 +2774,7 @@ class AutomatedSystemUI:
 
         canvas_widget = self.onoff_canvas.get_tk_widget()
         # Graph size 400 x 300
-        canvas_widget.config(width=500, height=300) 
+        canvas_widget.config(width=500, height=400) 
         # Prevent Frame Shrinking
         # https://youtu.be/onIEw70Uw-4
         canvas_widget.pack_propagate(False)  # prevent auto-resizing
@@ -2910,30 +2910,6 @@ class AutomatedSystemUI:
         self.calculate_voc_flow()
         
         self.plot_expected_vocprofile()
-        
-    #     # Clear existing plot from the graph frame
-    #     for child in self.onoffconc_graph_frame.winfo_children():
-    #         child.destroy()
-
-    #     # Create plot
-    #     self.onoff_fig, self.onoff_ax = plt.subplots(figsize=(6, 4))
-    #     self.onoff_ax.set_xlabel("Time (s)")
-    #     self.onoff_ax.set_ylabel("Concentration (ppm)")
-    #     self.onoff_ax.set_title(f"Setpoint Concentration On/Off Graph")
-    #     self.onoff_ax.grid(True)
-
-    #    # Insert the plot in Tkinter
-    #     self.onoff_canvas = FigureCanvasTkAgg(self.onoff_fig, master=self.onoffconc_graph_frame)
-    #     self.onoff_canvas.draw()
-    #     self.onoff_canvas.get_tk_widget().pack(fill = 'both', expand = True)
-
-    #     canvas_widget = self.onoff_canvas.get_tk_widget()
-    #     # Graph size 400 x 300
-    #     canvas_widget.config(width=500, height=300) 
-    #     # Prevent Frame Shrinking
-    #     # https://youtu.be/onIEw70Uw-4
-    #     canvas_widget.pack_propagate(False)  # prevent auto-resizing
-    #     canvas_widget.pack(fill='none', expand=False)
         
     def delete_onoffconcprofile(self):
         """Delete selected Pure Gas ON/OFF profile."""
@@ -3141,6 +3117,14 @@ class AutomatedSystemUI:
         self.diffconc_canvas.draw()
         self.diffconc_canvas.get_tk_widget().pack(fill='both', expand=True)
 
+        canvas_widget = self.diffconc_canvas.get_tk_widget()
+        # Graph size 400 x 300
+        canvas_widget.config(width=500, height=400) 
+        # Prevent Frame Shrinking
+        # https://youtu.be/onIEw70Uw-4
+        canvas_widget.pack_propagate(False)  # prevent auto-resizing
+        canvas_widget.pack(fill='none', expand=False)
+        
         ############# Right frame / edit frame #############
         # Edit frame where the user can edit the profile and fill in the daa for new profiles
         info_frame = ttk.Frame(edit_frame)
@@ -3528,6 +3512,16 @@ class AutomatedSystemUI:
         self.diffconc_ax.set_ylabel("Concentration (ppm)")
         self.diffconc_ax.grid(True)
         self.diffconc_canvas.draw()
+        self.diffconc_canvas.get_tk_widget().pack(fill='both', expand=True)
+
+        canvas_widget = self.diffconc_canvas.get_tk_widget()
+        # Graph size 400 x 300
+        canvas_widget.config(width=500, height=400) 
+        # Prevent Frame Shrinking
+        # https://youtu.be/onIEw70Uw-4
+        canvas_widget.pack_propagate(False)  # prevent auto-resizing
+        canvas_widget.pack(fill='none', expand=False)
+        
         
         # Show the user that a new profile is made, with the text new profile
         self.new_diffconcprofile_label.config(text = "New profile", foreground = "green")
