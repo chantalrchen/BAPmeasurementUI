@@ -392,6 +392,7 @@ class AutomatedSystemUI:
         var = tk.IntVar()
         entry = ttk.Combobox(frame, textvariable=var, values=[1, 2], width=5, state="readonly")
         entry.grid(row=0, column=1, padx=10, pady=10)
+        entry.current(0) #Assign a standard value
         self.position_vars.append(var)
 
         # Button the set the selected valve position
@@ -928,10 +929,10 @@ class AutomatedSystemUI:
         #Clearing all input fields and steps
         self.mfcname_var.set("")
         self.mfcdesc_var.set("")
-        self.mfcstep_time_var.set("0")
-        self.mfcstep_flow1_var.set("0")
-        self.mfcstep_flow2_var.set("0")
-        self.mfcstep_flow3_var.set("0")
+        self.mfcstep_time_var.set("0.0")
+        self.mfcstep_flow1_var.set("0.0")
+        self.mfcstep_flow2_var.set("0.0")
+        self.mfcstep_flow3_var.set("0.0")
 
         # Clear all entries of the existing steps in the tree
         for item in self.mfcsteps_tree.get_children():
@@ -1227,26 +1228,28 @@ class AutomatedSystemUI:
         # Label and combobox for the position RVM 1 of the step
         self.valveprofile_valve1_label =  ttk.Label(step_controls_frame, text="Valve 1 Position:").pack(side='left')
         self.valvestep_valve1_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        step_valve_combo = ttk.Combobox(
+        self.step_valve1_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.valvestep_valve1_var, 
             values=[1, 2], 
             width=5,
             state="readonly"
         )
-        step_valve_combo.pack(side='left', padx=2)
+        self.step_valve1_combo.pack(side='left', padx=2)
+        self.step_valve1_combo.current(0) # set the first one as standard chosen one
 
         # Label and combobox for the position RVM 1 of the step
-        self.valveprofile_valve2_label =  ttk.Label(step_controls_frame, text="Valve 1 Position:").pack(side='left')
+        self.valveprofile_valve2_label =  ttk.Label(step_controls_frame, text="Valve 2 Position:").pack(side='left')
         self.valvestep_valve2_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        step_valve_combo = ttk.Combobox(
+        self.step_valve2_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.valvestep_valve2_var, 
             values=[1, 2], 
             width=5,
             state="readonly"
         )
-        step_valve_combo.pack(side='left', padx=2)
+        self.step_valve2_combo.pack(side='left', padx=2)
+        self.step_valve2_combo.current(0) # set the first one as standard chosen one
         
         ########## Buttons for the step ##########
         ## Frame to add and remove a step, and clear all steps ##
@@ -1455,10 +1458,10 @@ class AutomatedSystemUI:
         #Clearing all input fields and steps
         self.valvename_var.set("")
         self.valvedesc_var.set("")
-        self.valvestep_time_var.set("0")
-        self.valvestep_valve1_var.set("0")
-        self.valvestep_valve2_var.set("0")
-
+        self.valvestep_time_var.set("0.0")
+        self.step_valve1_combo.current(0)
+        self.step_valve2_combo.current(0)
+        
         # Clear all entries of the existing steps in the tree
         for item in self.valvesteps_tree.get_children():
             self.valvesteps_tree.delete(item)
@@ -1806,51 +1809,54 @@ class AutomatedSystemUI:
         
         # Label and entry field for the time of the step
         ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
-        self.mfcandvalveprofile_time_var = tk.DoubleVar()
+        self.mfcandvalveprofile_time_var = tk.DoubleVar(value = 0.0)
         step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_time_var, width=8)
         step_time_entry.pack(side='left', padx=2)
         
         # Label and entry field for the flow of N2 (MFC1) of the step
         ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
-        self.mfcandvalveprofile_step_flow1_var = tk.DoubleVar()
+        self.mfcandvalveprofile_step_flow1_var = tk.DoubleVar(value = 0.0)
         step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_step_flow1_var, width=8)
         step_flow1_entry.pack(side='left', padx=2)
 
         # Label and entry field for the flow of MFC2 of the step
         ttk.Label(step_controls_frame, text="Flow MFC 2 (mL/min):").pack(side='left')
-        self.mfcandvalveprofile_step_flow2_var = tk.DoubleVar()
+        self.mfcandvalveprofile_step_flow2_var = tk.DoubleVar(value = 0.0)
         step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_step_flow2_var, width=8)
         step_flow2_entry.pack(side='left', padx=2)
 
         # Label and entry field for the flow of MFC3 of the step
         ttk.Label(step_controls_frame, text="Flow MFC 3 (mL/min):").pack(side='left')
-        self.mfcandvalveprofile_step_flow3_var = tk.DoubleVar()
+        self.mfcandvalveprofile_step_flow3_var = tk.DoubleVar(value = 0.0)
         step_flow3_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_step_flow3_var, width=8)
         step_flow3_entry.pack(side='left', padx=2)
     
         # Label and combobox for the position RVM 1 of the step
         ttk.Label(step_controls_frame, text="RVM 1 Position:").pack(side='left')
         self.mfcandvalveprofile_step_valve1_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        step_onoff_combo = ttk.Combobox(
+        self.step_mfcvalve1_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.mfcandvalveprofile_step_valve1_var, 
             values=[1, 2], 
             width=5,
             state="readonly"
         )
-        step_onoff_combo.pack(side='left', padx=2)
+        self.step_mfcvalve1_combo.pack(side='left', padx=2)
+        self.step_mfcvalve1_combo.current(0) # select the first as standard
         
         # Label and combobox for the position RVM 1 of the step
         ttk.Label(step_controls_frame, text="RVM 2 Position:").pack(side='left')
         self.mfcandvalveprofile_step_valve2_var = tk.IntVar() #integer variable, since the valve should be position on 1/2
-        step_onoff_combo = ttk.Combobox(
+        self.step_mfcvalve2_combo = ttk.Combobox(
             step_controls_frame, 
             textvariable=self.mfcandvalveprofile_step_valve2_var, 
             values=[1, 2], 
             width=5,
             state="readonly"
         )
-        step_onoff_combo.pack(side='left', padx=2)
+        self.step_mfcvalve2_combo.pack(side='left', padx=2)
+        self.step_mfcvalve2_combo.current(0) # select the first as standard
+        
         
         ########## Buttons for the step ##########
         ## Frame to add and remove a step, and clear all steps ##
@@ -1966,12 +1972,12 @@ class AutomatedSystemUI:
         #Clearing all input fields and steps
         self.mfcandvalveprofile_name_var.set("")
         self.mfcandvalveprofile_desc_var.set("")
-        self.mfcandvalveprofile_time_var.set("0")
-        self.mfcandvalveprofile_step_flow1_var.set("0")
-        self.mfcandvalveprofile_step_flow2_var.set("0")
-        self.mfcandvalveprofile_step_flow3_var.set("0")
-        self.mfcandvalveprofile_step_valve1_var.set("0")
-        self.mfcandvalveprofile_step_valve2_var.set("0")
+        self.mfcandvalveprofile_time_var.set("0.0")
+        self.mfcandvalveprofile_step_flow1_var.set("0.0")
+        self.mfcandvalveprofile_step_flow2_var.set("0.0")
+        self.mfcandvalveprofile_step_flow3_var.set("0.0")
+        self.step_mfcvalve1_combo.current(0)
+        self.step_mfcvalve2_combo.current(0)
 
         # Clear all entries of the existing steps in the tree
         for item in self.mfcandvalveprofile_steps_tree.get_children():
@@ -2253,13 +2259,13 @@ class AutomatedSystemUI:
 
         # Label and entry field for concentration
         ttk.Label(profile_info_frame, text="Concentration (ppm):").grid(row=4, column=0, padx=10, pady=10, sticky='e')
-        self.onoffconc_conc_var = tk.DoubleVar()
+        self.onoffconc_conc_var = tk.DoubleVar(value=0.0)
         concentration_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_conc_var)
         concentration_entry.grid(row=4, column=1, padx=10, pady=10)
 
         # Label and entry field for total Flow Rate input
         ttk.Label(profile_info_frame, text="Total Flow Rate (mL/min):").grid(row=5, column=0, padx=10, pady=10, sticky='e')
-        self.onoffconc_totflowrate_var = tk.DoubleVar()
+        self.onoffconc_totflowrate_var = tk.DoubleVar(value=0.0)
         totalflow_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_totflowrate_var)
         totalflow_entry.grid(row=5, column=1, padx=10, pady=10)
 
@@ -2283,16 +2289,19 @@ class AutomatedSystemUI:
         ttk.Label(profile_info_frame, text="ON Time (s):").grid(row=10, column=0)
         self.onoffconc_on_time_entry = ttk.Entry(profile_info_frame)
         self.onoffconc_on_time_entry.grid(row=10, column=1)
-
+        self.onoffconc_on_time_entry.insert(0, "0.0")         
+    
         # Label and entry field for the OFF Time
         ttk.Label(profile_info_frame, text="OFF Time (s):").grid(row=11, column=0)
         self.onoffconc_off_time_entry = ttk.Entry(profile_info_frame)
         self.onoffconc_off_time_entry.grid(row=11, column=1)
-
+        self.onoffconc_off_time_entry.insert(0, "0.0")     
+        
         # Label and entry field for the Run Time
         ttk.Label(profile_info_frame, text="Run Time (s):").grid(row=12, column=0)
         self.onoffconc_run_time_entry = ttk.Entry(profile_info_frame)
         self.onoffconc_run_time_entry.grid(row=12, column=1)
+        self.onoffconc_run_time_entry.insert(0, "0.0")     
         
         # Button to run the ON/OFF graph
         self.onoffconc_run_button = ttk.Button(profile_info_frame, state="disabled", text="Run ON/OFF Profile", command=self.puregas_onoff_runprofile)
@@ -2314,6 +2323,26 @@ class AutomatedSystemUI:
         # Label for the Setpoint concentration ON/OFF graph
         self.onoffconc_graph_frame = ttk.LabelFrame(profile_info_frame, text="Setpoint Concentration On/Off Graph")
         self.onoffconc_graph_frame.grid(row=0, column=4, rowspan=10, padx=10, pady=10, sticky="ns")        
+        
+        # Create plot
+        self.onoff_fig, self.onoff_ax = plt.subplots(figsize=(6, 4))
+        self.onoff_ax.set_xlabel("Time (s)")
+        self.onoff_ax.set_ylabel("Concentration (ppm)")
+        self.onoff_ax.set_title(f"Setpoint Concentration On/Off Graph")
+        self.onoff_ax.grid(True)
+
+       # Insert the plot in Tkinter
+        self.onoff_canvas = FigureCanvasTkAgg(self.onoff_fig, master=self.onoffconc_graph_frame)
+        self.onoff_canvas.draw()
+        self.onoff_canvas.get_tk_widget().pack(fill = 'both', expand = True)
+
+        canvas_widget = self.onoff_canvas.get_tk_widget()
+        # Graph size 400 x 300
+        canvas_widget.config(width=500, height=300) 
+        # Prevent Frame Shrinking
+        # https://youtu.be/onIEw70Uw-4
+        canvas_widget.pack_propagate(False)  # prevent auto-resizing
+        canvas_widget.pack(fill='none', expand=False)
         
     def update_puregasonoff_Telapsed_display(self, start_timestamp, run_time):
         """Updates the display of the elapsed time the Pure Gas ON/OFF profile
@@ -2580,24 +2609,21 @@ class AutomatedSystemUI:
             child.destroy()
 
         # Create plot
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.plot(time_data, signal_data, color='red', linewidth=2)
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Concentration (ppm)")
-        ax.set_title(f"Setpoint MFC {self.onoffconc_voc_index + 2} with {voc} On/Off Graph")
-        ax.set_xlim(0, time_data[-1] * 1.2 )
-        ax.set_ylim(0, conc * 1.2)
-        ax.grid(True)
-        fig.tight_layout()  
-
-        # To save a figure
-        # fig.savefig("C:/Users/chant/Downloads/expected_onoffconcentration_plot.png", dpi=300, bbox_inches='tight')
+        self.onoff_fig, self.onoff_ax = plt.subplots(figsize=(6, 4))
+        self.onoff_ax.plot(time_data, signal_data, color='red', linewidth=2)
+        self.onoff_ax.set_xlabel("Time (s)")
+        self.onoff_ax.set_ylabel("Concentration (ppm)")
+        self.onoff_ax.set_title(f"Setpoint MFC {self.onoffconc_voc_index + 2} with {voc} On/Off Graph")
+        self.onoff_ax.set_xlim(0, time_data[-1] * 1.2 )
+        self.onoff_ax.set_ylim(0, conc * 1.2)
+        self.onoff_ax.grid(True)
+        self.onoff_fig.tight_layout()  
 
        # Insert the plot in Tkinter
-        canvas = FigureCanvasTkAgg(fig, master=self.onoffconc_graph_frame)
-        canvas.draw()
+        self.onoff_canvas = FigureCanvasTkAgg(self.onoff_fig, master=self.onoffconc_graph_frame)
+        self.onoff_canvas.draw()
 
-        canvas_widget = canvas.get_tk_widget()
+        canvas_widget = self.onoff_canvas.get_tk_widget()
         # Graph size 400 x 300
         canvas_widget.config(width=500, height=300) 
         # Prevent Frame Shrinking
@@ -2703,18 +2729,44 @@ class AutomatedSystemUI:
         self.onoffconc_namevar.set("")
         self.onoffconc_desc_var.set("")
         self.onoffconc_voc_mfc_choice.current(0)  # Reset default to VOC1 in MFC2
-        self.onoffconc_voc_var.set("")
-        self.onoffconc_conc_var.set(0.0)
-        self.onoffconc_totflowrate_var.set(0.0)
+        self.onoffconc_voc_var.set("0.0")
+        self.onoffconc_conc_var.set("0.0")
+        self.onoffconc_totflowrate_var.set("0.0")
         self.onoffconc_on_time_entry.delete(0, tk.END)
+        self.onoffconc_on_time_entry.insert(0, "0.0")
+
         self.onoffconc_off_time_entry.delete(0, tk.END)
+        self.onoffconc_off_time_entry.insert(0, "0.0")
+
         self.onoffconc_run_time_entry.delete(0, tk.END)
+        self.onoffconc_run_time_entry.insert(0, "0.0")
+        self.onoffconc_typevoc_dropdown.current(0)
         self.status_var.set("Creating new ON/OFF profile.")
   
         # Clear existing plot from the graph frame
         for child in self.onoffconc_graph_frame.winfo_children():
             child.destroy()
 
+        # Create plot
+        self.onoff_fig, self.onoff_ax = plt.subplots(figsize=(6, 4))
+        self.onoff_ax.set_xlabel("Time (s)")
+        self.onoff_ax.set_ylabel("Concentration (ppm)")
+        self.onoff_ax.set_title(f"Setpoint Concentration On/Off Graph")
+        self.onoff_ax.grid(True)
+
+       # Insert the plot in Tkinter
+        self.onoff_canvas = FigureCanvasTkAgg(self.onoff_fig, master=self.onoffconc_graph_frame)
+        self.onoff_canvas.draw()
+        self.onoff_canvas.get_tk_widget().pack(fill = 'both', expand = True)
+
+        canvas_widget = self.onoff_canvas.get_tk_widget()
+        # Graph size 400 x 300
+        canvas_widget.config(width=500, height=300) 
+        # Prevent Frame Shrinking
+        # https://youtu.be/onIEw70Uw-4
+        canvas_widget.pack_propagate(False)  # prevent auto-resizing
+        canvas_widget.pack(fill='none', expand=False)
+        
     def delete_onoffconcprofile(self):
         """Delete selected Pure Gas ON/OFF profile."""
         #https://pythonassets.com/posts/listbox-in-tk-tkinter/
@@ -3034,6 +3086,7 @@ class AutomatedSystemUI:
         self.diffconc_step_valve_combo.bind("<<ComboboxSelected>>", self.diffconc_gas_inlet_selected)
         self.diffconc_step_valve_combo.pack(side='left', padx=2)
         self.diffconc_step_valve_combo.config(state ='disabled')
+        self.diffconc_step_valve_combo.current(0)  # Selects "VOC"
 
         # Label and entry for the desired concentration in ppm
         self.diffconc_profile_conc_label = ttk.Label(step_controls_frame, text="Concentration (ppm):").pack(side='left')
@@ -3282,14 +3335,16 @@ class AutomatedSystemUI:
         #Clearing all input fields and steps
         self.diffconc_namevar.set("")
         self.diffconc_desc_var.set("")
-        self.diffconc_voc_var.set("")
-        self.diffconc_totalflowrate_var.set("") 
-        self.diffconc_voc_mfc_choice.set("")
-        self.diffconc_step_time_var.set("")
-        self.diffconc_step_conc_var.set("")
-        self.diffconc_flowN2_var.set("")
-        self.diffconc_flowVOC_var.set("")
-        self.diffconc_valve_var.set("")
+        self.diffconc_totalflowrate_var.set("2.0") 
+        self.diffconc_step_time_var.set("0.0")
+        self.diffconc_step_conc_var.set("0.0")
+        self.diffconc_flowN2_var.set("0.0")
+        self.diffconc_flowVOC_var.set("0.0")
+        
+        self.diffconcprofile_voc_type_combobox.current(0)
+        self.diffconc_voc_mfc_choice.current(0)
+        self.diffconcprofile_voc_type_combobox.current(0)
+        self.diffconc_step_valve_combo.current(0)
         
         # Clear all entries of the existing steps in the tree
         for item in self.diffconc_steps_tree.get_children():
