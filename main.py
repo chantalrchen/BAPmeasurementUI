@@ -1,7 +1,8 @@
 import tkinter as tk
 from ui import AutomatedSystemUI
 import tkinter.messagebox
-
+from tkinter import font
+import tkinter.ttk as ttk
 # This code has been written by C.R. Chen and F.Lin for the BAP project E-nose.
 
 ##To use this application
@@ -23,6 +24,17 @@ if __name__ == "__main__":
     
     #When opening the UI ensuring it is full screen
     root.state("zoomed")
-    
+
+#    # Lettertype voor standaard tkinter widgets
+#     default_font = font.nametofont("TkDefaultFont")
+#     default_font.configure(family="Arial", size=10)
+#     root.option_add("*Font", default_font)
+
+#     # Lettertype voor ttk widgets (zoals ttk.Label, ttk.Entry, etc.)
+#     style = ttk.Style()
+#     style.configure(".", font=("Arial", 10))
+
+#     root.option_add("*Font", default_font)
+
     app = AutomatedSystemUI(root)
     root.mainloop()
