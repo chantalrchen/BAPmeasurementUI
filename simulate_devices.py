@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
 
+# This code has been written by C.R. Chen and F.Lin for the BAP project E-nose.
+
 # This file is purely used to simulate the devices
 
 class BronkhorstMFC:

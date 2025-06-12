@@ -4,6 +4,8 @@ import propar   # Bronkhorst MFC
 import serial   # Valve
 import time 
 
+# This code has been written by C.R. Chen and F.Lin for the BAP project E-nose.
+
 ##To control and monitor the real devices
 
 class BronkhorstMFC:

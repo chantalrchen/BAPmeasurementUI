@@ -4,6 +4,8 @@ import time
 import json
 import os
 
+# This code has been written by C.R. Chen and F.Lin for the BAP project E-nose.
+
 # When the "real"-devices are used
 # from devices import BronkhorstMFC, RVM
 

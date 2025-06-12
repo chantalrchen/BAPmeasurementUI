@@ -2,6 +2,8 @@ import json
 import os
 from tkinter import messagebox
 
+# This code has been written by C.R. Chen and F.Lin for the BAP project E-nose.
+
 class SettingsManager:
     """
     Class to manage configuration settings related to COM ports, VOC data, and profile paths.

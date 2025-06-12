@@ -7,6 +7,8 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+# This code has been written by C.R. Chen and F.Lin for the BAP project E-nose.
+
 class AutomatedSystemUI:
     """GUI class for the automated system
     """

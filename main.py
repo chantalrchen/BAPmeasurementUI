@@ -2,6 +2,8 @@ import tkinter as tk
 from ui import AutomatedSystemUI
 import tkinter.messagebox
 
+# This code has been written by C.R. Chen and F.Lin for the BAP project E-nose.
+
 ##To use this application
 # install the following packages: pip install bronkhorst-propar, pyserial, matplotlib 
 
