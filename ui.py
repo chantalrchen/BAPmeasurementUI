@@ -334,10 +334,43 @@ class AutomatedSystemUI:
         
         # Add the Settings menu to the menubar
         menu.add_cascade(label="Settings", menu=settings_menu)
-
+        
+        info_menu = tk.Menu(menu, tearoff=0)
+        info_menu.add_command(label="About", command=self.show_about_info)
+        menu.add_cascade(label="Info", menu=info_menu)
+        
         # Attach the menu to the main window
         self.root.config(menu=menu)
     
+    def show_about_info(self):
+        """Window with information and description about the functionalities."""
+        info_window = tk.Toplevel(self.root)
+        info_window.title("About")
+        info_window.geometry("500x400")
+
+        text_widget = tk.Text(info_window, wrap="word", padx=10, pady=10)
+        text_widget.pack(expand=True, fill="both")
+
+        info_text = (
+            "Automated Control System for the Gas Sensing Setup\n\n"
+            "Functionalities:\n"
+            "- Device Control: Set MFC flow rates and switch valve positions manually in real-time.\n\n"
+            "- Profile Management:\n"
+            "  • MFC Profile – time-based control of flow rates.\n"
+            "  • Valve Profile – time-based control of valve positions.\n"
+            "  • MFC & Valve – control both MFC and valve simultaneously over time.\n"
+            "  • ON/OFF Profile – alternate VOC and N₂ flow with desired setpoint concentrations.\n"
+            "  • Diff. Concentration Profile – vary VOC concentration over time based on the input values.\n\n"
+            "- Multiple Profile Runner: Run several MFC/valve profiles synchronously.\n\n"
+            "Developed by: C.R.Chen and F.Lin\n"
+            "TU Delft, Electrical Engineering\n"
+            "Date: June 2025"
+        )
+
+        text_widget.insert("1.0", info_text)
+        text_widget.config(state="disabled")  # Make it read-only
+
+        
     def create_device_tab(self):
         """Creates Device Control tab in the GUI to manually manage the MFCs and RVMs.
         """
