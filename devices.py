@@ -134,11 +134,10 @@ class RVM:
     The example code from AMF have been used: https://amf.ch/?post_type=document "Software Examples Python V1"
     This code has somewhat been adjusted for our use
     """
-    
     #### ALL COMMANDS
     START_COMMAND = '/'
     END_COMMAND = '\r'
-    POLLING_PERIOD = 0.05 ## time for repeated status check
+    POLLING_PERIOD = 0.1 ## time for repeated status check
     ADDRESS = '1' #unit 1 -> command = f"/1Z\r" (check manual)
     ROTATION_DELAY = 0.4  # 400 ms rotatietijd for Fast Mode
 
@@ -269,14 +268,6 @@ class RVM:
     #####
 
     def __init__(self, port='COM8', valve_ports=4, mode=0, address=1):
-        """Initialize the AMF Rotary Valve
-
-        Args:
-            port (str, optional): COM port of the RVM. Defaults to 'COM8'.
-            valve_ports (int, optional): Number of ports on the RVM. Defaults to 4.
-            mode (int, optional): Communication mode. Defaults to 0.
-            address (int, optional): _descripDevice adress for serial communication. Defaults to 1.
-        """
         self.port = port
         self.valve_port = valve_ports
         self.mode = mode #the answer mode for mode = 0 the valve will response immediately 
@@ -286,14 +277,8 @@ class RVM:
         self.current_position = None
 
     def connect(self):
-        """ Connect to the RVM through serial communication and initialize the valve
-
-        Returns:
-            Boolean: True if successfull serial communication and initialization, otherwise false.
-        """
         try:
-            # Serial communicate with the RVM
-            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=1)
+            self.instrument = serial.Serial(self.port, baudrate=9600, timeout=10)
             self.connected = True
             print(f"RVM Industrial Microfluidic Rotary Valve is in position {self.port}")
 
@@ -302,177 +287,140 @@ class RVM:
             self.send_command(self.SET_ANSWER_MODE, self.mode)
             self.send_command(self.SET_VALVE_CONFIGURATION, self.valve_port)
 
-            # Valve initialiseren and set the valve position to 1
+            # Valve initialiseren
             self.home()
             self.switch_position(1)
             return True
 
         except serial.SerialException as err:
-            # Show error message if serial connection fails
             messagebox.showerror("Error",
                     f"An error occurred while connecting RVM Industrial Microfluidic Rotary Valve: {err}") 
             self.connected = False
             return False
+        
+        # ##TO simulate
+        # self.connected = True
+        # return True
 
     def disconnect(self):
-        """ Disconnect to the RVM
-
-        Returns:
-            Boolean: True if disconnection was successful, False if already disconnected.
-        """
-        # Check if the device is connected  
         if self.connected:
-            # Close the serial communication with the device
             self.instrument.close()
             self.connected = False
             print("RVM Industrial Microfluidic Rotary Valve is disconnected")
             return True
         else:
             return False
+        
+        ##To simulate
+        # self.connected = False
+        # return False
 
     def home(self):
-        """ Send homing command to the RVM to reset its position reference.
-        """
         print("Homing RVM Industrial Microfluidic Rotary Valve...")
-        # Send home command to initialize valve's position
         self.send_command(self.HOME)
-        # Wait for the valve to finish rotating
         time.sleep(self.ROTATION_DELAY)
-        # Check the valve's status to ensure homing is complete
         self.check_status()
         print("RVM Industrial Microfluidic Rotary Valve homed")        
-
-    def switch_position(self, position: int):
-        """Switch the rotary valves position
-
-        Args:
-            position (int): Target position (1 or 2)
-
-        Raises:
-            ValueError: if the input position is not 1 or 2
-        """
         
-        # Check whether the input position is 1 or 2
+    def switch_position(self, position: str, direction='ANY', force=False):
+        if direction not in ['ANY', 'CW', 'CCW']:
+            raise ValueError('Direction parameter must be one of: "ANY","CW","CCW"]')
+
         if position not in [1, 2]:
             raise ValueError("The position of the valve can only be 1 or 2")
+        print(position)
+        command_switch = {'ANY': 'SWITCH_SHORTEST',
+                          'CW': 'SWITCH_CLOCKWISE',
+                          'CCW': 'SWITCH_COUNTERCLOCKWISE'}
+        cmd = command_switch.get(direction)
 
-        print(f"Switching RVM Industrial Microfluidic Rotary Valve to position {position}")
-        # Send the command to move with the shortest path toward the target position
-        self.send_command(self.SWITCH_SHORTEST, position)
-        # Wait for the valve to complete rotation
+        if force:
+            cmd += '_FORCE'
+
+        self.send_command(eval(f'self.{cmd}'), position)
         time.sleep(self.ROTATION_DELAY)
-        # Confirm the valve completed its movement
         self.check_status()
-        # Update the current position
         self.current_position = position
         print(f"RVM Industrial Microfluidic Rotary Valve is in positie {position}.")
-    
-    def get_position(self):
-        """ Get/Read the position from the RVM
+        print(f'Valve in position {position}')
 
-        Returns:
-            int: Current position of the RVM
-        """
-        # Read the current position of the RVM
-        pos = self.send_command(self.GET_VALVE_POSITION)
-        self.current_position = int(pos)
+    def get_position(self):
+        self.current_position = int(self.send_command(self.GET_VALVE_POSITION))
         print(f"The current position of RVM Industrial Microfluidic Rotary Valve is {self.current_position}")
         return self.current_position
-
-    def check_status(self):
-        """ Check the RVM status
-
-        Raises:
-            ValveError: If an unexpected status is returned
-        """
-        while True:
-            # Send command to obtain the status details
-            status = self.send_command(self.GET_STATUS_DETAILS)
-            # RVM is ready
-            if status == '0':
-                break
-            
-            # RVM is busy
-            elif status == '255':
-                time.sleep(self.POLLING_PERIOD)
-            else:
-                raise ValveError(f"invalid status: {status}")
-
-    def build_command(self, command, parameter=None):
-        """Build the command to construct a properly formatted command string to send to the valve.
-
-        Args:
-            command (str): the base command code
-            parameter (float, optional): Optional parameter to include with the command. Defaults to None.
-
-        Returns:
-            cmd (str): Formatted command string  
-        """
-        cmd = f"{self.START_COMMAND}{self.ADDRESS}{command}"
-        if parameter is not None:
-            cmd += str(parameter)
-        if command[0] not in self.NO_R_REQUIRED:
-            cmd += self.EXECUTE
-        cmd += self.END_COMMAND
-        return cmd
-
-    def send_command(self, command, parameter=None):
-        """Send command to RVM
-
-        Args:
-            command (str): Command code to send.
-            parameter (float, optional): Optional parameter. Defaults to None.
-
-        Raises:
-            ValveError: If valve is not connected or if an error is detected.
-
-        Returns:
-            str: Data obtained from the valve
-        """
-        if not self.connected:
-            raise ValveError("RVM Industrial Microfluidic Rotary Valve is not connected")
-
-        # Build and send full command
-        full_cmd = self.build_command(command, parameter)
-        self.instrument.reset_input_buffer()
-        self.instrument.write(full_cmd.encode())
         
-        # Read the response
+
+    def send_command(self, command: str, parameter: str = None) -> str:
+        """Send a command, get a response back and return the response. (No Status check)"""
+        if not self.connected:
+            raise ValveError('No AMF valve is connected.')
+
+        original_command = command
+          
+        command = self.START_COMMAND + str(self.address) + original_command
+
+        # format the command if it has some parameter
+        if parameter is not None:
+            command = command + str(parameter)
+
+        if original_command[0] not in self.NO_R_REQUIRED:
+            command = command + self.EXECUTE
+
+        command = command + self.END_COMMAND
+
+        self.instrument.write(data=command.encode())
+        time.sleep(0.2)
         error, data = self.read_response()
         self.check_error(error)
+
         return data
 
+    def check_status(self):
+        busy = True
+        status = '255'
+        while busy:
+            if status == '0':
+                busy = False
+            else:
+                time.sleep(self.POLLING_PERIOD)
+            
+            self.instrument.reset_input_buffer()
+            status = self.send_command(self.GET_STATUS_DETAILS)
+            print (f'status = {status}')
+            if status not in ['0', '1', '255', '', None]:
+                raise ValveError(f'Bad Status: {self.STATUS_CODES.get(status)}')
+                
     def read_response(self):
-        """Read the response from the valve
+        response = self.instrument.read_until(self.END_ANSWER.encode()).decode('utf-8')
+        print(" This is the response", response, "end response")
+        if self.mode == 2 and response[2] == '`' and len(response) > 2:
+            if response[3] != 0:
+                if response[-len(self.END_ANSWER):] == self.END_ANSWER:
+                    response = response[:-len(self.END_ANSWER)]
+                        
+                error = self.ERROR_CODES[response[2].upper()]
+                self.counter = response[3:]
+                data = '0'
+                return error, data
+            else:
+                response = response[2:]
+        else: 
+            response = response[2:]
 
-        Raises:
-            ValveError: if response format is invalid
+        if response[-len(self.END_ANSWER):] == self.END_ANSWER:
+            response = response[:-len(self.END_ANSWER)]
 
-        Returns:
-            tuple:  (error list [code, message], response data string)
-        """
-        response = self.instrument.read_until(self.END_ANSWER.encode()).decode('utf-8').strip()
-        if not response.startswith('/'):
-            raise ValveError(f"invalid response: {response}")
+        error = self.ERROR_CODES[response[0].upper()]
+        data = response[1:]
 
-        response = response[2:]  # Verwijder '/' en adres
-        error_code = response[0]
-        data = response[1:].replace(self.END_ANSWER.strip(), '')
-        error = {'@': [0, 'No error'], '`': [0, 'No error']}.get(error_code, [999, 'Invalid error'])
         return error, data
 
     def check_error(self, error):
-        """
-        Raise an exception if an error code was returned.
+        code = error[0]
 
-        Args:
-            error (list): Error code and message.
-
-        Raises:
-            ValveError: If error code is not zero.
-        """
-        if error[0] != 0:
-            raise ValveError(f"error {error[0]}: {error[1]}")
+        if code == 0:
+            return True
+        raise ValveError(f'{error[0]}: {error[1]}')
         
 #for rvm
 class ValveError(Exception):
