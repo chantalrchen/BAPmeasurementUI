@@ -433,7 +433,7 @@ class AutomatedSystemUI:
 
         # Label and entry field to set the desired mass flow rate
         tk.Label(frame, text="Mass flow rate (mL/min):").grid(row=0, column=0, padx=10, pady=10)
-        var = tk.DoubleVar()
+        var = tk.StringVar(value = 1.0)
         entry = tk.Entry(frame, textvariable=var)
         entry.grid(row=0, column=1, padx=10, pady=10)
         self.massflow_vars.append(var)
@@ -670,13 +670,13 @@ class AutomatedSystemUI:
 
         # Label and entry field for profile name
         ttk.Label(info_frame, text="Name:").pack(side='left')
-        self.mfcname_var = tk.StringVar()
+        self.mfcname_var = tk.StringVar(value = 'Name of New Profile')
         name_entry = ttk.Entry(info_frame, textvariable=self.mfcname_var)
         name_entry.pack(side='left', padx=5, expand=True, fill='x')
 
         # Label and entry field for profile description  
         ttk.Label(info_frame, text="Description:").pack(side='left')
-        self.mfcdesc_var = tk.StringVar()
+        self.mfcdesc_var = tk.StringVar(value = 'Description of New Description')
         desc_entry = ttk.Entry(info_frame, textvariable=self.mfcdesc_var)
         desc_entry.pack(side='left', padx=5, expand=True, fill='x')
         
@@ -713,25 +713,25 @@ class AutomatedSystemUI:
 
         # Label and entry field for the time of the step
         self.mfcprofile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
-        self.mfcstep_time_var = tk.DoubleVar()
+        self.mfcstep_time_var = tk.StringVar(value = 10.0)
         step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_time_var, width=8)
         step_time_entry.pack(side='left', padx=5)
         
         # Label and entry field for the flow of N2 (MFC1) of the step
         self.mfcprofile_mfc1_label = ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
-        self.mfcstep_flow1_var = tk.DoubleVar()
+        self.mfcstep_flow1_var = tk.StringVar(value = 1.0)
         step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_flow1_var, width=8)
         step_flow1_entry.pack(side='left', padx=5)
 
         # Label and entry field for the flow of MFC2 of the step
         self.mfcprofile_mfc2_label = ttk.Label(step_controls_frame, text="Flow MFC 2 (mL/min):").pack(side='left')
-        self.mfcstep_flow2_var = tk.DoubleVar()
+        self.mfcstep_flow2_var = tk.StringVar(value = 1.0)
         step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_flow2_var, width=8)
         step_flow2_entry.pack(side='left', padx=5)
 
         # Label and entry field for the flow of MFC3 of the step
         self.mfcprofile_mfc3_label = ttk.Label(step_controls_frame, text="Flow MFC 3 (mL/min):").pack(side='left')
-        self.mfcstep_flow3_var = tk.DoubleVar()
+        self.mfcstep_flow3_var = tk.StringVar(value = 1.0)
         step_flow3_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcstep_flow3_var, width=8)
         step_flow3_entry.pack(side='left', padx=5)
         
@@ -796,9 +796,18 @@ class AutomatedSystemUI:
         Args:
             index (int): index of the MF
         """
+        if self.mfcs[index].connected == False:
+            messagebox.showerror("Error", f"MFC {index} is not connected.")
+            return
+
         # Get the desired mass flow rate entered by the user
-        massflowrate = self.massflow_vars[index].get()
-        
+        massflowrate_get = self.massflow_vars[index].get()
+        try:
+            massflowrate = float(massflowrate_get)
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Mass flow rate must be a valid number.\nYou entered: '{massflowrate_get}'")
+            return
+
         # Set the massflow rate to the device
         if self.mfcs[index].set_massflow(massflowrate):
             # If settings is successfull, update the corresponding target label
@@ -929,12 +938,12 @@ class AutomatedSystemUI:
         """Clear all fields for new MFC profile
         """
         #Clearing all input fields and steps
-        self.mfcname_var.set("")
-        self.mfcdesc_var.set("")
-        self.mfcstep_time_var.set("0.0")
-        self.mfcstep_flow1_var.set("0.0")
-        self.mfcstep_flow2_var.set("0.0")
-        self.mfcstep_flow3_var.set("0.0")
+        self.mfcname_var.set("Name of New Profile")
+        self.mfcdesc_var.set("Description of New Profile")
+        self.mfcstep_time_var.set("10.0")
+        self.mfcstep_flow1_var.set("1.0")
+        self.mfcstep_flow2_var.set("1.0")
+        self.mfcstep_flow3_var.set("1.0")
 
         # Clear all entries of the existing steps in the tree
         for item in self.mfcsteps_tree.get_children():
@@ -945,35 +954,54 @@ class AutomatedSystemUI:
         
     def add_mfcstep(self):
         """Add a new step to the current MFC profile"""
+        # Validate time
+        time_val_get = self.mfcstep_time_var.get()
         try:
-            # Get input values from the entry fields
-            time_val = float(self.mfcstep_time_var.get())
-            flow1_val = float(self.mfcstep_flow1_var.get())
-            flow2_val = float(self.mfcstep_flow2_var.get())
-            flow3_val = float(self.mfcstep_flow3_var.get())
-            
-            # Time should not be negative
+            time_val = float(time_val_get)
             if time_val < 0:
-                raise ValueError("Time cannot be negative")
-            
-            # Check if the time already exists
-            for child in self.mfcsteps_tree.get_children():
-                if float(self.mfcsteps_tree.item(child, "values")[0]) == time_val:
-                    # Ask user to confirm if they want to overwrite the existing step
-                    if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
-                        #if True, thus User selects 'NO' then return
-                        return 
-                    # Remove the existing step
-                    self.mfcsteps_tree.delete(child) 
-                    break
- 
-            # Insert the new step to the tree
-            self.mfcsteps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val)) 
-            
-        except ValueError as error:
-            # If invalid input values, show error messagebox
-            messagebox.showerror("Error", f"Invalid input: {error}")
+                raise ValueError("Time cannot be negative.")
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Please enter a valid, non-negative number for time. \nYou entered: '{time_val_get}")
+            return
+        
+        # Validate flow1
+        flow1_val_get = self.mfcstep_flow1_var.get()
+        try:
+            flow1_val = float(flow1_val_get)
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Please enter a valid number for flow N2. \nYou entered: '{flow1_val_get}")
+            return
+
+        flow2_val_get = self.mfcstep_flow2_var.get()
+        # Validate flow2
+        try:
+            flow2_val = float(flow2_val_get)
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Please enter a valid number for flow MFC2.  \nYou entered: '{flow2_val_get}")
+            return
+
+        # Validate flow3
+        flow3_val_get = self.mfcstep_flow3_var.get()
+        try:
+            flow3_val = float(flow3_val_get)
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Please enter a valid number for flow MFC3. \nYou entered: '{flow3_val_get}")
+            return
     
+        # Check if the time already exists
+        for child in self.mfcsteps_tree.get_children():
+            if float(self.mfcsteps_tree.item(child, "values")[0]) == time_val:
+                # Ask user to confirm if they want to overwrite the existing step
+                if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
+                    #if True, thus User selects 'NO' then return
+                    return 
+                # Remove the existing step
+                self.mfcsteps_tree.delete(child) 
+                break
+
+        # Insert the new step to the tree
+        self.mfcsteps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val)) 
+            
     def remove_mfcstep(self):
         """Remove the selected step from the MFC profile"""
         # Get the selected item
@@ -1182,13 +1210,13 @@ class AutomatedSystemUI:
         
         # Label and entry field for profile name
         ttk.Label(info_frame, text="Name:").pack(side='left')
-        self.valvename_var = tk.StringVar()
+        self.valvename_var = tk.StringVar(value = 'Name of New Profile')
         name_entry = ttk.Entry(info_frame, textvariable=self.valvename_var)
         name_entry.pack(side='left', padx=5, expand=True, fill='x')
         
         # Label and entry field for profile description
         ttk.Label(info_frame, text="Description:").pack(side='left')
-        self.valvedesc_var = tk.StringVar()
+        self.valvedesc_var = tk.StringVar(value = 'Description of New Profile')
         desc_entry = ttk.Entry(info_frame, textvariable=self.valvedesc_var)
         desc_entry.pack(side='left', padx=5, expand=True, fill='x')
         
@@ -1223,7 +1251,7 @@ class AutomatedSystemUI:
         
         # Label and entry field for the time of the step
         self.valveprofile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
-        self.valvestep_time_var = tk.DoubleVar()
+        self.valvestep_time_var = tk.StringVar(value = 10.0)
         step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.valvestep_time_var, width=8)
         step_time_entry.pack(side='left', padx=5)
         
@@ -1460,7 +1488,7 @@ class AutomatedSystemUI:
         #Clearing all input fields and steps
         self.valvename_var.set("")
         self.valvedesc_var.set("")
-        self.valvestep_time_var.set("0.0")
+        self.valvestep_time_var.set("10.0")
         self.step_valve1_combo.current(0)
         self.step_valve2_combo.current(0)
         
@@ -1473,36 +1501,51 @@ class AutomatedSystemUI:
         
     def add_valvestep(self):
         """Add a new step to the current RVM profile"""
+        # Validate time input
+        time_val_get = self.valvestep_time_var.get()
         try:
-            # Get input values from the entry fields
-            time_val = float(self.valvestep_time_var.get())
-            valve1_val = int(self.valvestep_valve1_var.get())
-            valve2_val = int(self.valvestep_valve2_var.get())
-            
-            # Time should not be negative
+            time_val = float(time_val_get)
             if time_val < 0:
-                raise ValueError("Time cannot be negative")
+                messagebox.showerror("Invalid Time", "Time cannot be negative.")
+                return
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Please enter a valid number for time.  \nYou entered: '{time_val_get}")
+            return
+
+        # Validate valve 1 input
+        valve1_val_get = self.valvestep_valve1_var.get()
+        try:
+            valve1_val = int(valve1_val_get)
+            if valve1_val not in [1, 2]:
+                messagebox.showerror("Invalid Valve 1", "Valve 1 position must be 1 or 2.")
+                return
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Please enter a valid number (1 or 2) for Valve 1.  \nYou entered: '{valve1_val_get}")
+            return
+
+        # Validate valve 2 input
+        valve2_val_get = self.valvestep_valve2_var.get()
+        try:
+            valve2_val = int(valve2_val_get)
+            if valve2_val not in [1, 2]:
+                messagebox.showerror("Invalid Valve 2", "Valve 2 position must be 1 or 2.")
+                return
+        except ValueError:
+            messagebox.showerror("Invalid Input", f"Please enter a valid number (1 or 2) for Valve 2. \nYou entered: '{valve2_val_get}")
+            return
+
+        # Check if the time already exists
+        for child in self.valvesteps_tree.get_children():
+            if float(self.valvesteps_tree.item(child, "values")[0]) == time_val:
+                if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
+                    #if True, thus User selects 'NO' then return
+                    return 
+                # Remove the existing step
+                self.valvesteps_tree.delete(child)
+                break
             
-            # Position of the RVM of 1 or 2
-            if (valve1_val not in [1, 2]) and (valve2_val not in [1, 2]) :
-                raise ValueError("Position of the valve must be 1 or 2")
-            
-            # Check if the time already exists
-            for child in self.valvesteps_tree.get_children():
-                if float(self.valvesteps_tree.item(child, "values")[0]) == time_val:
-                    if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
-                        #if True, thus User selects 'NO' then return
-                        return 
-                    # Remove the existing step
-                    self.valvesteps_tree.delete(child)
-                    break
-                
-            # Insert the new step to the tree
-            self.valvesteps_tree.insert("", tk.END, values=(time_val, valve1_val, valve2_val))
-            
-        except ValueError as error:
-            # If invalid input values, show error messagebox
-            messagebox.showerror("Error", f"Invalid input: {error}")
+        # Insert the new step to the tree
+        self.valvesteps_tree.insert("", tk.END, values=(time_val, valve1_val, valve2_val))
     
     def remove_valvestep(self):
         """Remove the selected step from the RVM profile"""
@@ -1764,13 +1807,13 @@ class AutomatedSystemUI:
         
         # Label and entry field for profile name
         ttk.Label(info_frame, text="Name:").pack(side='left')
-        self.mfcandvalveprofile_name_var = tk.StringVar()
+        self.mfcandvalveprofile_name_var = tk.StringVar(value = 'Name of New Profile')
         name_entry = ttk.Entry(info_frame, textvariable=self.mfcandvalveprofile_name_var)
         name_entry.pack(side='left', padx=5, expand=True, fill='x')
 
         # Label and entry field for profile description
         ttk.Label(info_frame, text="Description:").pack(side='left')
-        self.mfcandvalveprofile_desc_var = tk.StringVar()
+        self.mfcandvalveprofile_desc_var = tk.StringVar(value = 'Description of New Profile')
         desc_entry = ttk.Entry(info_frame, textvariable=self.mfcandvalveprofile_desc_var)
         desc_entry.pack(side='left', padx=5, expand=True, fill='x')
         
@@ -1811,25 +1854,25 @@ class AutomatedSystemUI:
         
         # Label and entry field for the time of the step
         ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
-        self.mfcandvalveprofile_time_var = tk.DoubleVar(value = 0.0)
+        self.mfcandvalveprofile_time_var = tk.StringVar(value = 10.0)
         step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_time_var, width=8)
         step_time_entry.pack(side='left', padx=2)
         
         # Label and entry field for the flow of N2 (MFC1) of the step
         ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
-        self.mfcandvalveprofile_step_flow1_var = tk.DoubleVar(value = 0.0)
+        self.mfcandvalveprofile_step_flow1_var = tk.StringVar(value = 1.0)
         step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_step_flow1_var, width=8)
         step_flow1_entry.pack(side='left', padx=2)
 
         # Label and entry field for the flow of MFC2 of the step
         ttk.Label(step_controls_frame, text="Flow MFC 2 (mL/min):").pack(side='left')
-        self.mfcandvalveprofile_step_flow2_var = tk.DoubleVar(value = 0.0)
+        self.mfcandvalveprofile_step_flow2_var = tk.StringVar(value = 1.0)
         step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_step_flow2_var, width=8)
         step_flow2_entry.pack(side='left', padx=2)
 
         # Label and entry field for the flow of MFC3 of the step
         ttk.Label(step_controls_frame, text="Flow MFC 3 (mL/min):").pack(side='left')
-        self.mfcandvalveprofile_step_flow3_var = tk.DoubleVar(value = 0.0)
+        self.mfcandvalveprofile_step_flow3_var = tk.StringVar(value = 1.0)
         step_flow3_entry = ttk.Entry(step_controls_frame, textvariable=self.mfcandvalveprofile_step_flow3_var, width=8)
         step_flow3_entry.pack(side='left', padx=2)
     
@@ -1972,12 +2015,12 @@ class AutomatedSystemUI:
         """Create MFC and RVM profile
         """
         #Clearing all input fields and steps
-        self.mfcandvalveprofile_name_var.set("")
-        self.mfcandvalveprofile_desc_var.set("")
-        self.mfcandvalveprofile_time_var.set("0.0")
-        self.mfcandvalveprofile_step_flow1_var.set("0.0")
-        self.mfcandvalveprofile_step_flow2_var.set("0.0")
-        self.mfcandvalveprofile_step_flow3_var.set("0.0")
+        self.mfcandvalveprofile_name_var.set("Name of New Profile")
+        self.mfcandvalveprofile_desc_var.set("Description of New Profile")
+        self.mfcandvalveprofile_time_var.set("10.0")
+        self.mfcandvalveprofile_step_flow1_var.set("1.0")
+        self.mfcandvalveprofile_step_flow2_var.set("1.0")
+        self.mfcandvalveprofile_step_flow3_var.set("1.0")
         self.step_mfcvalve1_combo.current(0)
         self.step_mfcvalve2_combo.current(0)
 
@@ -1990,42 +2033,76 @@ class AutomatedSystemUI:
         
     def mfcandvalve_add_step(self):
         """Add a new step to the current profile"""
+        # Validate time
+        time_val_get = self.mfcandvalveprofile_time_var.get()
         try:
-            # Get input values from the entry fields
-            time_val = float(self.mfcandvalveprofile_time_var.get())
-            flow1_val = float(self.mfcandvalveprofile_step_flow1_var.get())
-            flow2_val = float(self.mfcandvalveprofile_step_flow2_var.get())
-            flow3_val = float(self.mfcandvalveprofile_step_flow3_var.get())
-
-            valve1_val = int(self.mfcandvalveprofile_step_valve1_var.get())
-            valve2_val = int(self.mfcandvalveprofile_step_valve2_var.get())
-
-            # Time should not be negative
+            time_val = float(time_val_get)
             if time_val < 0:
-                raise ValueError("Time cannot be negative")
+                messagebox.showerror("Invalid Time", "Time cannot be negative.")
+                return
+        except ValueError:
+            messagebox.showerror(f"Invalid Input", "Please enter a valid number for time.  \nYou entered: '{time_val_get}")
+            return
 
-            # Position of the RVM of 1 or 2
+        # Validate flow1
+        flow1_val_get = self.mfcandvalveprofile_step_flow1_var.get()
+        try:
+            flow1_val = float(flow1_val_get)
+        except ValueError:
+            messagebox.showerror(f"Invalid Input", "Please enter a valid number for the flow for nitrogen. \nYou entered: '{flow1_val_get}")
+            return
+
+        flow2_val_get = self.mfcandvalveprofile_step_flow2_var.get()
+        # Validate flow2
+        try:
+            flow2_val = float(flow2_val_get)
+        except ValueError:
+            messagebox.showerror(f"Invalid Input", "Please enter a valid number for the flow rate of MFC2. \nYou entered: '{flow2_val_get}")
+            return
+
+        flow3_val_get = self.mfcandvalveprofile_step_flow3_var.get()
+        # Validate flow3
+        try:
+            flow3_val = float(flow3_val_get)
+        except ValueError:
+            messagebox.showerror(f"Invalid Input", "Please enter a valid number for the flow rate of MFC3. \nYou entered: '{flow3_val_get}")
+            return
+
+        valve1_val_get = self.mfcandvalveprofile_step_valve1_var.get()
+        # Validate valve1
+        try:
+            valve1_val = int(valve1_val_get)
             if valve1_val not in [1, 2]:
-                raise ValueError("Position of the RVM 1 must be 1 or 2")
+                messagebox.showerror(f"Invalid Valve 1", "RVM 1 position must be 1 or 2. \nYou entered: '{valve1_val_get}")
+                return
+        except ValueError:
+            messagebox.showerror(f"Invalid Input", "Please enter a valid number (1 or 2) for RVM 1. \nYou entered: '{valve1_val_get}")
+            return
+
+        valve2_val_get = self.mfcandvalveprofile_step_valve2_var.get()
+        # Validate valve2
+        try:
+            valve2_val = int(valve2_val_get)
             if valve2_val not in [1, 2]:
-                raise ValueError("Position of the RVM 2 must be 1 or 2")
+                messagebox.showerror("Invalid Valve 2", "RVM 2 position must be 1 or 2. \nYou entered: '{valve2_val_get}")
+                return
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Please enter a valid number (1 of 2) for RVM 2. \nYou entered: '{valve2_val_get}")
+            return
+
+        
+        # Check if the time already exists
+        for child in self.mfcandvalveprofile_steps_tree.get_children():
+            if float(self.mfcandvalveprofile_steps_tree.item(child, "values")[0]) == time_val:
+                if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
+                    #if True, thus User selects 'NO' then return
+                    return 
+                # Remove the existing step
+                self.mfcandvalveprofile_steps_tree.delete(child)
+                break
             
-            # Check if the time already exists
-            for child in self.mfcandvalveprofile_steps_tree.get_children():
-                if float(self.mfcandvalveprofile_steps_tree.item(child, "values")[0]) == time_val:
-                    if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
-                        #if True, thus User selects 'NO' then return
-                        return 
-                    # Remove the existing step
-                    self.mfcandvalveprofile_steps_tree.delete(child)
-                    break
-                
-            # Insert the new step to the tree
-            self.mfcandvalveprofile_steps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val, valve1_val, valve2_val))
-            
-        except ValueError as error:
-            # If invalid input values, show error messagebox
-            messagebox.showerror("Error", f"Invalid input: {error}")
+        # Insert the new step to the tree
+        self.mfcandvalveprofile_steps_tree.insert("", tk.END, values=(time_val, flow1_val, flow2_val, flow3_val, valve1_val, valve2_val))
     
     def mfcandvalve_remove_step(self):
         """Remove the selected step from the MFC and Valve profile"""
@@ -2233,14 +2310,14 @@ class AutomatedSystemUI:
 
         # Label and entry field for profile name
         ttk.Label(profile_info_frame, text="Name:").grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        self.onoffconc_namevar = tk.StringVar()
+        self.onoffconc_namevar = tk.StringVar(value = 'Name of New Profile')
         name_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_namevar)
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         name_entry.config(width=30)
 
         # Label and entry field for profile description
         ttk.Label(profile_info_frame, text="Description:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
-        self.onoffconc_desc_var = tk.StringVar()
+        self.onoffconc_desc_var = tk.StringVar(value = 'Description of New Profile')
         desc_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_desc_var)
         desc_entry.grid(row=1, column=1, padx=10, pady=5)
         desc_entry.config(width=30)
@@ -2257,17 +2334,17 @@ class AutomatedSystemUI:
         self.onoffconc_voc_list = list(self.settings_manager.get_voc_data().keys())
         self.onoffconc_typevoc_dropdown = ttk.Combobox(profile_info_frame, textvariable=self.onoffconc_voc_var, values=self.onoffconc_voc_list, state="readonly")
         self.onoffconc_typevoc_dropdown.grid(row=3, column=3, padx=10, pady=10)
-        self.onoffconc_typevoc_dropdown.current(0)
+        self.onoffconc_typevoc_dropdown.current(9)
 
         # Label and entry field for concentration
         ttk.Label(profile_info_frame, text="Concentration (ppm):").grid(row=4, column=0, padx=10, pady=10, sticky='e')
-        self.onoffconc_conc_var = tk.DoubleVar(value=0.0)
+        self.onoffconc_conc_var = tk.StringVar(value=10.0)
         concentration_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_conc_var)
         concentration_entry.grid(row=4, column=1, padx=10, pady=10)
 
         # Label and entry field for total Flow Rate input
         ttk.Label(profile_info_frame, text="Total Flow Rate (mL/min):").grid(row=5, column=0, padx=10, pady=10, sticky='e')
-        self.onoffconc_totflowrate_var = tk.DoubleVar(value=0.0)
+        self.onoffconc_totflowrate_var = tk.StringVar(value=3.0)
         totalflow_entry = ttk.Entry(profile_info_frame, textvariable=self.onoffconc_totflowrate_var)
         totalflow_entry.grid(row=5, column=1, padx=10, pady=10)
 
@@ -2291,19 +2368,19 @@ class AutomatedSystemUI:
         ttk.Label(profile_info_frame, text="ON Time (s):").grid(row=10, column=0)
         self.onoffconc_on_time_entry = ttk.Entry(profile_info_frame)
         self.onoffconc_on_time_entry.grid(row=10, column=1)
-        self.onoffconc_on_time_entry.insert(0, "0.0")         
+        self.onoffconc_on_time_entry.insert(0, "10.0")         
     
         # Label and entry field for the OFF Time
         ttk.Label(profile_info_frame, text="OFF Time (s):").grid(row=11, column=0)
         self.onoffconc_off_time_entry = ttk.Entry(profile_info_frame)
         self.onoffconc_off_time_entry.grid(row=11, column=1)
-        self.onoffconc_off_time_entry.insert(0, "0.0")     
+        self.onoffconc_off_time_entry.insert(0, "10.0")     
         
         # Label and entry field for the Run Time
         ttk.Label(profile_info_frame, text="Run Time (s):").grid(row=12, column=0)
         self.onoffconc_run_time_entry = ttk.Entry(profile_info_frame)
         self.onoffconc_run_time_entry.grid(row=12, column=1)
-        self.onoffconc_run_time_entry.insert(0, "0.0")     
+        self.onoffconc_run_time_entry.insert(0, "60.0")     
         
         # Button to run the ON/OFF graph
         self.onoffconc_run_button = ttk.Button(profile_info_frame, state="disabled", text="Run ON/OFF Profile", command=self.puregas_onoff_runprofile)
@@ -2382,6 +2459,7 @@ class AutomatedSystemUI:
         """
         # Plot the expected graph
         self.plot_expected_vocprofile()
+        
         try:
             # Obtaining values from the entries
             on_time = float(self.onoffconc_on_time_entry.get())
@@ -2391,10 +2469,10 @@ class AutomatedSystemUI:
             self.tot_flow = self.onoffconc_totflowrate_var.get()
             
         except ValueError:
-            messagebox.showerror("Input Error", "All timing fields must be numbers.")
+            # messagebox.showerror("Input Error", "All timing fields must be numbers.")
             return
-
-        # MFC and RVM objects
+  
+        # MFC and RVM 
         voc_mfc = self.mfcs[self.onoffconc_voc_index  + 1]  # index 0 = MFC2 , index 1 = MFC3
         n2_mfc = self.mfcs[0]                               # nitrogen is always MFC1
         
@@ -2414,7 +2492,7 @@ class AutomatedSystemUI:
             f"Did you set the cooling plate temperature to 0 °C?"
         )
         if not confirm: # When user selected 'No'
-            return  
+            return False
         
         # Enable the stop button
         self.onoffconc_stop_button.config(state = 'enabled')
@@ -2564,17 +2642,53 @@ class AutomatedSystemUI:
     def plot_expected_vocprofile(self):
         """Plot the expected ON/OFF concentration profile
         """
+
+        # Validate ON time
+        on_time_get = self.onoffconc_on_time_entry.get()
         try:
-            # Obtain inputs from the entries
-            on_time = float(self.onoffconc_on_time_entry.get())
-            off_time = float(self.onoffconc_off_time_entry.get())
-            total_run_time = float(self.onoffconc_run_time_entry.get())
-            conc = float(self.onoffconc_conc_var.get())
-            self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
-            voc = self.onoffconc_voc_var.get()
+            on_time = float(on_time_get)
+            if on_time < 0:
+                messagebox.showerror("Invalid ON Time", f"ON Time must be a non-negative number.\nYou entered: '{on_time_get}'")
+                return False
         except ValueError:
-            messagebox.showerror("Input Error", "Start Delay Time, On time, Off Time, Run Time and Concentrations must be numbers.")
-            return
+            messagebox.showerror("Invalid ON Time", f"Please enter a valid number for ON Time.\nYou entered: '{on_time_get}'")
+            return False
+
+        # Validate OFF time
+        off_time_get = self.onoffconc_off_time_entry.get()
+        try:
+            off_time = float(off_time_get)
+            if off_time < 0:
+                messagebox.showerror("Invalid OFF Time", f"OFF Time must be a non-negative number.\nYou entered: '{off_time_get}'")
+                return False
+        except ValueError:
+            messagebox.showerror("Invalid OFF Time", f"Please enter a valid number for OFF Time.\nYou entered: '{off_time_get}'")
+            return False
+
+        # Validate total run time
+        total_run_time_get = self.onoffconc_run_time_entry.get()
+        try:
+            total_run_time = float(total_run_time_get)
+            if total_run_time <= 0:
+                messagebox.showerror("Invalid Run Time", f"Run Time must be a positive number.\nYou entered: '{total_run_time_get}'")
+                return False
+        except ValueError:
+            messagebox.showerror("Invalid Run Time", f"Please enter a valid number for Run Time.\nYou entered: '{total_run_time_get}'")
+            return False
+
+        # Validate concentration
+        conc_get = self.onoffconc_conc_var.get()
+        try:
+            conc = float(conc_get)
+            if conc < 0:
+                messagebox.showerror("Invalid Concentration", f"Concentration must be a non-negative number.\nYou entered: '{conc_get}'")
+                return False
+        except ValueError:
+            messagebox.showerror("Invalid Concentration", f"Please enter a valid number for Concentration.\nYou entered: '{conc_get}'")
+            return False
+        
+        self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
+        voc = self.onoffconc_voc_var.get()
 
         # Initialize data arrays for plotting
         time_data = []
@@ -2636,14 +2750,30 @@ class AutomatedSystemUI:
     def calculate_voc_flow(self):
         """Calculate the required flow of VOC and nitrogen based on the selected concentration and type of VOC and total flow rate
         """
+
+        voc = self.onoffconc_voc_var.get()
+        
+        concentration_get = self.onoffconc_conc_var.get()
+        # Validate concentration
         try:
-            # Get the inputs from the entries
-            voc = self.onoffconc_voc_var.get()
-            concentration = float(self.onoffconc_conc_var.get())
-            total_flow = float(self.onoffconc_totflowrate_var.get())
-            self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
+            concentration = float(concentration_get)
         except ValueError:
-            messagebox.showerror("Invalid input", "Please enter valid numbers for concentration and total flow rate.")
+            messagebox.showerror("Invalid Concentration", f"Please enter a valid number for concentration. \nYou entered: '{concentration_get}")
+            return
+
+        total_flow_get = self.onoffconc_totflowrate_var.get()
+        # Validate total flow rate
+        try:
+            total_flow = float(total_flow_get)
+        except ValueError:
+            messagebox.showerror("Invalid Total Flow Rate", f"Please enter a valid number for total flow rate. \nYou entered: '{total_flow_get}")
+            return
+
+        # Validate MFC selection
+        try:
+            self.onoffconc_voc_index = self.onoffconc_voc_mfc_choice.current()
+        except Exception:
+            messagebox.showerror("MFC Selection Error", "Please select a valid MFC (VOC1 or VOC2).")
             return
 
         # Calculate the required flow of VOC and nitrogen based on the type of VOC and the concentration
@@ -2728,46 +2858,49 @@ class AutomatedSystemUI:
     def new_onoffconcprofile(self):
         """Clear new Pure Gas ON/OFF concentration profile."""
 
-        self.onoffconc_namevar.set("")
-        self.onoffconc_desc_var.set("")
+        self.onoffconc_namevar.set("Name of New Profile")
+        self.onoffconc_desc_var.set("Description of New Profile")
         self.onoffconc_voc_mfc_choice.current(0)  # Reset default to VOC1 in MFC2
-        self.onoffconc_voc_var.set("0.0")
-        self.onoffconc_conc_var.set("0.0")
-        self.onoffconc_totflowrate_var.set("0.0")
+        self.onoffconc_typevoc_dropdown.current(9) #
+        self.onoffconc_conc_var.set("10.0")
+        self.onoffconc_totflowrate_var.set("3.0")
         self.onoffconc_on_time_entry.delete(0, tk.END)
-        self.onoffconc_on_time_entry.insert(0, "0.0")
+        self.onoffconc_on_time_entry.insert(0, "10.0")
 
         self.onoffconc_off_time_entry.delete(0, tk.END)
-        self.onoffconc_off_time_entry.insert(0, "0.0")
+        self.onoffconc_off_time_entry.insert(0, "10.0")
 
         self.onoffconc_run_time_entry.delete(0, tk.END)
-        self.onoffconc_run_time_entry.insert(0, "0.0")
-        self.onoffconc_typevoc_dropdown.current(0)
+        self.onoffconc_run_time_entry.insert(0, "60.0")
         self.status_var.set("Creating new ON/OFF profile.")
-  
-        # Clear existing plot from the graph frame
-        for child in self.onoffconc_graph_frame.winfo_children():
-            child.destroy()
 
-        # Create plot
-        self.onoff_fig, self.onoff_ax = plt.subplots(figsize=(6, 4))
-        self.onoff_ax.set_xlabel("Time (s)")
-        self.onoff_ax.set_ylabel("Concentration (ppm)")
-        self.onoff_ax.set_title(f"Setpoint Concentration On/Off Graph")
-        self.onoff_ax.grid(True)
+        self.calculate_voc_flow()
+        
+        self.plot_expected_vocprofile()
+        
+    #     # Clear existing plot from the graph frame
+    #     for child in self.onoffconc_graph_frame.winfo_children():
+    #         child.destroy()
 
-       # Insert the plot in Tkinter
-        self.onoff_canvas = FigureCanvasTkAgg(self.onoff_fig, master=self.onoffconc_graph_frame)
-        self.onoff_canvas.draw()
-        self.onoff_canvas.get_tk_widget().pack(fill = 'both', expand = True)
+    #     # Create plot
+    #     self.onoff_fig, self.onoff_ax = plt.subplots(figsize=(6, 4))
+    #     self.onoff_ax.set_xlabel("Time (s)")
+    #     self.onoff_ax.set_ylabel("Concentration (ppm)")
+    #     self.onoff_ax.set_title(f"Setpoint Concentration On/Off Graph")
+    #     self.onoff_ax.grid(True)
 
-        canvas_widget = self.onoff_canvas.get_tk_widget()
-        # Graph size 400 x 300
-        canvas_widget.config(width=500, height=300) 
-        # Prevent Frame Shrinking
-        # https://youtu.be/onIEw70Uw-4
-        canvas_widget.pack_propagate(False)  # prevent auto-resizing
-        canvas_widget.pack(fill='none', expand=False)
+    #    # Insert the plot in Tkinter
+    #     self.onoff_canvas = FigureCanvasTkAgg(self.onoff_fig, master=self.onoffconc_graph_frame)
+    #     self.onoff_canvas.draw()
+    #     self.onoff_canvas.get_tk_widget().pack(fill = 'both', expand = True)
+
+    #     canvas_widget = self.onoff_canvas.get_tk_widget()
+    #     # Graph size 400 x 300
+    #     canvas_widget.config(width=500, height=300) 
+    #     # Prevent Frame Shrinking
+    #     # https://youtu.be/onIEw70Uw-4
+    #     canvas_widget.pack_propagate(False)  # prevent auto-resizing
+    #     canvas_widget.pack(fill='none', expand=False)
         
     def delete_onoffconcprofile(self):
         """Delete selected Pure Gas ON/OFF profile."""
@@ -2819,8 +2952,8 @@ class AutomatedSystemUI:
         mfc_index = profile.get("selectedmfcindex", 0)
 
         voc = profile.get("voc", "")
-        concentration = profile.get("concentration", 0.0)
-        total_flow = profile.get("total_flow", 0.0)
+        concentration = profile.get("concentration", 10.0)
+        total_flow = profile.get("total_flow", 3.0)
         on_time = profile.get("on_time", "")
         off_time = profile.get("off_time", "")
         run_time = profile.get("run_time", "")
@@ -2867,7 +3000,7 @@ class AutomatedSystemUI:
             description = self.onoffconc_desc_var.get()
             
         except ValueError:
-            messagebox.showerror("Input Error", "All numeric fields must be valid numbers.")
+            messagebox.showerror("Input Error", "All input fields must be valid.")
             return
 
         # Package the data into a dictionary such that it can be saved
@@ -2993,7 +3126,7 @@ class AutomatedSystemUI:
 
         # Label and entry field for profile name
         ttk.Label(name_frame, text="Name:").pack(side='left')
-        self.diffconc_namevar = tk.StringVar()
+        self.diffconc_namevar = tk.StringVar(value = 'Name of New Profile')
         name_entry = ttk.Entry(name_frame, textvariable=self.diffconc_namevar)
         name_entry.pack(side='left', padx=10)
         name_entry.config(width=30)
@@ -3004,7 +3137,7 @@ class AutomatedSystemUI:
 
         # Label and entry field for profile description
         ttk.Label(desc_frame, text="Description:").pack(side='left')
-        self.diffconc_desc_var = tk.StringVar()
+        self.diffconc_desc_var = tk.StringVar(value = 'Description of New Profile')
         desc_entry = ttk.Entry(desc_frame, textvariable=self.diffconc_desc_var)
         desc_entry.pack(side='left', fill='x', expand=True)
         
@@ -3023,11 +3156,11 @@ class AutomatedSystemUI:
         self.onoffconc_voc_list = list(self.settings_manager.get_voc_data().keys())
         self.diffconcprofile_voc_type_combobox = ttk.Combobox(secondrow_frame, textvariable=self.diffconc_voc_var, values=self.onoffconc_voc_list, state="readonly")
         self.diffconcprofile_voc_type_combobox.pack(side='left', padx=5)
-        self.diffconcprofile_voc_type_combobox.current(0)
+        self.diffconcprofile_voc_type_combobox.current(9)
         
         # Label and entry field for the total flow rate
         ttk.Label(secondrow_frame, text="Total Flow Rate (mL/min):").pack(side='left', padx=5)
-        self.diffconc_totalflowrate_var = tk.DoubleVar()
+        self.diffconc_totalflowrate_var = tk.StringVar(value = 3.0)
         self.totalflow_entry = ttk.Entry(secondrow_frame, textvariable=self.diffconc_totalflowrate_var)
         self.totalflow_entry.pack(side='left', padx=5)
         self.totalflow_entry.config(state = 'enabled')
@@ -3070,7 +3203,7 @@ class AutomatedSystemUI:
 
         # Label and entry field for the time of the step
         self.diffconc_profile_time_label = ttk.Label(step_controls_frame, text="Time (s):").pack(side='left')
-        self.diffconc_step_time_var = tk.DoubleVar()
+        self.diffconc_step_time_var = tk.StringVar(value = 10.0)
         self.step_time_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_time_var, width=8)
         self.step_time_entry.pack(side='left', padx=2)
         self.step_time_entry.config(state ='disabled')
@@ -3092,21 +3225,21 @@ class AutomatedSystemUI:
 
         # Label and entry for the desired concentration in ppm
         self.diffconc_profile_conc_label = ttk.Label(step_controls_frame, text="Concentration (ppm):").pack(side='left')
-        self.diffconc_step_conc_var = tk.DoubleVar()
+        self.diffconc_step_conc_var = tk.StringVar(value = 10.0)
         self.step_conc_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_step_conc_var, width=8)
         self.step_conc_entry.pack(side='left', padx=2)
         self.step_conc_entry.config(state ='disabled')
 
         # Label and entry field for the flow rate of nitrogen
         self.diffconc_profile_mfc1_label = ttk.Label(step_controls_frame, text="Flow N2 (mL/min):").pack(side='left')
-        self.diffconc_flowN2_var = tk.DoubleVar()
+        self.diffconc_flowN2_var = tk.StringVar()
         self.diffconc_step_flow1_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowN2_var, width=25)
         self.diffconc_step_flow1_entry.pack(side='left', padx=2)
         self.diffconc_step_flow1_entry.config(state ='disabled')
 
         # Label and entry field for the flow rate of the VOC
         self.diffconc_mfc2_label = ttk.Label(step_controls_frame, text="Flow VOC (mL/min):").pack(side='left')
-        self.diffconc_flowVOC_var = tk.DoubleVar()
+        self.diffconc_flowVOC_var = tk.StringVar()
         self.diffconc_step_flow2_entry = ttk.Entry(step_controls_frame, textvariable=self.diffconc_flowVOC_var, width=25)
         self.diffconc_step_flow2_entry.pack(side='left', padx=2)
         self.diffconc_step_flow2_entry.config(state ='disabled')
@@ -3158,10 +3291,16 @@ class AutomatedSystemUI:
     def enabling_select_diffconcprofile(self):
         """Enable all input fields and buttons needed to define the steps and lock the selection of type VOC, total flow and dropdown of the selection of the VOC MFC
         """
+        total_flow_get = self.totalflow_entry.get()
         try:
             # Try to convert the value to float
-            total_flow = float(self.totalflow_entry.get())
-            
+            total_flow = float(total_flow_get)
+
+            #  Check whether the total flow is not negative nor equal to 0
+            if total_flow <= 0:
+                messagebox.showerror("Invalid Input", f"Total flow must be a positive number. \nYou entered: '{total_flow_get}")
+                return
+
             ## Lock the selection of type VOC, total flow and dropdown of the selection of the VOC MFC
             self.diffconcprofile_voc_type_combobox.config(state = 'disabled')
             self.totalflow_entry.config(state = 'disabled')
@@ -3180,7 +3319,7 @@ class AutomatedSystemUI:
             self.run_button.config(state = 'enabled')
             
         except ValueError:
-            messagebox.showerror("Invalid Input", "Please enter a valid number for total flow.")
+            messagebox.showerror("Invalid Input", f"Please enter a valid number for total flow. \nYou entered: '{total_flow_get}")
             return
 
     def disabling_select_diffconcprofile(self):
@@ -3297,7 +3436,7 @@ class AutomatedSystemUI:
     
         elif gas_inlet == "VOC":
             # Clear the previous filled values
-            self.diffconc_step_conc_var.set("")
+            self.diffconc_step_conc_var.set("10.0")
             self.diffconc_flowN2_var.set("")
             self.diffconc_flowVOC_var.set("")
             
@@ -3335,17 +3474,14 @@ class AutomatedSystemUI:
         """Create Pure gas diff concentration profile
         """
         #Clearing all input fields and steps
-        self.diffconc_namevar.set("")
-        self.diffconc_desc_var.set("")
-        self.diffconc_totalflowrate_var.set("2.0") 
-        self.diffconc_step_time_var.set("0.0")
-        self.diffconc_step_conc_var.set("0.0")
-        self.diffconc_flowN2_var.set("0.0")
-        self.diffconc_flowVOC_var.set("0.0")
+        self.diffconc_namevar.set("Name of New Profile")
+        self.diffconc_desc_var.set("Description of New Profile")
+        self.diffconc_totalflowrate_var.set("3.0") 
+        self.diffconc_step_time_var.set("10.0")
+        self.diffconc_step_conc_var.set("10.0")
         
-        self.diffconcprofile_voc_type_combobox.current(0)
+        self.diffconcprofile_voc_type_combobox.current(9)
         self.diffconc_voc_mfc_choice.current(0)
-        self.diffconcprofile_voc_type_combobox.current(0)
         self.diffconc_step_valve_combo.current(0)
         
         # Clear all entries of the existing steps in the tree
@@ -3368,44 +3504,66 @@ class AutomatedSystemUI:
   
     def diffconcadd_step(self):
         """Add a new step to the current profile with calculated flows"""
+        # Validate time
+        time_val_get = self.diffconc_step_time_var.get()
         try:
-            # Get input values from the entry fields
-            time_val = float(self.diffconc_step_time_var.get())
-            concentration_val = float(self.diffconc_step_conc_var.get())
-            f_n2 = self.diffconc_flowN2_var.get()
-            f_voc = self.diffconc_flowVOC_var.get()
-            gas_inlet_vocn2 = self.diffconc_valve_var.get()
-
-            # Time should not be negative
+            time_val = float(time_val_get)
             if time_val < 0:
-                raise ValueError("Time cannot be negative")
-            
-            # Gas inlet should be VOC or N2
-            if gas_inlet_vocn2 not in ["VOC", "N2"]:
-                raise ValueError("Gas Inlet of Chamber should be VOC or N2")
+                messagebox.showerror("Invalid Time", "Time cannot be negative.")
+                return
+        except ValueError:
+            messagebox.showerror("Invalid Time", f"Time must be a valid number. \nYou entered: '{time_val_get}")
+            return
 
-            # Check if the time already exists
-            for child in self.diffconc_steps_tree.get_children():
-                if float(self.diffconc_steps_tree.item(child, "values")[0]) == time_val:
-                    if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
-                        #if True, thus User selects 'NO' then return
-                        return
-                    # Remove the existing step
-                    self.diffconc_steps_tree.delete(child)
-                    break
+        # Validate concentration
+        concentration_val_get = self.diffconc_step_conc_var.get()
+        try:
+            concentration_val = float(concentration_val_get)
+        except ValueError:
+            messagebox.showerror("Invalid Concentration", f"Concentration must be a valid number. \nYou entered: '{concentration_val_get}")
+            return
 
-            # Insert the new step to the tree
-            self.diffconc_steps_tree.insert("", tk.END, values=(time_val, gas_inlet_vocn2, concentration_val, f_voc, f_n2))
-            
-            # Enable the calculate step button, the user should fill in the next values of the step
-            self.calculate_step_button.config(state = 'enabled')
-            
-            # Disable the add step button, the user should first calculate before adding the next step
-            self.add_step_button.config(state = 'disabled')
+        # Validate VOC flow
+        f_voc_get = self.diffconc_flowVOC_var.get()
+        try:
+            f_voc = float(f_voc_get)
+        except ValueError:
+            messagebox.showerror("Invalid VOC Flow", f"VOC Flow must be a valid number. \nYou entered: '{f_voc_get}")
+            return
 
-        except ValueError as error:
-            messagebox.showerror("Error", f"Invalid input: {error}")
+        # Validate N2 flow
+        f_n2_get = self.diffconc_flowN2_var.get()
+        try:
+            f_n2 = float(f_n2_get)
+        except ValueError:
+            messagebox.showerror("Invalid N2 Flow", f"N2 Flow must be a valid number. \nYou entered: '{f_n2_get}")
+            return
 
+        # Validate gas inlet selection
+        gas_inlet_vocn2 = self.diffconc_valve_var.get()
+        if gas_inlet_vocn2 not in ["VOC", "N2"]:
+            messagebox.showerror("Invalid Gas Inlet", "Gas Inlet of Chamber must be 'VOC' or 'N2'.")
+            return
+    
+        # Check if the time already exists
+        for child in self.diffconc_steps_tree.get_children():
+            if float(self.diffconc_steps_tree.item(child, "values")[0]) == time_val:
+                if not messagebox.askyesno("Confirm", f"Step at time {time_val}s already exists. Overwrite?"):
+                    #if True, thus User selects 'NO' then return
+                    return
+                # Remove the existing step
+                self.diffconc_steps_tree.delete(child)
+                break
+
+        # Insert the new step to the tree
+        self.diffconc_steps_tree.insert("", tk.END, values=(time_val, gas_inlet_vocn2, concentration_val, f_voc, f_n2))
+        
+        # Enable the calculate step button, the user should fill in the next values of the step
+        self.calculate_step_button.config(state = 'enabled')
+        
+        # Disable the add step button, the user should first calculate before adding the next step
+        self.add_step_button.config(state = 'disabled')
+        
     def diffconcremove_step(self):
         """Remove the selected step"""
         # Get the selected item
@@ -3592,27 +3750,52 @@ class AutomatedSystemUI:
     def diffconc_calc_step(self):
         """Calculate the required VOC and N2 flow rates based on the entered concentration and total flow rates
         """
+        time_val_get = self.diffconc_step_time_var.get()
         try:
-            # Get the input values from the GUI
-            concentration_val = float(self.diffconc_step_conc_var.get())
-            total_flow = float(self.diffconc_totalflowrate_var.get())
-            voc = self.diffconc_voc_var.get()
-
-            # Calculate the required flows for VOC and N2
-            f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
-            if f_voc is None or f_n2 is None:
-                messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration. Please enter another concentration.")
+            time_val = float(time_val_get)
+            if time_val < 0:
+                messagebox.showerror("Invalid Time", "Time cannot be negative.")
                 return
+        except ValueError:
+            messagebox.showerror("Invalid Time", f"Time must be a valid number. \nYou entered: '{time_val_get}")
+            return
+            
+        # Validate concentration
+        concentration_val_get = self.diffconc_step_conc_var.get()
+        try:
+            concentration_val = float(concentration_val_get)
+            if concentration_val < 0:
+                messagebox.showerror("Invalid Concentration", f"Concentration cannot be negative. \nYou entered: '{concentration_val_get}")
+                return False
+        except ValueError:
+            messagebox.showerror("Invalid Concentration", f"Concentration must be a valid non-negative number. \nYou entered: '{concentration_val_get}")
+            return False
 
-            ## Set the values to the corresponding input fields
-            self.diffconc_flowN2_var.set(f_n2)
-            self.diffconc_flowVOC_var.set(f_voc)
+        # Validate total flow rate
+        total_flow_get = self.diffconc_totalflowrate_var.get()
+        try:
+            total_flow = float(total_flow_get)
+            if total_flow <= 0:
+                messagebox.showerror("Invalid Total Flow", f"Total flow must be a positive number. \nYou entered: '{total_flow_get}")
+                return False
+        except ValueError:
+            messagebox.showerror("Invalid Total Flow", f"Total flow must be a valid positive number. \nYou entered: '{total_flow_get}")
+            return False
 
-            # Enable add step button
-            self.add_step_button.config(state = 'enabled')
+        voc = self.diffconc_voc_var.get()
 
-        except ValueError as e:
-            messagebox.showerror("Error", f"Invalid input: {e}")
+        # Calculate the required flows for VOC and N2
+        f_voc, f_n2, P_s = self.calculate_required_flow_0degrees(voc, concentration_val, total_flow)
+        if f_voc is None or f_n2 is None:
+            messagebox.showerror("Calculation Error", "Flow could not be calculated for this VOC and concentration. Please enter another concentration.")
+            return
+
+        ## Set the values to the corresponding input fields
+        self.diffconc_flowN2_var.set(f_n2)
+        self.diffconc_flowVOC_var.set(f_voc)
+
+        # Enable add step button
+        self.add_step_button.config(state = 'enabled')
             
     def update_diffconc_graph(self, steps):
         """Update the setpoint differention concentration graph
