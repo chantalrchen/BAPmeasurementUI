@@ -390,9 +390,9 @@ class MFCandRVMProfileManager(BaseProfileManager):
     # https://www.w3schools.com/python/python_inheritance.asp
     
     This class can also:
-    - include standard profiles for both the mass flow and valve switching
+    - include standard profiles for both the flow rate and valve switching
     - initialize the MFCs and Valve
-    - Execute profiles based on times set the mass flow rate and valves position
+    - Execute profiles based on times set the flow rate and valves position
     """
     def __init__(self, UImfcs, UIvalve, profiles_dir):
         """Initialize the profile manager for both the MFCs and the RVMs
@@ -529,7 +529,7 @@ class MFCandRVMProfileManager(BaseProfileManager):
         self.stoprequest = True
 
 class OnOffConcProfileManager(BaseProfileManager):
-    """Class to control the On/Off profile that can calculate the corresponding mass flow rates based on the concentration
+    """Class to control the On/Off profile that can calculate the corresponding flow rates based on the concentration
     
     The class is a child class of the baseprofilemanager.
     # https://www.w3schools.com/python/python_inheritance.asp
@@ -554,7 +554,7 @@ class OnOffConcProfileManager(BaseProfileManager):
         super().__init__(profiles_dir,  "profiles_puregas_onoff_conc", standard_profiles)
 
 class DiffConcProfileManager(BaseProfileManager):
-    """Class to control the profile that can calculate the corresponding mass flow rates based on the concentration
+    """Class to control the profile that can calculate the corresponding flow rates based on the concentration
     
     The class is a child class of the baseprofilemanager.
     # https://www.w3schools.com/python/python_inheritance.asp

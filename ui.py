@@ -110,7 +110,7 @@ class AutomatedSystemUI:
         status_bar = ttk.Label(header_frame, text='Status', textvariable=self.status_var)
         status_bar.pack(fill='both', padx=5, pady=5)
 
-        # Information Bar with live values, such as mass flow rates and valve positions
+        # Information Bar with live values, such as flow rates and valve positions
         self.running_var_bar = tk.Label(header_frame, text="", anchor="w", relief="sunken")
         self.running_var_bar.pack(side='top', fill='x')
         
@@ -285,7 +285,7 @@ class AutomatedSystemUI:
             if not self.root.winfo_exists():
                 return
         
-            ######## Update MFCs mass flow rates ########
+            ######## Update MFCs flow rates ########
             massflows = []
             
             # For each MFC
@@ -305,7 +305,7 @@ class AutomatedSystemUI:
                 # Store the massflow to the list 
                 massflows.append(flow_str)
                 # Update label in the device tab
-                self.current_massflow_labels[i].config(text=f"Current mass flow rate: {flow_str}")
+                self.current_massflow_labels[i].config(text=f"Current flow rate: {flow_str}")
 
             ######## Update RVM positions ########
             valveposition = []
@@ -328,9 +328,9 @@ class AutomatedSystemUI:
             self.running_var_bar.config(
                 text=(
                     f"Reading Values   : "
-                    f"MFC 1 (N2) Mass Flow Rate: {massflows[0]} | "
-                    f"MFC 2 Mass Flow Rate: {massflows[1]} | "
-                    f"MFC 3 Mass Flow Rate: {massflows[2]} | "
+                    f"MFC 1 (N2) Flow Rate: {massflows[0]} | "
+                    f"MFC 2 Flow Rate: {massflows[1]} | "
+                    f"MFC 3 Flow Rate: {massflows[2]} | "
                     f"Valve 1 Position: {valveposition[0]} | "
                     f"Valve 2 Position: {valveposition[1]} | "
                 )
@@ -495,8 +495,8 @@ class AutomatedSystemUI:
         frame = ttk.LabelFrame(parent, text=f'MFC {index + 1}')
         frame.grid(row=0, column=index, padx=10, pady=5)
 
-        # Label and entry field to set the desired mass flow rate
-        tk.Label(frame, text="Mass flow rate (mL/min):").grid(row=0, column=0, padx=10, pady=10)
+        # Label and entry field to set the desired flow rate
+        tk.Label(frame, text="Flow rate (mL/min):").grid(row=0, column=0, padx=10, pady=10)
         var = tk.StringVar(value=self.default_flow)
         entry = tk.Entry(frame, textvariable=var)
         entry.grid(row=0, column=1, padx=10, pady=10)
@@ -504,17 +504,17 @@ class AutomatedSystemUI:
         
         tk.Label(frame, text=f"Valid range: {self.min_flow}–{self.max_flow} mL/min", fg="blue").grid(row=1, column=0,  columnspan=2, pady=10)
         
-        # Button to set the mass flow rate to the MFC
-        tk.Button(frame, text="Set mass flow rate", command=lambda i=index: self.set_MFCmassflow(i)).grid(
+        # Button to set the  flow rate to the MFC
+        tk.Button(frame, text="Set flow rate", command=lambda i=index: self.set_MFCmassflow(i)).grid(
             row=2, column=0, columnspan=2, pady=10)
 
-        # Label to show the current mass flow rate
-        current_label = tk.Label(frame, text="Current mass flow rate: Not available", width=35, anchor="w")
+        # Label to show the current  flow rate
+        current_label = tk.Label(frame, text="Current flow rate: Not available", width=35, anchor="w")
         current_label.grid(row=3, column=0, padx=10, pady=10)
         self.current_massflow_labels.append(current_label)
 
-        # Label to show the target mass flow rate
-        target_label = tk.Label(frame, text=f"Target mass flow rate: {mfc.targetmassflow:.2f} mL/min", width=35, anchor="w")
+        # Label to show the target flow rate
+        target_label = tk.Label(frame, text=f"Target flow rate: {mfc.targetmassflow:.2f} mL/min", width=35, anchor="w")
         target_label.grid(row=3, column=1, padx=10, pady=10)
         self.target_massflow_labels.append(target_label)
 
@@ -864,7 +864,7 @@ class AutomatedSystemUI:
             messagebox.showinfo("Connection Failed", f"MFC {index + 1} is not connected")
 
     def set_MFCmassflow(self, index):
-        """Sets the target mass flow rate for the specific MFC by index
+        """Sets the target flow rate for the specific MFC by index
 
         Args:
             index (int): index of the MF
@@ -873,31 +873,31 @@ class AutomatedSystemUI:
             messagebox.showerror("Error", f"MFC {index} is not connected.")
             return
 
-        # Get the desired mass flow rate entered by the user
+        # Get the desired flow rate entered by the user
         massflowrate_get = self.massflow_vars[index].get()
         try:
             massflowrate = float(massflowrate_get)
         except ValueError:
-            messagebox.showerror("Invalid Input", f"Mass flow rate must be a valid number.\nYou entered: '{massflowrate_get}'")
+            messagebox.showerror("Invalid Input", f"Flow rate must be a valid number.\nYou entered: '{massflowrate_get}'")
             return
         
         if massflowrate > self.max_flow:
-            messagebox.showerror("Error", f"Mass flow rate must be smaller than {self.max_flow}.\nYou entered: '{massflowrate}'")
+            messagebox.showerror("Error", f"Flow rate must be smaller than {self.max_flow}.\nYou entered: '{massflowrate}'")
             return
         
         # Set the massflow rate to the device
         if self.mfcs[index].set_massflow(massflowrate):
             # If settings is successfull, update the corresponding target label
-            self.target_massflow_labels[index].config(text=f"Target mass flow rate: {self.mfcs[index].targetmassflow} mL/min")
+            self.target_massflow_labels[index].config(text=f"Target flow rate: {self.mfcs[index].targetmassflow} mL/min")
             
             # Enabling that the massflow will continously updated
             self.update_massflow(index)
         else:
             # Messagebox if setting the massflow fails.
-            messagebox.showerror("Error", f"Failed to set mass flow rate to {massflowrate} for MFC {index + 1}.")
+            messagebox.showerror("Error", f"Failed to set flow rate to {massflowrate} for MFC {index + 1}.")
                     
     def update_massflow(self, index):
-        """ Updating the current mass flow rate reading for a specific MFC
+        """ Updating the current flow rate reading for a specific MFC
 
         Args:
             index (int): the index of the MFC to update (0-based)
@@ -922,9 +922,9 @@ class AutomatedSystemUI:
             
             # If obtained massflow has a value, update the label
             if current_flow is not None:
-                self.current_massflow_labels[index].config(text=f"Current mass flow rate: {current_flow:.2f} mL/min")
+                self.current_massflow_labels[index].config(text=f"Current flow rate: {current_flow:.2f} mL/min")
             else:
-                messagebox.showerror("Read Error", f"Failed to read mass flow rate from MFC {index + 1}.")
+                messagebox.showerror("Read Error", f"Failed to read flow rate from MFC {index + 1}.")
             
             # Passing the index to the function by using lambda
             # Lambda are anonymous function means that the function is without a name
@@ -3194,7 +3194,7 @@ class AutomatedSystemUI:
             messagebox.showerror("Save Error", f"Could not save profile '{profile_name}'.")
     
     def stop_onoffconc_run(self):
-        """Stop running the Pure Gas On/Off concentration profile and set the valve position to let the N2 in the gas inlet, and set the mass flow rate of VOC and MFC to 0
+        """Stop running the Pure Gas On/Off concentration profile and set the valve position to let the N2 in the gas inlet, and set the flow rate of VOC and MFC to 0
         """
         # Set stop flag to True
         self.stop_onoff_conc_run = True
@@ -3633,10 +3633,10 @@ class AutomatedSystemUI:
             # Concentration to 0 ppm
             self.diffconc_step_conc_var.set(0.0)  
             
-            # mass flow rate of N2 is the total flow
+            # flow rate of N2 is the total flow
             self.diffconc_flowN2_var.set(total_flow) 
             
-            # mass flow rate of VOC is 0 ml/min
+            # flow rate of VOC is 0 ml/min
             self.diffconc_flowVOC_var.set(0.0) 
             
             # Enable the add step button

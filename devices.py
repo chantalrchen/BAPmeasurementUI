@@ -70,24 +70,24 @@ class BronkhorstMFC:
             )
         
     def get_massflow(self):
-        """ Reading the mass flow rates (in mL/min) from the MFC 
+        """ Reading the flow rates (in mL/min) from the MFC 
 
         Returns:
-            float: The actual measured mass flow rate (self.massflow) if reading the parameter was successfull
-            boolean False: if the device is not connected or reading mass flow rate went wrong
+            float: The actual measured flow rate (self.massflow) if reading the parameter was successfull
+            boolean False: if the device is not connected or reading flow rate went wrong
         """
         # Check whether the device is connected
         if self.connected and self.instrument is not None:  # device is connected and assigned
             try:
-                # Read the mass flow rate from the MFC
+                # Read the flow rate from the MFC
                 # Manual Flexi-Flow p29, Fmeasure
                 param = [{'proc_nr':  33, 'parm_nr': 0, 'parm_type': propar.PP_TYPE_FLOAT}] 
                 self.massflow = self.instrument.read_parameters(param)
                 return self.massflow  
             except Exception as err:
-                # Show Messagebox when reading mass flow rate failed
+                # Show Messagebox when reading flow rate failed
                 messagebox.showerror("Error",
-                    f"An error occurred while reading the mass flow rate: {err}"
+                    f"An error occurred while reading the flow rate: {err}"
                 )
                 return False  
         else:
@@ -96,10 +96,10 @@ class BronkhorstMFC:
             return False  
 
     def set_massflow(self, value: float):
-        """ Setting the target mass flow rate and write it to the MFC
+        """ Setting the target flow rate and write it to the MFC
 
         Args:
-            value (float): the target mass flow rate that the user want to set
+            value (float): the target flow rate that the user want to set
 
         Returns:
             boolean: True if the massflowrate is successfully written, False otherwise
@@ -110,7 +110,7 @@ class BronkhorstMFC:
                 # Block negative values
                 if value < 0:
                     # Show Messagebox when user input a negative value
-                    messagebox.showwarning("Mass flow rate can't be negative", f"The mass flow rate can't be negative.")
+                    messagebox.showwarning("Flow rate can't be negative", f"The flow rate can't be negative.")
                     return False                            
                 else:
                     self.targetmassflow = value
@@ -123,7 +123,7 @@ class BronkhorstMFC:
             except Exception as err:
             # Show error if writing to the instrument fails
                 messagebox.showerror("Error",
-                    f"An error occurred while setting the mass flow rate: {err}"
+                    f"An error occurred while setting the flow rate: {err}"
                 )
                 return False  
         else:

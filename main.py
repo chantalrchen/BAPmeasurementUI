@@ -25,16 +25,5 @@ if __name__ == "__main__":
     #When opening the UI ensuring it is full screen
     root.state("zoomed")
 
-#    # Lettertype voor standaard tkinter widgets
-#     default_font = font.nametofont("TkDefaultFont")
-#     default_font.configure(family="Arial", size=10)
-#     root.option_add("*Font", default_font)
-
-#     # Lettertype voor ttk widgets (zoals ttk.Label, ttk.Entry, etc.)
-#     style = ttk.Style()
-#     style.configure(".", font=("Arial", 10))
-
-#     root.option_add("*Font", default_font)
-
     app = AutomatedSystemUI(root)
     root.mainloop()
